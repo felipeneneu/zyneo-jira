@@ -44,7 +44,7 @@ export const UserButton = () => {
     : email.charAt(0).toUpperCase() ?? "0";
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="outline-none relative">
+      <DropdownMenuTrigger className="outline-none relative cursor-pointer">
         <Avatar className="size-10 hover:opacity-75 transition border border-neutral-300">
           <AvatarFallback className="bg-neutral-200 font-medium text-neutral-500 flex items-center justify-center">
             {avatarFallback}
