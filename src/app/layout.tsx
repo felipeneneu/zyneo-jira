@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "@/src/ui/sonner";
 
 import { QueryProvider } from "./components/query-provider";
+import { Providers } from "@/src/lib/providers";
 import "@/src/app/globals.css";
 
 const InterFont = Inter({
@@ -24,8 +25,10 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${InterFont.variable} antialiased min-h-screen`}>
         <QueryProvider>
-          <Toaster />
-          {children}
+          <Providers>
+            <Toaster />
+            {children}
+          </Providers>
         </QueryProvider>
       </body>
     </html>
