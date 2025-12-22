@@ -3,6 +3,7 @@ import { cn } from "@/src/lib/utils";
 
 import { Avatar, AvatarFallback } from "@/src/ui/avatar";
 import Image from "next/image";
+import { getAppwriteFileViewUrl } from "../hooks/get_appwrite-file-view-url";
 
 interface WorkspaceAvatarProps {
   image?: string;
@@ -10,13 +11,7 @@ interface WorkspaceAvatarProps {
   className?: string;
 }
 
-const getAppwriteFileViewUrl = (fileId: string) => {
-  const endpoint = APPWRITE_ENDPOINT;
-  const project = PROJECT_ID;
-  const bucket = IMAGES_BUCKET_ID;
 
-  return `${endpoint}/storage/buckets/${bucket}/files/${fileId}/view?project=${project}`;
-};
 
 export const WorkspaceAvatar = ({
   image,

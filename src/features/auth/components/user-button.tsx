@@ -1,19 +1,10 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/src/ui/avatar";
-import { Button } from "@/src/ui/button";
+import { Avatar, AvatarFallback } from "@/src/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/src/ui/dropdown-menu";
 import { DottedSeparator } from "@/src/ui/dotted-separator";
@@ -58,7 +49,7 @@ export const UserButton = () => {
         sideOffset={10}
       >
         <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-4">
-          <Avatar className="size-[52px] hover:opacity-75 transition border border-neutral-300">
+          <Avatar className="size-13 hover:opacity-75 transition border border-neutral-300">
             <AvatarFallback className="bg-neutral-200 text-xl font-medium text-neutral-500 flex items-center justify-center">
               {avatarFallback}
             </AvatarFallback>
