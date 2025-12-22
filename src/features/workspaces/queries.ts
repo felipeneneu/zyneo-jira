@@ -1,24 +1,15 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { Databases, Client, Query, Account } from "node-appwrite";
-import { AUTH_COOKIE } from "@/src/features/auth/constants";
+import { Query } from "node-appwrite";
+
 import { DATABASE_ID, MEMBERS_ID, WORKSPACE_ID } from "@/src/config";
 import { getMember } from "@/src/features/members/utils";
 import { Workspace } from "./types";
+import { createSessionClient } from "@/src/lib/appwrite";
 
 export const getWorkspace = async () => {
   try {
-    const session = (await cookies()).get(AUTH_COOKIE);
-    if (!session) return { documents: [], total: 0 };
-
-    const client = new Client()
-      .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-      .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
-
-    client.setSession(session.value);
-    const databases = new Databases(client);
-    const account = new Account(client);
+    const { account, databases } = await createSessionClient();
     const user = await account.get();
 
     const members = await databases.listDocuments(DATABASE_ID, MEMBERS_ID, [
@@ -50,16 +41,8 @@ export const getWorkspaceById = async ({
   workspaceId,
 }: GetWorkspaceByIdParams) => {
   try {
-    const session = (await cookies()).get(AUTH_COOKIE);
-    if (!session) return null;
+    const { account, databases } = await createSessionClient();
 
-    const client = new Client()
-      .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-      .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
-
-    client.setSession(session.value);
-    const databases = new Databases(client);
-    const account = new Account(client);
     const user = await account.get();
 
     const member = await getMember({

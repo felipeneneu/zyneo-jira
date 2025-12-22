@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/src/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/src/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/src/ui/sheet";
 import { MenuIcon } from "lucide-react";
 import { Sidebar } from "./sidebar";
 
@@ -22,6 +22,7 @@ export const MobileSidebar = () => {
           <MenuIcon className="size-5 text-neutral-500" />
         </Button>
       </SheetTrigger>
+      <SheetTitle className="hidden">Menu</SheetTitle>
       <SheetContent side="left" className="p-0">
         <Sidebar />
       </SheetContent>
