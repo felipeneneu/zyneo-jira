@@ -24,7 +24,6 @@ export const WorkspaceSwitcher = () => {
   const onSelect = (id: string) => {
     router.push(`/workspaces/${id}`);
   };
-  console.log("w", workspaceId);
   return (
     <div className="flex flex-col">
       <div className=" flex items-center justify-between mb-2">
