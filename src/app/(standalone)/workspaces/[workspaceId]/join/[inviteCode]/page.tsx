@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 interface WorkspaceIdJoinPageProps {
   params: Promise<{
     workspaceId: string;
-    inviteCode: string;
   }>;
 }
 
