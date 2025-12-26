@@ -11,8 +11,8 @@ export const createProjectSchema = z.object({
   workspaceId: z.string(),
 });
 
-export const updateWorkspaceSchema = z.object({
-  name: z.string().trim().min(1, "Must be 1 or more characters").optional(),
+export const updateProjectSchema = z.object({
+  name: z.string().trim().min(1, "Minimum 1 character required").optional(),
   image: z
     .union([
       z.instanceof(File),
@@ -20,3 +20,5 @@ export const updateWorkspaceSchema = z.object({
     ])
     .optional(),
 });
+
+
