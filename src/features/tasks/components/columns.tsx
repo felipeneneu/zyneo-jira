@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Task } from "../types";
-import { ArrowUpDown, MoreVertical, MoreVerticalIcon } from "lucide-react";
+import { ArrowUpDown, MoreVertical } from "lucide-react";
 import { Button } from "@/src/ui/button";
 import { ProjectAvatar } from "../../projects/components/project-avatar";
 import { MembersAvatar } from "../../members/components/members-avatar";
@@ -46,6 +46,9 @@ export const columns: ColumnDef<Task>[] = [
     },
     cell: ({ row }) => {
       const project = row.original.project;
+      if (!project) {
+        return <p className="text-muted-foreground">—</p>;
+      }
 
       return (
         <div className="flex items-center gap-x-2 text-sm font-medium">
