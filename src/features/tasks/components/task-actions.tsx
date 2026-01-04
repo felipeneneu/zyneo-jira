@@ -9,6 +9,7 @@ import { ExternalLinkIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useDeleteTask } from "../api/use-delete-task";
 import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
+import { useEditTaskModal } from "../hooks/use-edit-task-modal";
 
 interface TaskActionsProps {
   id: string;
@@ -19,6 +20,8 @@ interface TaskActionsProps {
 export const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
   const workspaceId = useWorkspaceId();
   const router = useRouter();
+
+  const { open } = useEditTaskModal();
 
   const [ConfirmDialog, confirm] = useConfirm(
     "Delete task",
@@ -68,7 +71,7 @@ export const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            onClick={() => {}}
+            onClick={() => open(id)}
             disabled={false}
             className="font-medium p-2.5"
           >
