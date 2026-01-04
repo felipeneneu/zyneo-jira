@@ -13,6 +13,7 @@ import { DataFilters } from "./data-filters";
 import { useTaskFilters } from "../hooks/use-task-filters";
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
+import { DataKanban } from "./data-kanban";
 
 export const TaskViewSwitcher = () => {
   const [view, setView] = useQueryState("task-view", {
@@ -20,8 +21,6 @@ export const TaskViewSwitcher = () => {
   });
 
   const [{ status, assigneeId, projectId, dueDate }] = useTaskFilters();
-
-
 
   const workspaceId = useWorkspaceId();
   const { open } = useCreateTaskModal();
@@ -47,7 +46,7 @@ export const TaskViewSwitcher = () => {
               Table
             </TabsTrigger>
             <TabsTrigger className="h-8 w-full lg:w-auto" value="kaban">
-              Kaban
+              Kanban
             </TabsTrigger>
             <TabsTrigger className="h-8 w-full lg:w-auto" value="calendar">
               Calendar
@@ -71,10 +70,10 @@ export const TaskViewSwitcher = () => {
               <DataTable columns={columns} data={tasks?.documents ?? []} />
             </TabsContent>
             <TabsContent value="kaban" className="mt-0">
-              Kaban
+              <DataKanban data={tasks?.documents ?? []} />
             </TabsContent>
             <TabsContent value="calendar" className="mt-0">
-              Calendar
+              {JSON.stringify(tasks)}
             </TabsContent>
           </>
         )}
