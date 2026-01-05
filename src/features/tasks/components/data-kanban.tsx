@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Task, TaskStatus } from "../types";
-import { DragDropContext } from "@hello-pangea/dnd";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import { KanbanColumnHeader } from "./kanban-column-header";
+import { KanbanCard } from "./kanban-card";
 
 const boards: TaskStatus[] = [
   TaskStatus.BACKLOG,
@@ -41,6 +47,31 @@ export const DataKanban = ({ data }: DataKanbanProps) => {
 
     return initialTasks;
   });
+
+  const onDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    const sourceStatus = source.droppableId as TaskStatus;
+    const destStatus = destination.droppableId as TaskStatus;
+
+    let updatesPayload: { $id: string; status: TaskStatus; position: number };
+
+    setTasks((prevTasks) => {
+      const newTasks = { ...prevTasks };
+
+      // Safely remove the task from the source column
+      const sourceColumn = [...newTasks[sourceStatus]];
+      const [movedTask] = sourceColumn.slice(source.index, 1);
+
+      // if there`s no moved task (shouldn`t happen, but just in case)
+
+      if (!movedTask) {
+        console.error("No task found at the source index");
+        return prevTasks;
+      }
+    });
+  }, []);
+
   return (
     <DragDropContext onDragEnd={() => {}}>
       <div className="flex overflow-x-auto">
@@ -54,6 +85,34 @@ export const DataKanban = ({ data }: DataKanbanProps) => {
                 board={board}
                 taskCount={tasks[board].length}
               />
+              <Droppable droppableId={board}>
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="min-h-50 py-1.5"
+                  >
+                    {tasks[board].map((task, index) => (
+                      <Draggable
+                        key={task.$id}
+                        draggableId={task.$id}
+                        index={index}
+                      >
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            <KanbanCard task={task} />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
             </div>
           );
         })}

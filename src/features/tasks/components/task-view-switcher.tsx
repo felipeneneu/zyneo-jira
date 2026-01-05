@@ -61,7 +61,7 @@ export const TaskViewSwitcher = () => {
         <DataFilters />
         <DottedSeparator className="my-4" />
         {isLoadingTasks ? (
-          <div className="w-full border rounded-lg h-[200px] flex flex-col items-center justify-center">
+          <div className="w-full border rounded-lg h-50 flex flex-col items-center justify-center">
             <Loader className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : (

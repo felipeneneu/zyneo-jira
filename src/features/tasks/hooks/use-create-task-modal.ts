@@ -1,4 +1,13 @@
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { useQueryState, parseAsBoolean, parseAsStringLiteral } from "nuqs";
+import { TaskStatus } from "../types";
+
+const statusParser = parseAsStringLiteral([
+  TaskStatus.BACKLOG,
+  TaskStatus.TODO,
+  TaskStatus.IN_PROGRESS,
+  TaskStatus.IN_REVIEW,
+  TaskStatus.DONE,
+] as const);
 
 export const useCreateTaskModal = () => {
   const [isOpen, setIsOpen] = useQueryState(
@@ -6,7 +15,17 @@ export const useCreateTaskModal = () => {
     parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
   );
 
-  const open = () => setIsOpen(true);
+  const [status, setStatus] = useQueryState(
+    "create-task-status",
+    statusParser
+      .withDefault(TaskStatus.BACKLOG)
+      .withOptions({ clearOnDefault: true })
+  );
+
+  const open = (initialStatus?: TaskStatus) => {
+    if (initialStatus) setStatus(initialStatus);
+    setIsOpen(true);
+  };
   const close = () => setIsOpen(false);
 
   return {
@@ -14,5 +33,6 @@ export const useCreateTaskModal = () => {
     open,
     close,
     setIsOpen,
+    status,
   };
 };
