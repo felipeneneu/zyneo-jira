@@ -26,6 +26,8 @@ export const useCreateTaskModal = () => {
     if (initialStatus) setStatus(initialStatus);
     setIsOpen(true);
   };
+
+  const openNoStatus = () => setIsOpen(true);
   const close = () => setIsOpen(false);
 
   return {
@@ -34,5 +36,6 @@ export const useCreateTaskModal = () => {
     close,
     setIsOpen,
     status,
+    openNoStatus,
   };
 };

@@ -51,7 +51,7 @@ export const CreateTaskFormWrapper = ({
       onCancel={onCancel}
       projectOptions={projectOptions ?? []}
       memberOptions={memberOptions ?? []}
-      status={status}
+      status={status ?? []}
     />
   );
 };
