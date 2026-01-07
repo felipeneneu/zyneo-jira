@@ -1,5 +1,9 @@
+
 @import "tailwindcss";
 @import "tw-animate-css";
+
+@tailwind utilities;
+
 
 @custom-variant dark (&:is(.dark *));
 
@@ -132,3 +136,5 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+
