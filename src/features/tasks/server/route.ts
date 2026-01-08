@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ID, Query } from "node-appwrite";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";
@@ -256,6 +257,73 @@ const app = new Hono()
       return c.json({ data: task });
     }
   )
+  .post("/:taskId/ai-description", sessionMiddleware, async (c) => {
+    const user = c.get("user");
+    const databases = c.get("databases");
+    const { taskId } = c.req.param();
+
+    const task = await databases.getDocument<Task>(
+      DATABASE_ID,
+      TASKS_ID,
+      taskId
+    );
+
+    const member = await getMember({
+      databases,
+      workspaceId: task.workspaceId,
+      userId: user.$id,
+    });
+
+    if (!member) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return c.json({ error: "AI not configured" }, 500);
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+    });
+
+    let projectName: string | undefined;
+    try {
+      const project = await databases.getDocument<Project>(
+        DATABASE_ID,
+        PROJECTS_ID,
+        task.projectId
+      );
+      projectName = project.name;
+    } catch {}
+
+    const prompt = `
+You are Echo AI, a friendly and concise project management assistant.
+- Be clear
+- Be practical
+- Avoid unnecessary verbosity
+- Use bullet points
+
+Gere uma descrição detalhada em pt-BR para a tarefa abaixo, em Markdown.
+Inclua:
+- Contexto
+- Objetivo
+- Checklist
+- Critérios de aceite
+- Riscos/Observações
+
+Tarefa: ${task.name}
+Projeto: ${projectName ?? "-"}
+Status: ${task.status}
+Prazo: ${task.dueDate ?? "-"}
+`;
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    // 4) retorna só a sugestão
+    return c.json({ data: { text } });
+  })
   .get("/:taskId", sessionMiddleware, async (c) => {
     const currentUser = c.get("user");
     const databases = c.get("databases");
