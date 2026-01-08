@@ -10,3 +10,5 @@ export const IMAGES_BUCKET_ID =
 
 export const PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
 export const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
+
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;

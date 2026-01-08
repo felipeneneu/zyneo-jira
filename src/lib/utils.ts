@@ -1,8 +1,10 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function generateInviteCode(length: number) {
@@ -21,3 +23,11 @@ export function snakeCaseToTitleCase(str: string) {
     .replace(/_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
+
+export const formatDate = (date: Date | string, pattern = "dd/MM/yyyy") => {
+  if (!date) return "";
+
+  return format(new Date(date), pattern, {
+    locale: ptBR,
+  });
+};

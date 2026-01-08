@@ -11,7 +11,7 @@ import { RiAddCircleFill } from "react-icons/ri";
 
 export const Projects = () => {
   const { open } = useCreateProjectModal();
-  const projectId = null; //Criar um hook para projectId
+
   const pathname = usePathname();
   const workspaceId = useWorkspaceId();
   const { data } = useGetProjects({ workspaceId });
@@ -37,9 +37,7 @@ export const Projects = () => {
               )}
             >
               <ProjectAvatar name={project.name} image={project.imageUrl} />
-              <span className="truncate">
-                {project.name} {console.log(project)}
-              </span>
+              <span className="truncate">{project.name}</span>
             </div>
           </Link>
         );

@@ -1,11 +1,12 @@
 import { snakeCaseToTitleCase } from "@/src/lib/utils";
 import { TaskStatus } from "../types";
 import {
-  CircleCheckIcon,
-  CircleDashedIcon,
+  CircleCheckBig,
   CircleDotIcon,
   CircleIcon,
+  CircleQuestionMark,
   PlusIcon,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/src/ui/button";
 import { useCreateTaskModal } from "../hooks/use-create-task-modal";
@@ -17,13 +18,13 @@ interface KanbanColumnHeaderProps {
 }
 
 const statusIconMap: Record<TaskStatus, React.ReactNode> = {
-  [TaskStatus.BACKLOG]: <CircleDashedIcon className="size-4.5 text-pink-400" />,
-  [TaskStatus.TODO]: <CircleIcon className="size-4.5 text-red-400" />,
-  [TaskStatus.IN_PROGRESS]: (
-    <CircleDotIcon className="size-4.5 text-yellow-400" />
+  [TaskStatus.BACKLOG]: (
+    <CircleQuestionMark className="size-4.5 text-pink-400" />
   ),
+  [TaskStatus.TODO]: <CircleIcon className="size-4.5 text-red-400" />,
+  [TaskStatus.IN_PROGRESS]: <Timer className="size-4.5 text-yellow-400" />,
   [TaskStatus.IN_REVIEW]: <CircleDotIcon className="size-4.5 text-blue-400" />,
-  [TaskStatus.DONE]: <CircleCheckIcon className="size-4.5 text-emerald-400" />,
+  [TaskStatus.DONE]: <CircleCheckBig className="size-4.5 text-emerald-400" />,
 };
 
 export const KanbanColumnHeader = ({

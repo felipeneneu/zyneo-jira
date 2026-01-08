@@ -19,7 +19,14 @@ import { TaskStatus } from "../types";
 import { useBulkUpdateTask } from "../api/use-bulk-update-task";
 import { DataCalendar } from "./data-calendar";
 
-export const TaskViewSwitcher = () => {
+
+interface TaskViewSwitcherProps {
+  hideProjectFilters?: boolean;
+}
+
+export const TaskViewSwitcher = ({
+  hideProjectFilters,
+}: TaskViewSwitcherProps) => {
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
   });
@@ -76,13 +83,17 @@ export const TaskViewSwitcher = () => {
               Backlog
             </TabsTrigger>
           </TabsList>
-          <Button size={"sm"} className="w-full lg:w-auto" onClick={open}>
+          <Button
+            size={"sm"}
+            className="w-full lg:w-auto"
+            onClick={() => open()}
+          >
             <PlusIcon className="size-4 mr-2" />
             New
           </Button>
         </div>
         <DottedSeparator className="my-4" />
-        <DataFilters />
+        <DataFilters hideProjectFilters={hideProjectFilters} />
         <DottedSeparator className="my-4" />
         {isLoadingTasks ? (
           <div className="w-full border rounded-lg h-50 flex flex-col items-center justify-center">

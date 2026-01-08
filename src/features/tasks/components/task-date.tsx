@@ -1,4 +1,4 @@
-import { cn } from "@/src/lib/utils";
+import { cn, formatDate } from "@/src/lib/utils";
 import { differenceInDays, format } from "date-fns";
 
 interface TaskDateProps {
@@ -25,7 +25,7 @@ export const TaskDate = ({ value, className }: TaskDateProps) => {
   return (
     <div className={textColor}>
       <span className={cn("truncate font-medium", className)}>
-        {format(value, "PPP")}
+        {formatDate(value, "PPP")}
       </span>
     </div>
   );
