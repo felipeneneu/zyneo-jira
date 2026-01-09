@@ -18,7 +18,7 @@ import { useCallback } from "react";
 import { TaskStatus } from "../types";
 import { useBulkUpdateTask } from "../api/use-bulk-update-task";
 import { DataCalendar } from "./data-calendar";
-
+import { ChatArea } from "../../projects/components/chat-project";
 
 interface TaskViewSwitcherProps {
   hideProjectFilters?: boolean;
@@ -82,6 +82,9 @@ export const TaskViewSwitcher = ({
             <TabsTrigger className="h-8 w-full lg:w-auto" value="backlog">
               Backlog
             </TabsTrigger>
+            <TabsTrigger className="h-8 w-full lg:w-auto" value="chat">
+              Chat
+            </TabsTrigger>
           </TabsList>
           <Button
             size={"sm"}
@@ -116,6 +119,10 @@ export const TaskViewSwitcher = ({
 
             <TabsContent value="backlog" className="mt-0">
               <DataTable columns={columns} data={tasks?.documents ?? []} />
+            </TabsContent>
+
+            <TabsContent value="chat" className="mt-0">
+              <ChatArea data={tasks?.documents ?? []} />
             </TabsContent>
           </>
         )}
