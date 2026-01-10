@@ -1,0 +1,35 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=prenuptial-thea-southern.ngrok-free.dev
+        - N8N_PORT=443
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://prenuptial-thea-southern.ngrok-free.dev
+      - N8N_EDITOR_BASE_URL=https://prenuptial-thea-southern.ngrok-free.dev
+      - N8N_DIAGNOSTICS_ENABLED=false
+
+    volumes:
+      - ./data/n8n:/home/node/.n8n
+    networks:
+      - automation
+    restart: unless-stopped
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: whisper
+    ports:
+      - "9001:9000"
+    environment:
+      - ASR_MODEL=small
+      - ASR_ENGINE=faster_whisper
+    networks:
+      - automation
+    restart: unless-stopped
+
+networks:
+  automation:
+    external: true
