@@ -1,4 +1,3 @@
-import { APPWRITE_ENDPOINT, IMAGES_BUCKET_ID, PROJECT_ID } from "@/src/config";
 import { cn } from "@/src/lib/utils";
 
 import { Avatar, AvatarFallback } from "@/src/ui/avatar";

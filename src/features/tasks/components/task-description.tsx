@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2Icon, PencilIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Task } from "../types";
 import { Button } from "@/src/ui/button";
@@ -14,12 +14,8 @@ interface TaskDescriptionProps {
 }
 export const TaskDescription = ({ task }: TaskDescriptionProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(task.description);
+  const [value, setValue] = useState(task.description ?? "");
   const AI_NAME = "Echo AI";
-
-  useEffect(() => {
-    setValue(task.description ?? "");
-  }, [task.description]);
 
   const { mutate, isPending } = useUpdateTask();
 
@@ -38,6 +34,17 @@ export const TaskDescription = ({ task }: TaskDescriptionProps) => {
         },
       }
     );
+  };
+
+  const handleToggleEditing = () => {
+    if (isEditing) {
+      setIsEditing(false);
+      setValue(task.description ?? "");
+      return;
+    }
+
+    setValue(task.description ?? "");
+    setIsEditing(true);
   };
 
   const handleGenerate = () => {
@@ -61,7 +68,7 @@ export const TaskDescription = ({ task }: TaskDescriptionProps) => {
         <Button
           size={"sm"}
           variant={"secondary"}
-          onClick={() => setIsEditing((prev) => !prev)}
+          onClick={handleToggleEditing}
         >
           {isEditing ? (
             <XIcon className="size-4 mr-2" />

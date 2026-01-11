@@ -77,6 +77,9 @@ export const columns: ColumnDef<Task>[] = [
     },
     cell: ({ row }) => {
       const assignee = row.original.assignee;
+      if (!assignee) {
+        return <p className="text-muted-foreground">—</p>;
+      }
 
       return (
         <div className="flex items-center gap-x-2 text-sm font-medium">

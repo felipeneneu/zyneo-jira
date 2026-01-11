@@ -43,7 +43,7 @@ export function ChatArea({ data }: ChatAreaProps) {
     {
       id: "1",
       user: firstTask?.assignee?.name || "Maria Silva",
-      avatar: firstTask?.assignee?.image || "", // <--- Aqui pegamos a URL da imagem
+      avatar: firstTask?.assignee?.name || "", // <--- Aqui pegamos a URL da imagem
       content: "Olá pessoal! Como estão os projetos de hoje?",
       time: "09:15",
       reactions: [{ emoji: "👍", count: 3 }],
@@ -51,7 +51,7 @@ export function ChatArea({ data }: ChatAreaProps) {
     {
       id: "2",
       user: firstTask?.assignee?.name || "Maria Silva",
-      avatar: firstTask?.assignee?.image || "", // <--- Aqui pegamos a URL da imagem
+      avatar: firstTask?.assignee?.name || "", // <--- Aqui pegamos a URL da imagem
       content: "Olá pessoal! Como estão os projetos de hoje?",
       time: "09:15",
       reactions: [{ emoji: "👍", count: 3 }],
@@ -100,7 +100,7 @@ export function ChatArea({ data }: ChatAreaProps) {
           </Button>
           <div className="flex items-center gap-2">
             <Hash className="h-5 w-5 text-muted-foreground" />
-            <h1 className="font-semibold text-lg">{data[0].project.name}</h1>
+            <h1 className="font-semibold text-lg">{data[0].project?.name}</h1>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -170,7 +170,7 @@ export function ChatArea({ data }: ChatAreaProps) {
             <Input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={`Mensagem para #${data[0].project.name}`}
+              placeholder={`Mensagem para #${data[0].project?.name}`}
               className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pr-32 resize-none"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">

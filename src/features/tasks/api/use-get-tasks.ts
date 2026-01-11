@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-
+import { InferResponseType } from "hono"; // ✅
 import { client } from "@/src/lib/rpc";
 import { TaskStatus } from "../types";
+
+type ResponseType = InferResponseType<(typeof client.api.tasks)["$get"], 200>;
+type DataType = ResponseType["data"];
 
 interface useGetTasksProps {
   workspaceId: string;
@@ -20,7 +23,7 @@ export const useGetTasks = ({
   assigneeId,
   dueDate,
 }: useGetTasksProps) => {
-  const query = useQuery({
+  return useQuery<DataType>({
     queryKey: [
       "tasks",
       workspaceId,
@@ -47,9 +50,7 @@ export const useGetTasks = ({
       }
 
       const { data } = await response.json();
-
       return data;
     },
   });
-  return query;
 };

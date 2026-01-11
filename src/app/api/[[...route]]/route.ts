@@ -6,11 +6,11 @@ import workspaces from "@/src/features/workspaces/server/route";
 import members from "@/src/features/members/server/route";
 import projects from "@/src/features/projects/server/route";
 import tasks from "@/src/features/tasks/server/route";
-import ai from "@/src/features/ai/server/route";
 // import users from "@/src/features/users/server/route";
 
 const app = new Hono().basePath("/api");
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app
   .route("/auth", auth)
   .route("/workspaces", workspaces)

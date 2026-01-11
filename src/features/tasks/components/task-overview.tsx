@@ -32,8 +32,13 @@ export const TaskOverview = ({ task }: TaskOverviewProps) => {
 
         <div className="flex flex-col gap-y-4">
           <OverviewProperty label="Assignee:">
-            <MembersAvatar name={task.assignee.name} className="size-6" />
-            <p className="text-sm font-medium">{task.assignee.name}</p>
+            <MembersAvatar
+              name={task.assignee?.name ?? "Unknown"}
+              className="size-6"
+            />
+            <p className="text-sm font-medium">
+              {task.assignee?.name ?? "Unassigned"}
+            </p>
           </OverviewProperty>
 
           <OverviewProperty label="Due Date:">

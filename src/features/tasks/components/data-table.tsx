@@ -22,7 +22,6 @@ import {
   TableRow,
 } from "@/src/components/ui/table";
 import { Button } from "@/src/ui/button";
-import { Input } from "@/src/ui/input";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -38,6 +37,7 @@ export function DataTable<TData, TValue>({
     []
   );
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,

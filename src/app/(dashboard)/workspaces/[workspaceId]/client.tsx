@@ -9,7 +9,6 @@ import { Member } from "@/src/features/members/types";
 import { useGetProjects } from "@/src/features/projects/api/use-get-projects";
 import { ProjectAvatar } from "@/src/features/projects/components/project-avatar";
 import { useCreateProjectModal } from "@/src/features/projects/hooks/use-create-project-modal";
-import { useProjectId } from "@/src/features/projects/hooks/use-project-id";
 import { Project } from "@/src/features/projects/types";
 import { useGetTasks } from "@/src/features/tasks/api/use-get-tasks";
 import { useCreateTaskModal } from "@/src/features/tasks/hooks/use-create-task-modal";

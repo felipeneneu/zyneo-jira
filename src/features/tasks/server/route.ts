@@ -135,7 +135,7 @@ const app = new Hono()
         })
       );
 
-      const populatedTasks = tasks.documents.map((task) => {
+      const populatedTasks: Task[] = tasks.documents.map((task) => {
         const project = projects.documents.find(
           (project) => project.$id === task.projectId
         );
@@ -203,7 +203,7 @@ const app = new Hono()
           status,
           workspaceId,
           projectId,
-          dueDate,
+          dueDate: dueDate instanceof Date ? dueDate.toISOString() : dueDate,
           assigneeId,
           position: newPosition,
         }
@@ -248,7 +248,7 @@ const app = new Hono()
           name,
           status,
           projectId,
-          dueDate,
+          dueDate: dueDate instanceof Date ? dueDate.toISOString() : dueDate,
           assigneeId,
           description,
         }

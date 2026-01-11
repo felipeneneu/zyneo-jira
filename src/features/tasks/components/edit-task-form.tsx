@@ -1,5 +1,5 @@
 "use client";
-import { z } from "zod";
+import z from "zod/v3";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createTaskSchema } from "../schemas";
@@ -16,7 +16,6 @@ import { DottedSeparator } from "@/src/ui/dotted-separator";
 import { Input } from "@/src/ui/input";
 import { Button } from "@/src/ui/button";
 import { cn } from "@/src/lib/utils";
-import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
 import { DatePicker } from "@/src/ui/date-picker";
 import {
   Select,
@@ -37,19 +36,23 @@ interface EditTaskFormProps {
   initialValues: Task;
 }
 
+const editTaskFormSchema = createTaskSchema.omit({
+  workspaceId: true,
+  description: true,
+});
+
+type EditTaskFormValues = z.infer<typeof editTaskFormSchema>;
+
 export const EditTaskForm = ({
   onCancel,
   projectOptions,
   memberOptions,
   initialValues,
 }: EditTaskFormProps) => {
-  const workspaceId = useWorkspaceId();
   const { mutate, isPending } = useUpdateTask();
 
-  const form = useForm<z.infer<typeof createTaskSchema>>({
-    resolver: zodResolver(
-      createTaskSchema.omit({ workspaceId: true, description: true })
-    ),
+  const form = useForm<EditTaskFormValues>({
+    resolver: zodResolver(editTaskFormSchema),
     defaultValues: {
       ...initialValues,
       dueDate: initialValues.dueDate
@@ -57,7 +60,7 @@ export const EditTaskForm = ({
         : undefined,
     },
   });
-  const onSubmit = (values: z.infer<typeof createTaskSchema>) => {
+  const onSubmit = (values: EditTaskFormValues) => {
     mutate(
       { json: values, param: { taskId: initialValues.$id } },
       {

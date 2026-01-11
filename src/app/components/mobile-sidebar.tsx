@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/src/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/src/ui/sheet";
 import { MenuIcon } from "lucide-react";
@@ -9,14 +9,16 @@ import { Sidebar } from "./sidebar";
 import { usePathname } from "next/navigation";
 
 export const MobileSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const [openPathname, setOpenPathname] = useState<string | null>(null);
 
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  const isOpen = openPathname === pathname;
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpenPathname(nextOpen ? pathname : null);
+  };
+
   return (
-    <Sheet modal={false} open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet modal={false} open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button size={"icon"} variant="secondary" className="lg:hidden">
           <MenuIcon className="size-5 text-neutral-500" />

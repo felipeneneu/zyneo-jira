@@ -10,4 +10,5 @@ export type Member = Models.Document & {
   userId: string;
   role: MemberRole;
   name: string;
+  email: string;
 };

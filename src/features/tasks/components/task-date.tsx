@@ -1,5 +1,5 @@
 import { cn, formatDate } from "@/src/lib/utils";
-import { differenceInDays, format } from "date-fns";
+import { differenceInDays } from "date-fns";
 
 interface TaskDateProps {
   value: string;

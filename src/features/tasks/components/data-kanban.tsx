@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Task, TaskStatus } from "../types";
 import {
   DragDropContext,
@@ -21,6 +21,26 @@ type TasksState = {
   [key in TaskStatus]: Task[];
 };
 
+const buildTasksState = (data: Task[]): TasksState => {
+  const tasksState: TasksState = {
+    [TaskStatus.BACKLOG]: [],
+    [TaskStatus.TODO]: [],
+    [TaskStatus.IN_PROGRESS]: [],
+    [TaskStatus.IN_REVIEW]: [],
+    [TaskStatus.DONE]: [],
+  };
+
+  data.forEach((task) => {
+    tasksState[task.status].push(task);
+  });
+
+  Object.keys(tasksState).forEach((status) => {
+    tasksState[status as TaskStatus].sort((a, b) => a.position - b.position);
+  });
+
+  return tasksState;
+};
+
 interface DataKanbanProps {
   data: Task[];
   onChange: (
@@ -29,47 +49,24 @@ interface DataKanbanProps {
 }
 
 export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
-  const [tasks, setTasks] = useState<TasksState>(() => {
-    const initialTasks: TasksState = {
-      [TaskStatus.BACKLOG]: [],
-      [TaskStatus.TODO]: [],
-      [TaskStatus.IN_PROGRESS]: [],
-      [TaskStatus.IN_REVIEW]: [],
-      [TaskStatus.DONE]: [],
-    };
+  const dataKey = useMemo(
+    () =>
+      data
+        .map((task) => `${task.$id}:${task.status}:${task.position}`)
+        .join("|"),
+    [data]
+  );
+  const [override, setOverride] = useState<{
+    key: string;
+    tasks: TasksState;
+  } | null>(null);
+  const tasks = useMemo(() => {
+    if (override?.key === dataKey) {
+      return override.tasks;
+    }
 
-    data.forEach((task) => {
-      initialTasks[task.status].push(task);
-    });
-
-    Object.keys(initialTasks).forEach((status) => {
-      initialTasks[status as TaskStatus].sort(
-        (a, b) => a.position - b.position
-      );
-    });
-
-    return initialTasks;
-  });
-
-  useEffect(() => {
-    const newTasks: TasksState = {
-      [TaskStatus.BACKLOG]: [],
-      [TaskStatus.TODO]: [],
-      [TaskStatus.IN_PROGRESS]: [],
-      [TaskStatus.IN_REVIEW]: [],
-      [TaskStatus.DONE]: [],
-    };
-
-    data.forEach((task) => {
-      newTasks[task.status].push(task);
-    });
-
-    Object.keys(newTasks).forEach((status) => {
-      newTasks[status as TaskStatus].sort((a, b) => a.position - b.position);
-    });
-
-    setTasks(newTasks);
-  }, [data]);
+    return buildTasksState(data);
+  }, [data, dataKey, override]);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -84,83 +81,80 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
         position: number;
       }[] = [];
 
-      setTasks((prevTasks) => {
-        const newTasks = { ...prevTasks };
+      const newTasks = { ...tasks };
 
-        // Safely remove the task from the source column
-        const sourceColumn = [...newTasks[sourceStatus]];
-        const [movedTask] = sourceColumn.splice(source.index, 1);
+      // Safely remove the task from the source column
+      const sourceColumn = [...newTasks[sourceStatus]];
+      const [movedTask] = sourceColumn.splice(source.index, 1);
 
-        // if there`s no moved task (shouldn`t happen, but just in case)
+      // if there`s no moved task (shouldn`t happen, but just in case)
 
-        if (!movedTask) {
-          console.error("No task found at the source index");
-          return prevTasks;
+      if (!movedTask) {
+        console.error("No task found at the source index");
+        return;
+      }
+
+      // Create a new task object with potentially update status
+
+      const updatedMovedTask =
+        sourceStatus !== destStatus
+          ? { ...movedTask, status: destStatus }
+          : movedTask;
+
+      //Update the source column
+      newTasks[sourceStatus] = sourceColumn;
+
+      // Add the task to the destination column
+      const destColumn = [...newTasks[destStatus]];
+      destColumn.splice(destination.index, 0, updatedMovedTask);
+      newTasks[destStatus] = destColumn;
+
+      // Prepare minimal update payloads
+      updatesPayload = [];
+
+      // Always update the moved task
+      updatesPayload.push({
+        $id: updatedMovedTask.$id,
+        status: destStatus,
+        position: Math.min((destination.index + 1) * 1000, 1_000_000),
+      });
+
+      // Update positions for affected tasks in the destination column
+
+      newTasks[destStatus].forEach((task, index) => {
+        if (task && task.$id !== updatedMovedTask.$id) {
+          const newPosition = Math.min((index + 1) * 1000, 1_000_000);
+          if (task.position !== newPosition) {
+            updatesPayload.push({
+              $id: task.$id,
+              status: destStatus,
+              position: newPosition,
+            });
+          }
         }
+      });
 
-        // Create a new task object with potentially update status
+      // If the task moved between columns, update positions in the source column
 
-        const updatedMovedTask =
-          sourceStatus !== destStatus
-            ? { ...movedTask, status: destStatus }
-            : movedTask;
-
-        //Update the source column
-        newTasks[sourceStatus] = sourceColumn;
-
-        // Add the task to the destination column
-        const destColumn = [...newTasks[destStatus]];
-        destColumn.splice(destination.index, 0, updatedMovedTask);
-        newTasks[destStatus] = destColumn;
-
-        // Prepare minimal update payloads
-        updatesPayload = [];
-
-        // Always update the moved task
-        updatesPayload.push({
-          $id: updatedMovedTask.$id,
-          status: destStatus,
-          position: Math.min((destination.index + 1) * 1000, 1_000_000),
-        });
-
-        // Update positions for affected tasks in the destination column
-
-        newTasks[destStatus].forEach((task, index) => {
-          if (task && task.$id !== updatedMovedTask.$id) {
+      if (sourceStatus !== destStatus) {
+        newTasks[sourceStatus].forEach((task, index) => {
+          if (task) {
             const newPosition = Math.min((index + 1) * 1000, 1_000_000);
             if (task.position !== newPosition) {
               updatesPayload.push({
                 $id: task.$id,
-                status: destStatus,
+                status: sourceStatus,
                 position: newPosition,
               });
             }
           }
         });
+      }
 
-        // If the task moved between columns, update positions in the source column
-
-        if (sourceStatus !== destStatus) {
-          newTasks[sourceStatus].forEach((task, index) => {
-            if (task) {
-              const newPosition = Math.min((index + 1) * 1000, 1_000_000);
-              if (task.position !== newPosition) {
-                updatesPayload.push({
-                  $id: task.$id,
-                  status: sourceStatus,
-                  position: newPosition,
-                });
-              }
-            }
-          });
-        }
-
-        return newTasks;
-      });
-
+      setOverride({ key: dataKey, tasks: newTasks });
       onChange(updatesPayload);
     },
-    [onChange]
+    [dataKey, onChange, tasks]
   );
 
   return (

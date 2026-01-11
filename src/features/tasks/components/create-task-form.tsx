@@ -1,5 +1,5 @@
 "use client";
-import { z } from "zod";
+import z from "zod/v3";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createTaskSchema } from "../schemas";
@@ -37,6 +37,10 @@ interface CreateTaskFormProps {
   status?: TaskStatus;
 }
 
+const createTaskFormSchema = createTaskSchema.omit({ workspaceId: true });
+
+type CreateTaskFormValues = z.infer<typeof createTaskFormSchema>;
+
 export const CreateTaskForm = ({
   onCancel,
   projectOptions,
@@ -46,14 +50,13 @@ export const CreateTaskForm = ({
   const workspaceId = useWorkspaceId();
   const { mutate, isPending } = useCreateTask();
 
-  const form = useForm<z.infer<typeof createTaskSchema>>({
-    resolver: zodResolver(createTaskSchema.omit({ workspaceId: true })),
+  const form = useForm<CreateTaskFormValues>({
+    resolver: zodResolver(createTaskFormSchema),
     defaultValues: {
-      workspaceId,
       status,
     },
   });
-  const onSubmit = (values: z.infer<typeof createTaskSchema>) => {
+  const onSubmit = (values: CreateTaskFormValues) => {
     mutate(
       { json: { ...values, workspaceId } },
       {
