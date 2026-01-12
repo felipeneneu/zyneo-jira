@@ -44,6 +44,55 @@ const app = new Hono()
     });
     return c.json({ success: true });
   })
+  .post("/sync-profile", sessionMiddleware, async (c) => {
+    const account = c.get("account");
+    const user = c.get("user");
+
+    const identities = await account.listIdentities();
+    const identity = identities.identities?.[0];
+
+    if (!identity?.providerAccessToken) {
+      return c.json({ data: { avatarUrl: (user as any)?.prefs?.avatarUrl ?? null } });
+    }
+
+    let avatarUrl: string | null = null;
+
+    try {
+      if (identity.provider === "google") {
+        const res = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+          headers: {
+            Authorization: `Bearer ${identity.providerAccessToken}`,
+          },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          avatarUrl = json.picture ?? null;
+        }
+      } else if (identity.provider === "github") {
+        const res = await fetch("https://api.github.com/user", {
+          headers: {
+            Authorization: `Bearer ${identity.providerAccessToken}`,
+            Accept: "application/vnd.github+json",
+            "User-Agent": "zyneolist",
+          },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          avatarUrl = json.avatar_url ?? null;
+        }
+      }
+    } catch {}
+
+    if (!avatarUrl) {
+      return c.json({ data: { avatarUrl: (user as any)?.prefs?.avatarUrl ?? null } });
+    }
+
+    const nextPrefs = { ...((user as any)?.prefs ?? {}), avatarUrl };
+    await account.updatePrefs(nextPrefs);
+
+    return c.json({ data: { avatarUrl } });
+  })
+
   .post("/logout", sessionMiddleware, async (c) => {
     const account = c.get("account");
     deleteCookie(c, AUTH_COOKIE);

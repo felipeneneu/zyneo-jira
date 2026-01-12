@@ -18,7 +18,7 @@ import { useCallback } from "react";
 import { TaskStatus } from "../types";
 import { useBulkUpdateTask } from "../api/use-bulk-update-task";
 import { DataCalendar } from "./data-calendar";
-import { ChatArea } from "../../projects/components/chat-project";
+import { WorkspaceChat } from "@/src/features/chat/components/workspace-chat";
 import { useProjectId } from "../../projects/hooks/use-project-id";
 
 interface TaskViewSwitcherProps {
@@ -124,7 +124,10 @@ export const TaskViewSwitcher = ({
             </TabsContent>
 
             <TabsContent value="chat" className="mt-0">
-              <ChatArea data={tasks?.documents ?? []} />
+              <WorkspaceChat
+                workspaceId={workspaceId}
+                defaultProjectId={paramProjectId || projectId || null}
+              />
             </TabsContent>
           </>
         )}

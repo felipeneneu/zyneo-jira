@@ -5,34 +5,36 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
 ## Sprint Atual (Sprint 1 - Chat de Workspace + Notificacoes)
 
 - [ ] (CHAT) Definir modelo de dados no Appwrite (Workspace Chat)
-  - Objetivo: permitir mensagens persistidas por workspace (canais/rooms + messages).
-  - Aceite: colecoes/atributos/indexes definidos; permissao por workspace; documentado no README/notes.
+  - Objetivo: chat unico por workspace, com mensagens opcionais vinculadas a um projeto do workspace.
+  - Aceite: collection `chat_messages` (ou equivalente) com `workspaceId`, `projectId?`, `userId`, `body`, `senderName`, `senderAvatarUrl?`; indices para queries; permissao: so membros do workspace.
   - Fora de escopo: threads, reactions, anexos.
-  - Dependencias: Appwrite Console (criar collections e indexes).
+  - Dependencias: Appwrite Console (criar collections/attributes/indexes).
 
 - [ ] (CHAT) Implementar API de chat (Hono)
-  - Objetivo: endpoints para listar canais, listar mensagens (com paginacao) e enviar mensagem.
-  - Aceite: `POST /api/chat/messages` cria mensagem; `GET /api/chat/messages` pagina; acesso so para membros do workspace.
+  - Objetivo: endpoints para listar mensagens (com paginacao), enviar mensagem e marcar como lido.
+  - Aceite:
+    - `GET /api/chat/messages?workspaceId&projectId?&cursor?&limit?`
+    - `POST /api/chat/messages` cria mensagem
+    - `POST /api/chat/mark-read` marca como lido
+    - Acesso somente para membros do workspace.
   - Fora de escopo: edicao/remocao de mensagens.
 
 - [ ] (CHAT) Implementar UI de chat real (substituir mock)
-  - Objetivo: tela funcional de chat do workspace (listar mensagens, enviar, scroll).
-  - Aceite: mensagens persistem, carregam ao abrir e aparecem apos refresh; sem `console.log` no componente.
+  - Objetivo: chat funcional com filtro por projeto (All/Projeto X).
+  - Aceite: mensagens persistem e carregam ao abrir; enviar funciona; UI sem `console.log`.
   - Fora de escopo: anexos, reactions.
 
-- [ ] (CHAT) Realtime (Appwrite Realtime) para novas mensagens
-  - Objetivo: atualizar UI instantaneamente ao chegar nova mensagem.
-  - Aceite: ao enviar/receber mensagem em outra aba, ela aparece sem refresh.
-  - Dependencias: decidir stack realtime (Appwrite Realtime primeiro).
+- [ ] (CHAT) Realtime (MVP via polling; depois Appwrite Realtime)
+  - Objetivo: atualizar UI ao chegar nova mensagem.
+  - Aceite: mensagens aparecem automaticamente sem refresh (polling ok no MVP).
 
-- [ ] (NOTIF) Unread: contabilizar mensagens nao lidas por usuario
-  - Objetivo: calcular se ha mensagens novas desde a ultima leitura (por workspace/canal).
-  - Aceite: estado `lastReadAt` por membro/canal; API/UI calcula unread; ao abrir chat marca como lido.
-  - Fora de escopo: notificacoes push/email.
+- [ ] (NOTIF) Unread por workspace
+  - Objetivo: saber se ha mensagens novas no workspace desde a ultima leitura do usuario.
+  - Aceite: estado `chatLastReadAt` (por membro) + endpoint `GET /api/chat/unread?workspaceId`.
 
 - [ ] (NOTIF) Badge no avatar quando chegar mensagem nova
-  - Objetivo: exibir indicador (dot/contador) no avatar/user-button quando houver unread.
-  - Aceite: badge aparece quando chega mensagem e some ao ler.
+  - Objetivo: indicador (dot) no `UserButton` quando houver unread no workspace atual.
+  - Aceite: badge aparece quando chega mensagem e some ao abrir/ler.
 
 - [ ] (TECH) Corrigir bug de rota de projeto (singular vs plural)
   - Objetivo: evitar links quebrados no dashboard.
@@ -44,21 +46,33 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
   - Aceite: nova task recebe `position` consistente (sempre maior que a ultima da coluna).
   - Ref: `src/features/tasks/server/route.ts`.
 
-## Sprint 2 (Observabilidade + Logs de Telas)
+- [ ] (AVATAR) Mostrar avatar real do usuario (Google/GitHub)
+  - Objetivo: se usuario tiver avatarUrl, renderizar imagem no `UserButton`.
+  - Aceite: `UserButton` usa `user.prefs.avatarUrl` (fallback para iniciais); endpoint para sync do profile OAuth.
 
-- [ ] (LOGS) Definir o que e "logs das telas" e padrao de eventos
-  - Objetivo: especificar quais eventos vamos registrar (erros, navegacao, actions, falhas de API).
-  - Aceite: lista de eventos + payload + politica de retencao.
+## Sprint 2 (Audit Log do Sistema)
 
-- [ ] (LOGS) Criar coleta de logs no client
-  - Objetivo: capturar errors (window.onerror/unhandledrejection) e eventos-chave.
-  - Aceite: logs sao enviados para um endpoint protegido (ou persistidos em collection dedicada).
+- [ ] (AUDIT) Definir modelo de dados no Appwrite (audit log)
+  - Objetivo: registrar acoes do usuario (ex: moveu task, editou descricao, mudou assignee).
+  - Aceite: collection `audit_logs` com `workspaceId`, `actorUserId`, `entityType`, `entityId`, `action`, `changes`, `createdAt`.
 
-- [ ] (LOGS) Criar tela `/logs` (admin-only)
-  - Objetivo: visualizar logs por periodo/usuario/tela.
-  - Aceite: lista paginada, filtros basicos, acesso restrito a admin.
+- [ ] (AUDIT) Instrumentar alteracoes em tasks
+  - Objetivo: toda mudanca relevante em task gera um audit log.
+  - Aceite: `PATCH /api/tasks/:taskId` e `POST /api/tasks/bulk-update` escrevem logs com diff.
 
-## Sprint 3 (Regras de negocio + Fortalecer "Jira-like")
+- [ ] (AUDIT) Tela `/workspaces/:workspaceId/audit`
+  - Objetivo: visualizar audit logs por workspace.
+  - Aceite: lista paginada + filtro por entityType/usuario; acesso admin.
+
+## Sprint 3 (Regras de negocio + Campos novos de Task)
+
+- [ ] (TASK) Adicionar `priority` (HIGH|MEDIUM|LOW) em tasks
+  - Objetivo: permitir prioridade na task.
+  - Aceite: atributo Appwrite + types/schemas + create/edit forms + exibir no card/overview.
+
+- [ ] (TASK) Adicionar `tag` (ex: BUGFIX|UI_UX|FEATURE|TECH) em tasks
+  - Objetivo: categorizar task.
+  - Aceite: atributo Appwrite + types/schemas + create/edit forms + exibir no card/overview.
 
 - [ ] (RULES) Levantar e documentar regras de negocio do dominio
   - Objetivo: mapear invariantes (permissoes, transicoes de status, limites, ownership).
@@ -67,20 +81,6 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
 - [ ] (ARCH) Criar camada de services/use-cases e refatorar rotas
   - Objetivo: tirar regra de negocio de dentro das rotas Hono para facilitar evolucao/testes.
   - Aceite: pelo menos `tasks` refatorado; rotas finas; comportamento igual.
-
-- [ ] (AUDIT) Auditoria/historico de mudancas em tasks
-  - Objetivo: registrar quem alterou o que/quando (status, assignee, dueDate, descricao).
-  - Aceite: collection de audit; UI basica na task (timeline).
-
-## Sprint 4 (Perfil / Avatar)
-
-- [ ] (AVATAR) Descobrir e padronizar origem do avatar (Google/GitHub)
-  - Objetivo: definir como obter avatarUrl para usuarios OAuth no Appwrite (identities/prefs) e fallback.
-  - Aceite: estrategia definida + implementavel sem expor tokens.
-
-- [ ] (AVATAR) Renderizar avatar real no user button
-  - Objetivo: quando `avatarUrl` existir, renderizar imagem em vez de letra.
-  - Aceite: usuario Google/GitHub ve foto; fallback para iniciais continua funcionando.
 
 ## Sprints anteriores
 

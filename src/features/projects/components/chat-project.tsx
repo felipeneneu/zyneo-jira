@@ -36,7 +36,6 @@ interface ChatAreaProps {
 }
 
 export function ChatArea({ data }: ChatAreaProps) {
-  console.log(data);
   const firstTask = data[0];
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([
