@@ -148,7 +148,7 @@ export const ProjectList = ({ data, total }: ProjectListProps) => {
             {data.map((project) => (
               <li key={project.$id}>
                 <Link
-                  href={`/workspaces/${workspaceId}/project/${project.$id}`}
+                  href={`/workspaces/${workspaceId}/projects/${project.$id}`}
                 >
                   <Card className="rounded-lg border shadow-none hover:opacity-75 transition">
                     <CardContent className="flex items-center gap-x-2.5">

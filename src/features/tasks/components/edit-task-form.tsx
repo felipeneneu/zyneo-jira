@@ -128,7 +128,12 @@ export const EditTaskForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <FormMessage />
-                      <SelectContent>
+                      <SelectContent
+                        side="bottom"
+                        align="start"
+                        sideOffset={2}
+                        position="popper"
+                      >
                         {memberOptions.map((member) => (
                           <SelectItem key={member.id} value={member.id}>
                             <div className="flex items-center gap-x-2">
@@ -162,7 +167,12 @@ export const EditTaskForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <FormMessage />
-                      <SelectContent>
+                      <SelectContent
+                        side="bottom"
+                        align="start"
+                        sideOffset={2}
+                        position="popper"
+                      >
                         <SelectItem value={TaskStatus.BACKLOG}>
                           Backlog
                         </SelectItem>
@@ -200,7 +210,12 @@ export const EditTaskForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <FormMessage />
-                      <SelectContent>
+                      <SelectContent
+                        side="bottom"
+                        align="start"
+                        sideOffset={2}
+                        position="popper"
+                      >
                         {projectOptions.map((project) => (
                           <SelectItem key={project.id} value={project.id}>
                             <div className="flex items-center gap-x-2">

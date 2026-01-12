@@ -42,7 +42,6 @@ const app = new Hono()
       sameSite: "Strict",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
-    console.log({ name, email, password });
     return c.json({ success: true });
   })
   .post("/logout", sessionMiddleware, async (c) => {

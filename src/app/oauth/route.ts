@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     path: "/",
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: true,
   });
 
   return NextResponse.redirect(`${request.nextUrl.origin}/`);
