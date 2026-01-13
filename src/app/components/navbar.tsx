@@ -5,18 +5,18 @@ import { usePathname } from "next/navigation";
 
 const pathnameMap = {
   tasks: {
-    title: "My Tasks",
-    description: "View all of your tasks here",
+    title: "Minhas Tarefas",
+    description: "Visualize todas as suas tarefas aqui.",
   },
   projects: {
-    title: "My Project",
-    description: "View tasks of your project here",
+    title: "Meu Projeto",
+    description: "Visualize as tarefas do seu projeto aqui.",
   },
 };
 
 const defaultMap = {
-  title: "Home",
-  description: "Monitor all of your projects and tasks here",
+  title: "Início",
+  description: "Acompanhe todos os seus projetos e tarefas aqui.",
 };
 
 export const Navbar = () => {

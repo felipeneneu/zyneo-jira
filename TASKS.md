@@ -10,6 +10,36 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
   - Fora de escopo: traducao manual ou i18n.
   - Dependencias: acesso ao repo/HEAD.
 
+- [ ] (TECH) Log do error boundary no reload
+  - Objetivo: capturar o erro real que dispara "Something went wrong".
+  - Aceite: `src/app/error.tsx` imprime erro + digest no console quando o fallback aparece.
+  - Fora de escopo: envio para observabilidade/alertas.
+  - Dependencias: nenhuma.
+
+- [ ] (NOTIF) Badge com contagem de mensagens nao lidas
+  - Objetivo: exibir quantidade de mensagens nao lidas no avatar (estilo WhatsApp).
+  - Aceite: API retorna `count`; badge mostra numero (ex: 3, 9, 99+).
+  - Fora de escopo: notificacao push.
+  - Dependencias: Appwrite com indices para query por workspaceId e createdAt.
+
+- [ ] (SEC) Auditoria de seguranca e vulnerabilidades (full)
+  - Objetivo: mapear falhas, riscos e vetores de ataque do sistema atual.
+  - Aceite: relatorio com achados priorizados, impactos e recomendacoes.
+  - Fora de escopo: correcoes no codigo.
+  - Dependencias: acesso ao repo e contexto de deploy.
+
+- [ ] (OPS) Teste de build para deploy
+  - Objetivo: validar que o build compila sem erros antes do deploy.
+  - Aceite: `npm run build` executa com sucesso ou loga falhas.
+  - Fora de escopo: correcoes de falhas encontradas.
+  - Dependencias: dependencias instaladas e env vars basicas.
+
+- [ ] (OPS) Log diario + commit geral
+  - Objetivo: registrar o resumo do dia e consolidar commit.
+  - Aceite: log do dia criado e commit com todas as mudancas atuais.
+  - Fora de escopo: split por feature.
+  - Dependencias: status do git revisado.
+
 - [ ] (OPS) Alinhar env vars Appwrite + adicionar Resend
   - Objetivo: garantir que o MVP roda com Appwrite e envio de relatorios.
   - Aceite: `.env.local` e Vercel com `NEXT_PUBLIC_APPWRITE_*` e `NEXT_APPWRITE_KEY` + `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `MANAGER_REPORT_TO_EMAIL`.

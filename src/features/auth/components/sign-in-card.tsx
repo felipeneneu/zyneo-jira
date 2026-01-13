@@ -20,8 +20,6 @@ import { loginSchema } from "../schemas";
 import { useLogin } from "../api/use-login";
 import { signUpWithGithub, signUpWithGoogle } from "@/src/lib/oauth";
 
-// type Props = {};
-
 export const SignInCard = () => {
   const { mutate, isPending } = useLogin();
 
@@ -40,7 +38,7 @@ export const SignInCard = () => {
     <div>
       <Card className="w-full h-full md:w-[487px] border-none shadow-none">
         <CardHeader className="flex items-center justify-center text-center p-7">
-          <CardTitle className="text-2xl">Welcome back!</CardTitle>
+          <CardTitle className="text-2xl">Bem-vindo(a) de volta!</CardTitle>
         </CardHeader>
         <div className="px-7 mb-2">
           <DottedSeparator />
@@ -58,7 +56,7 @@ export const SignInCard = () => {
                         {...field}
                         disabled={isPending}
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder="Digite seu email..."
                       />
                     </FormControl>
                     <FormMessage />
@@ -76,7 +74,7 @@ export const SignInCard = () => {
                         {...field}
                         disabled={isPending}
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder="Digite sua senha..."
                       />
                     </FormControl>
                     <FormMessage />
@@ -102,7 +100,7 @@ export const SignInCard = () => {
             onClick={() => signUpWithGoogle()}
           >
             <FcGoogle className="mr-2 size-5" />
-            Login with Google
+            Login com Google
           </Button>
           <Button
             disabled={isPending}
@@ -112,7 +110,7 @@ export const SignInCard = () => {
             onClick={() => signUpWithGithub()}
           >
             <FaGithub className="mr-2 size-5" />
-            Login with Github
+            Login com Github
           </Button>
         </CardContent>
         <div className="px-7">
@@ -120,9 +118,9 @@ export const SignInCard = () => {
         </div>
         <CardContent className="p-7 flex items-center justify-center">
           <p>
-            Don&apos;t have an account?
+            Não tem uma conta?
             <Link href="/sign-up">
-              <span className="text-blue-700">&nbsp;Sign Up</span>
+              <span className="text-blue-700">&nbsp;Registrar-se</span>
             </Link>
           </p>
         </CardContent>

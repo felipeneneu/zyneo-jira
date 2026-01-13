@@ -131,6 +131,22 @@ const app = new Hono()
     }
   )
   .get(
+    "/realtime-token",
+    sessionMiddleware,
+    async (c) => {
+      const account = c.get("account");
+      const user = c.get("user");
+
+      if (!user) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const jwt = await account.createJWT();
+
+      return c.json({ data: { jwt: jwt.jwt } });
+    }
+  )
+  .get(
     "/unread",
     sessionMiddleware,
     zValidator("query", unreadQuerySchema),
@@ -161,17 +177,26 @@ const app = new Hono()
 
       const lastMessageAt = lastMessage.$createdAt;
       const lastReadAt = (member as any)?.chatLastReadAt as string | undefined;
+      const unreadQuery = [
+        Query.equal("workspaceId", workspaceId),
+        Query.notEqual("userId", user.$id),
+        Query.limit(1),
+      ];
 
-      if (lastMessage.userId === user.$id) {
-        return c.json({ data: { unread: false, lastMessageAt } });
+      if (lastReadAt) {
+        unreadQuery.push(Query.greaterThan("$createdAt", lastReadAt));
       }
 
-      if (!lastReadAt) {
-        return c.json({ data: { unread: true, lastMessageAt } });
-      }
+      const unreadDocs = await databases.listDocuments<ChatMessage>(
+        DATABASE_ID,
+        CHAT_MESSAGES_ID,
+        unreadQuery
+      );
 
-      const unread = new Date(lastReadAt).getTime() < new Date(lastMessageAt).getTime();
-      return c.json({ data: { unread, lastMessageAt } });
+      const count = unreadDocs.total ?? 0;
+      const unread = count > 0;
+
+      return c.json({ data: { unread, count, lastMessageAt } });
     }
   );
 

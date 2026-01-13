@@ -14,25 +14,25 @@ import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id
 
 const routes = [
   {
-    label: "Home",
+    label: "Início",
     href: "/",
     icon: GoHome,
     activeIcon: GoHomeFill,
   },
   {
-    label: "My Tasks",
+    label: "Minhas Tarefas",
     href: "/tasks",
     icon: GoCheckCircle,
     activeIcon: GoCheckCircleFill,
   },
   {
-    label: "Settings",
+    label: "Configurações",
     href: "/settings",
     icon: SettingsIcon,
     activeIcon: SettingsIcon,
   },
   {
-    label: "Members",
+    label: "Membros",
     href: "/members",
     icon: UserIcon,
     activeIcon: UserIcon,

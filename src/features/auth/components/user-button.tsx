@@ -15,7 +15,9 @@ import { Loader, LogOut } from "lucide-react";
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
 import { useChatUnread } from "@/src/features/chat/api/use-chat-unread";
 import { useSyncProfile } from "../api/use-sync-profile";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useChatRealtime } from "@/src/features/chat/hooks/use-chat-realtime";
 
 export const UserButton = () => {
   const { data: user, isLoading } = useCurrent();
@@ -25,6 +27,32 @@ export const UserButton = () => {
   const { data: unreadData } = useChatUnread(workspaceId);
   const { mutate: syncProfile } = useSyncProfile();
   const didTrySync = useRef(false);
+  const queryClient = useQueryClient();
+  const avatarUrl = useMemo(
+    () => (user as any)?.prefs?.avatarUrl as string | undefined,
+    [user]
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    if (avatarUrl) return;
+    if (didTrySync.current) return;
+    didTrySync.current = true;
+    syncProfile();
+  }, [avatarUrl, syncProfile, user]);
+
+  const handleUnreadRealtime = useCallback(() => {
+    if (!workspaceId) return;
+    queryClient.invalidateQueries({
+      queryKey: ["chat", "unread", workspaceId],
+    });
+  }, [queryClient, workspaceId]);
+
+  useChatRealtime({
+    workspaceId,
+    enabled: !!workspaceId,
+    onMessage: handleUnreadRealtime,
+  });
 
   if (isLoading) {
     return (
@@ -39,23 +67,18 @@ export const UserButton = () => {
   }
 
   const { name, email } = user;
-  const avatarUrl = useMemo(() => (user as any)?.prefs?.avatarUrl as string | undefined, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    if (avatarUrl) return;
-    if (didTrySync.current) return;
-    didTrySync.current = true;
-    syncProfile();
-  }, [avatarUrl, syncProfile, user]);
   const avatarFallback = name
     ? name.charAt(0).toUpperCase()
     : email.charAt(0).toUpperCase() ?? "0";
+  const unreadCount = unreadData?.count ?? (unreadData?.unread ? 1 : 0);
+  const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="outline-none relative cursor-pointer">
-        {unreadData?.unread ? (
-          <span className="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-500 ring-2 ring-white" />
+        {unreadCount > 0 ? (
+          <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1.5 rounded-full bg-red-500 ring-2 ring-white text-[10px] leading-4 font-semibold text-white flex items-center justify-center">
+            {unreadLabel}
+          </span>
         ) : null}
         <Avatar className="size-10 hover:opacity-75 transition border border-neutral-300">
           {avatarUrl ? <AvatarImage src={avatarUrl} alt={name || email} /> : null}

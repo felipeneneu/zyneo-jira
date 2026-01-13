@@ -44,15 +44,15 @@ export const SignUpCard = () => {
     <div>
       <Card className="w-full h-full md:w-[487px] border-none shadow-none">
         <CardHeader className="flex flex-col items-center justify-center text-center p-7">
-          <CardTitle className="text-2xl">Sign Up</CardTitle>
+          <CardTitle className="text-2xl">Criar Conta</CardTitle>
           <CardDescription>
-            By signing up, you agree to our{" "}
+            Ao se cadastrar, você concorda com nossas{" "}
             <Link href="/privacy">
-              <span className="text-blue-700">Privacy Policy</span>
+              <span className="text-blue-700">Política de Privacidade</span>
             </Link>{" "}
-            and{" "}
+            e{" "}
             <Link href="/terms">
-              <span className="text-blue-700">Terms of Service</span>
+              <span className="text-blue-700">Termos de Serviço</span>
             </Link>
           </CardDescription>
         </CardHeader>
@@ -72,7 +72,7 @@ export const SignUpCard = () => {
                         {...field}
                         disabled={isPending}
                         type="text"
-                        placeholder="Enter your name"
+                        placeholder="Digite seu nome..."
                       />
                     </FormControl>
                     <FormMessage />
@@ -89,7 +89,7 @@ export const SignUpCard = () => {
                         {...field}
                         disabled={isPending}
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder="Digite seu email..."
                       />
                     </FormControl>
                     <FormMessage />
@@ -106,7 +106,7 @@ export const SignUpCard = () => {
                         {...field}
                         disabled={isPending}
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder="Digite sua senha..."
                       />
                     </FormControl>
                     <FormMessage />
@@ -114,7 +114,7 @@ export const SignUpCard = () => {
                 )}
               />
               <Button disabled={isPending} size="lg" className="w-full">
-                Register
+                Registre-se
               </Button>
             </form>
           </Form>
@@ -130,7 +130,7 @@ export const SignUpCard = () => {
             className="w-full"
           >
             <FcGoogle className="mr-2 size-5" />
-            Login with Google
+            Login com Google
           </Button>
           <Button
             disabled={isPending}
@@ -139,7 +139,7 @@ export const SignUpCard = () => {
             className="w-full"
           >
             <FaGithub className="mr-2 size-5" />
-            Login with Github
+            Login com Github
           </Button>
         </CardContent>
         <div className="px-7">
@@ -147,9 +147,9 @@ export const SignUpCard = () => {
         </div>
         <CardContent className="p-7 flex items-center justify-center">
           <p>
-            Already have an account?
+            Já tem uma conta?
             <Link href="/sign-in">
-              <span className="text-blue-700">&nbsp;Sign In</span>
+              <span className="text-blue-700">&nbsp;Entrar</span>
             </Link>
           </p>
         </CardContent>

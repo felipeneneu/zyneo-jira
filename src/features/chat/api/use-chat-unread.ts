@@ -13,7 +13,7 @@ export const useChatUnread = (workspaceId?: string) => {
     enabled: !!workspaceId,
     queryFn: async () => {
       if (!workspaceId) {
-        return { unread: false, lastMessageAt: null };
+        return { unread: false, count: 0, lastMessageAt: null };
       }
 
       const response = await client.api.chat.unread.$get({
@@ -21,7 +21,7 @@ export const useChatUnread = (workspaceId?: string) => {
       });
 
       if (!response.ok) {
-        return { unread: false, lastMessageAt: null };
+        return { unread: false, count: 0, lastMessageAt: null };
       }
 
       const { data } = await response.json();

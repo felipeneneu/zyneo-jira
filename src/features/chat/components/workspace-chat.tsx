@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { ScrollArea } from "@/src/ui/scroll-area";
 import { Input } from "@/src/ui/input";
@@ -12,6 +13,7 @@ import { useGetProjects } from "@/src/features/projects/api/use-get-projects";
 import { useGetChatMessages } from "../api/use-get-chat-messages";
 import { useMarkChatRead } from "../api/use-mark-chat-read";
 import { useSendChatMessage } from "../api/use-send-chat-message";
+import { useChatRealtime } from "../hooks/use-chat-realtime";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/ui/avatar";
 
@@ -28,6 +30,7 @@ export const WorkspaceChat = ({
   const [projectId, setProjectId] = useState<string | null>(defaultProjectId ?? null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const { data: projects } = useGetProjects({ workspaceId });
 
@@ -48,6 +51,22 @@ export const WorkspaceChat = ({
     return [...docs].reverse(); // server is orderDesc
   }, [data]);
 
+  const handleRealtimeMessage = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["chat", "messages", workspaceId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["chat", "unread", workspaceId],
+    });
+    markRead({ json: { workspaceId } });
+  }, [markRead, queryClient, workspaceId]);
+
+  useChatRealtime({
+    workspaceId,
+    projectId,
+    onMessage: handleRealtimeMessage,
+  });
+
   useEffect(() => {
     markRead({ json: { workspaceId } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,7 +83,7 @@ export const WorkspaceChat = ({
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
-    }, 3000);
+    }, 15000);
     return () => clearInterval(interval);
   }, [refetch]);
 
