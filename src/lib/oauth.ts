@@ -3,32 +3,51 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { OAuthProvider } from "node-appwrite";
-import { createAdminClient } from "./appwrite";
+import { createAdminClient, forceCleanup } from "./appwrite";
 
 export async function signUpWithGithub() {
-  const { account } = await createAdminClient();
+  try {
+    // CRÍTICO: Limpa sessões anteriores
+    await forceCleanup();
+    
+    const { account } = await createAdminClient();
+    const origin = (await headers()).get("origin");
+    
+    // Adiciona nonce para prevenir reuso
+    const nonce = Date.now();
 
-  const origin = (await headers()).get("origin");
+    const redirectUrl = await account.createOAuth2Token(
+      OAuthProvider.Github,
+      `${origin}/oauth?nonce=${nonce}`,
+      `${origin}/sign-up?error=oauth_failed`
+    );
 
-  const redirectUrl = await account.createOAuth2Token({
-    provider: OAuthProvider.Github,
-    success: `${origin}/oauth`,
-    failure: `${origin}/sign-up`,
-  });
-
-  return redirect(redirectUrl);
+    return redirect(redirectUrl);
+  } catch (error: any) {
+    console.error("❌ Erro OAuth GitHub:", error);
+    throw new Error(`OAuth failed: ${error.message}`);
+  }
 }
 
 export async function signUpWithGoogle() {
-  const { account } = await createAdminClient();
+  try {
+    // CRÍTICO: Limpa sessões anteriores
+    await forceCleanup();
+    
+    const { account } = await createAdminClient();
+    const origin = (await headers()).get("origin");
+    
+    const nonce = Date.now();
 
-  const origin = (await headers()).get("origin");
+    const redirectUrl = await account.createOAuth2Token(
+      OAuthProvider.Google,
+      `${origin}/oauth?nonce=${nonce}`,
+      `${origin}/sign-up?error=oauth_failed`
+    );
 
-  const redirectUrl = await account.createOAuth2Token({
-    provider: OAuthProvider.Google,
-    success: `${origin}/oauth`,
-    failure: `${origin}/sign-up`,
-  });
-
-  return redirect(redirectUrl);
+    return redirect(redirectUrl);
+  } catch (error: any) {
+    console.error("❌ Erro OAuth Google:", error);
+    throw new Error(`OAuth failed: ${error.message}`);
+  }
 }
