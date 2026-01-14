@@ -7,12 +7,24 @@ export async function createSessionClient() {
     .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
     .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
 
-  const session = (await cookies()).get(AUTH_COOKIE);
-  if (!session || !session.value) {
-    throw new Error("Unatorized");
+  const emailSession = (await cookies()).get(AUTH_COOKIE);
+  const oauthSession = (await cookies()).get(`a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
+
+  
+
+  if (!session) {
+    // Retornar client sem sessão, para login
+    return {
+      get account() {
+        return new Account(client);
+      },
+      get databases() {
+        return new Databases(client);
+      },
+    };
   }
 
-  client.setSession(session.value);
+  client.setSession(session);
 
 
   return {
@@ -39,3 +51,4 @@ export async function createAdminClient() {
     },
   };
 }
+
