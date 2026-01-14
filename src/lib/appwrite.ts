@@ -1,4 +1,4 @@
-import { Client, Account, Users, Databases } from "node-appwrite";
+import { Client, Account, Databases } from "node-appwrite";
 import { cookies } from "next/headers";
 import { AUTH_COOKIE } from "../features/auth/constants";
 
@@ -7,13 +7,18 @@ export async function createSessionClient() {
     .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
     .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
 
-  const emailSession = (await cookies()).get(AUTH_COOKIE);
-  const oauthSession = (await cookies()).get(`a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
+  // Pega os cookies existentes
+  const cookieStore = await cookies();
+  const emailSession = cookieStore.get(AUTH_COOKIE)?.value;
+  const oauthSession = cookieStore.get(`a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`)?.value;
 
-  
+  // Declaração correta do session
+  const session = oauthSession ?? emailSession;
 
-  if (!session) {
-    // Retornar client sem sessão, para login
+  if (session) {
+    client.setSession(session);
+  } else {
+    // Sem sessão, apenas retorna o client sem setSession
     return {
       get account() {
         return new Account(client);
@@ -24,9 +29,6 @@ export async function createSessionClient() {
     };
   }
 
-  client.setSession(session);
-
-
   return {
     get account() {
       return new Account(client);
@@ -36,19 +38,3 @@ export async function createSessionClient() {
     },
   };
 }
-
-export async function createAdminClient() {
-  const client = new Client()
-    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT as string)
-    .setKey(process.env.NEXT_APPWRITE_KEY as string);
-  return {
-    get account() {
-      return new Account(client);
-    },
-    get users() {
-      return new Users(client);
-    },
-  };
-}
-
