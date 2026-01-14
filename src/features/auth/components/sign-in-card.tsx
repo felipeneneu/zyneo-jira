@@ -20,6 +20,9 @@ import { loginSchema } from "../schemas";
 import { useLogin } from "../api/use-login";
 import { signUpWithGithub, signUpWithGoogle } from "@/src/lib/oauth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const SignInCard = () => {
   const { mutate, isPending } = useLogin();
 
@@ -128,3 +131,4 @@ export const SignInCard = () => {
     </div>
   );
 };
+
