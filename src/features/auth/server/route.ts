@@ -1,49 +1,72 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { loginSchema, registerSchema } from "../schemas";
-import { createAdminClient } from "@/src/lib/appwrite";
+import { createAdminClient, forceCleanup } from "@/src/lib/appwrite";
 import { ID } from "node-appwrite";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { AUTH_COOKIE } from "../constants";
 import { sessionMiddleware } from "@/src/lib/session-middleware";
-
 
 const app = new Hono()
   .get("/current", sessionMiddleware, (c) => {
     const user = c.get("user");
     return c.json({ data: user });
   })
+  
   .post("/login", zValidator("json", loginSchema), async (c) => {
-    const { email, password } = c.req.valid("json");
-    const { account } = await createAdminClient();
-    const session = await account.createEmailPasswordSession(email, password);
-    setCookie(c, AUTH_COOKIE, session.secret, {
-      path: "/",
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+    try {
+      const { email, password } = c.req.valid("json");
+      
+      console.log("🔐 Tentando login com email...");
+      
+      const { account } = await createAdminClient();
+      const session = await account.createEmailPasswordSession(email, password);
+      
+      setCookie(c, AUTH_COOKIE, session.secret, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 7, // 7 dias
+      });
 
-    return c.json({ success: true });
+      console.log("✅ Login realizado com sucesso");
+      return c.json({ success: true });
+      
+    } catch (error: any) {
+      console.error("❌ Erro no login:", error);
+      return c.json({ error: error.message }, 401);
+    }
   })
+  
   .post("/register", zValidator("json", registerSchema), async (c) => {
-    const { name, email, password } = c.req.valid("json");
+    try {
+      const { name, email, password } = c.req.valid("json");
 
-    const { account } = await createAdminClient();
-    await account.create(ID.unique(), email, password, name);
+      console.log("📝 Registrando novo usuário...");
 
-    const session = await account.createEmailPasswordSession(email, password);
+      const { account } = await createAdminClient();
+      await account.create(ID.unique(), email, password, name);
 
-    setCookie(c, AUTH_COOKIE, session.secret, {
-      path: "/",
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-    return c.json({ success: true });
+      const session = await account.createEmailPasswordSession(email, password);
+
+      setCookie(c, AUTH_COOKIE, session.secret, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 24 * 7, // 7 dias
+      });
+      
+      console.log("✅ Registro realizado com sucesso");
+      return c.json({ success: true });
+      
+    } catch (error: any) {
+      console.error("❌ Erro no registro:", error);
+      return c.json({ error: error.message }, 400);
+    }
   })
+  
   .post("/sync-profile", sessionMiddleware, async (c) => {
     const account = c.get("account");
     const user = c.get("user");
@@ -52,7 +75,11 @@ const app = new Hono()
     const identity = identities.identities?.[0];
 
     if (!identity?.providerAccessToken) {
-      return c.json({ data: { avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null } });
+      return c.json({ 
+        data: { 
+          avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null 
+        } 
+      });
     }
 
     let avatarUrl: string | null = null;
@@ -81,10 +108,16 @@ const app = new Hono()
           avatarUrl = json.avatar_url ?? null;
         }
       }
-    } catch {}
+    } catch (err) {
+      console.error("❌ Erro ao buscar avatar:", err);
+    }
 
     if (!avatarUrl) {
-      return c.json({ data: { avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null } });
+      return c.json({ 
+        data: { 
+          avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null 
+        } 
+      });
     }
 
     const nextPrefs = { ...(user.prefs as Record<string, string>), avatarUrl };
@@ -94,12 +127,34 @@ const app = new Hono()
   })
 
   .post("/logout", sessionMiddleware, async (c) => {
-    const account = c.get("account");
-    deleteCookie(c, AUTH_COOKIE);
+    try {
+      const account = c.get("account");
+      
+      console.log("🚪 Realizando logout...");
+      
+      // Remove cookies
+      deleteCookie(c, AUTH_COOKIE);
+      deleteCookie(c, `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
 
-    await account.deleteSession("current");
+      // Deleta sessão no Appwrite
+      try {
+        await account.deleteSession("current");
+      } catch (err) {
+        console.warn("⚠️ Erro ao deletar sessão (pode já estar expirada):", err);
+      }
 
-    return c.json({ success: true });
+      console.log("✅ Logout realizado");
+      return c.json({ success: true });
+      
+    } catch (error: any) {
+      console.error("❌ Erro no logout:", error);
+      
+      // Mesmo com erro, remove os cookies
+      deleteCookie(c, AUTH_COOKIE);
+      deleteCookie(c, `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
+      
+      return c.json({ success: true });
+    }
   });
 
 export default app;
