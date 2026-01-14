@@ -29,7 +29,7 @@ export const UserButton = () => {
   const didTrySync = useRef(false);
   const queryClient = useQueryClient();
   const avatarUrl = useMemo(
-    () => (user as any)?.prefs?.avatarUrl as string | undefined,
+    () => (user?.prefs as Record<string, string>)?.avatarUrl,
     [user]
   );
 
@@ -70,7 +70,7 @@ export const UserButton = () => {
   const avatarFallback = name
     ? name.charAt(0).toUpperCase()
     : email.charAt(0).toUpperCase() ?? "0";
-  const unreadCount = unreadData?.count ?? (unreadData?.unread ? 1 : 0);
+  const unreadCount = (unreadData && "count" in unreadData ? unreadData.count : 0) ?? (unreadData?.unread ? 1 : 0);
   const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
   return (
     <DropdownMenu modal={false}>

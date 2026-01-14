@@ -93,12 +93,12 @@ export const WorkspaceChat = ({ workspaceId }: WorkspaceChatProps) => {
   );
 
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
+    <div className="flex flex-col min-h-0 max-h-[calc(100dvh-12rem)] border rounded-lg overflow-hidden">
       <div className="flex items-center gap-2 p-3 border-b">
         <div className="text-sm font-medium">Chat</div>
       </div>
 
-      <div ref={containerRef} className="flex-1">
+      <div ref={containerRef} className="flex-1 min-h-0">
       <ScrollArea className="h-full p-4">
         <div className="space-y-3">
           {messages.map((m) => {

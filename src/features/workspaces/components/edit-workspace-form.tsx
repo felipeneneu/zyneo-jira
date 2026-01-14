@@ -61,7 +61,7 @@ export const EditWorkspaceForm = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof updateWorkspaceSchema>>({
-    resolver: zodResolver(updateWorkspaceSchema),
+    resolver: zodResolver(updateWorkspaceSchema) as any,
     defaultValues: {
       ...initialValues,
       image: initialValues.imageUrl ? initialValues.imageUrl : "",

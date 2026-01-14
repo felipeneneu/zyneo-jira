@@ -34,7 +34,7 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof createWorkspaceSchema>>({
-    resolver: zodResolver(createWorkspaceSchema),
+    resolver: zodResolver(createWorkspaceSchema) as any,
     defaultValues: {
       name: "",
     },

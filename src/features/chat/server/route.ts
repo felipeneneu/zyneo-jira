@@ -82,7 +82,7 @@ const app = new Hono()
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      const senderAvatarUrl = (user as any)?.prefs?.avatarUrl as string | undefined;
+      const senderAvatarUrl = (user.prefs as Record<string, string>).avatarUrl;
 
       const message = await databases.createDocument<ChatMessage>(
         DATABASE_ID,
@@ -177,7 +177,7 @@ const app = new Hono()
       }
 
       const lastMessageAt = lastMessage.$createdAt;
-      const lastReadAt = (member as any)?.chatLastReadAt as string | undefined;
+      const lastReadAt = member['chatLastReadAt'] as string | undefined;
       const unreadQuery = [
         Query.equal("workspaceId", workspaceId),
         Query.notEqual("userId", user.$id),

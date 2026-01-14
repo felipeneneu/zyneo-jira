@@ -33,7 +33,7 @@ export const CreateWorkspaceModal = () => {
     }
 
     mutate(
-      { form },
+      { form: form as any },
       {
         onSuccess: ({ data: workspace }) => {
           close();

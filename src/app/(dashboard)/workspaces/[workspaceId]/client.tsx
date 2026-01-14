@@ -14,7 +14,7 @@ import { useGetTasks } from "@/src/features/tasks/api/use-get-tasks";
 import { useCreateTaskModal } from "@/src/features/tasks/hooks/use-create-task-modal";
 import { Task } from "@/src/features/tasks/types";
 import { useGetWorkspaceAnalytics } from "@/src/features/workspaces/api/use-get-workspace-analytics";
-import { WorkspaceWizard } from "@/src/features/workspaces/components/onboarding/workspace-wizard";
+
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
 import { Button } from "@/src/ui/button";
 import { Card, CardContent } from "@/src/ui/card";

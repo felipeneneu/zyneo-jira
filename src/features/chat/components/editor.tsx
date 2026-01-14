@@ -423,11 +423,13 @@ const EditorShell = ({
   const handleSend = useCallback(() => {
     if (!canSend) return;
     onSend({ text: text.trim(), lexical });
-    editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+    editor.update(() => {
+        $getRoot().clear();
+    });
     setText("");
     setLength(0);
     setLexical("");
-    editor.focus();
+    setTimeout(() => editor.focus(), 0);
   }, [canSend, editor, lexical, onSend, text]);
 
   const handleKeyDown = useCallback(

@@ -52,7 +52,7 @@ const app = new Hono()
     const identity = identities.identities?.[0];
 
     if (!identity?.providerAccessToken) {
-      return c.json({ data: { avatarUrl: (user as any)?.prefs?.avatarUrl ?? null } });
+      return c.json({ data: { avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null } });
     }
 
     let avatarUrl: string | null = null;
@@ -84,10 +84,10 @@ const app = new Hono()
     } catch {}
 
     if (!avatarUrl) {
-      return c.json({ data: { avatarUrl: (user as any)?.prefs?.avatarUrl ?? null } });
+      return c.json({ data: { avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null } });
     }
 
-    const nextPrefs = { ...((user as any)?.prefs ?? {}), avatarUrl };
+    const nextPrefs = { ...(user.prefs as Record<string, string>), avatarUrl };
     await account.updatePrefs(nextPrefs);
 
     return c.json({ data: { avatarUrl } });

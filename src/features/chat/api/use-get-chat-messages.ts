@@ -32,8 +32,8 @@ export const useGetChatMessages = ({
         query: {
           workspaceId,
           projectId: projectId ?? undefined,
-          cursor: pageParam ?? undefined,
-          limit: limit ?? undefined,
+          cursor: (pageParam as string | null) ?? undefined,
+          limit: limit ? limit.toString() : undefined,
         },
       });
 
