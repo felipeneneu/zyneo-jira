@@ -101,7 +101,7 @@ export const SignInCard = () => {
             variant={"secondary"}
             size="lg"
             className="w-full"
-            {/* onClick={() => signUpWithGoogle()} */}
+            
           >
             <FcGoogle className="mr-2 size-5" />
             Login com Google
@@ -113,7 +113,7 @@ export const SignInCard = () => {
             variant={"secondary"}
             size="lg"
             className="w-full"
-            {/* onClick={() => signUpWithGithub()} */}
+            
           >
             <FaGithub className="mr-2 size-5" />
             Login com Github
@@ -135,5 +135,6 @@ export const SignInCard = () => {
     </div>
   );
 };
+
 
 
