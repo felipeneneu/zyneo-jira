@@ -18,7 +18,6 @@ import { useCallback } from "react";
 import { TaskStatus } from "../types";
 import { useBulkUpdateTask } from "../api/use-bulk-update-task";
 import { DataCalendar } from "./data-calendar";
-import { WorkspaceChat } from "@/src/features/chat/components/workspace-chat";
 import { useProjectId } from "../../projects/hooks/use-project-id";
 
 interface TaskViewSwitcherProps {
@@ -84,9 +83,6 @@ export const TaskViewSwitcher = ({
             <TabsTrigger className="h-8 w-full lg:w-auto" value="backlog">
               Backlog
             </TabsTrigger>
-            <TabsTrigger className="h-8 w-full lg:w-auto" value="chat">
-              Chat
-            </TabsTrigger>
           </TabsList>
           <Button
             size={"sm"}
@@ -123,12 +119,6 @@ export const TaskViewSwitcher = ({
               <DataTable columns={columns} data={tasks?.documents ?? []} />
             </TabsContent>
 
-            <TabsContent value="chat" className="mt-0">
-              <WorkspaceChat
-                workspaceId={workspaceId}
-                defaultProjectId={paramProjectId || projectId || null}
-              />
-            </TabsContent>
           </>
         )}
       </div>

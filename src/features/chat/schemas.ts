@@ -11,6 +11,7 @@ export const createMessageSchema = z.object({
   workspaceId: z.string().min(1),
   projectId: z.string().min(1).nullish(),
   body: z.string().trim().min(1).max(2000),
+  bodyLexical: z.string().trim().min(1).max(20000).optional(),
 });
 
 export const markReadSchema = z.object({

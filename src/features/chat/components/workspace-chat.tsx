@@ -1,49 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { ScrollArea } from "@/src/ui/scroll-area";
-import { Input } from "@/src/ui/input";
 import { Button } from "@/src/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/ui/select";
-
-import { useGetProjects } from "@/src/features/projects/api/use-get-projects";
 
 import { useGetChatMessages } from "../api/use-get-chat-messages";
 import { useMarkChatRead } from "../api/use-mark-chat-read";
 import { useSendChatMessage } from "../api/use-send-chat-message";
 import { useChatRealtime } from "../hooks/use-chat-realtime";
+import { ChatInput } from "./chat-input";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/ui/avatar";
 
 interface WorkspaceChatProps {
   workspaceId: string;
-  defaultProjectId?: string | null;
 }
 
-export const WorkspaceChat = ({
-  workspaceId,
-  defaultProjectId,
-}: WorkspaceChatProps) => {
-  const [message, setMessage] = useState("");
-  const [projectId, setProjectId] = useState<string | null>(defaultProjectId ?? null);
-
+export const WorkspaceChat = ({ workspaceId }: WorkspaceChatProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: projects } = useGetProjects({ workspaceId });
-
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useGetChatMessages({ workspaceId, projectId, limit: 50 });
+    useGetChatMessages({ workspaceId, limit: 50 });
 
   const { mutate: markRead } = useMarkChatRead();
   const { mutate: sendMessage, isPending: isSending } = useSendChatMessage();
-
-  const projectOptions = useMemo(() => {
-    const docs = projects?.documents ?? [];
-    return docs.map((project) => ({ value: project.$id, label: project.name }));
-  }, [projects]);
 
   const messages = useMemo(() => {
     const pages = data?.pages ?? [];
@@ -63,7 +46,6 @@ export const WorkspaceChat = ({
 
   useChatRealtime({
     workspaceId,
-    projectId,
     onMessage: handleRealtimeMessage,
   });
 
@@ -87,50 +69,33 @@ export const WorkspaceChat = ({
     return () => clearInterval(interval);
   }, [refetch]);
 
-  const onSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    const body = message.trim();
-    if (!body) return;
+  const onSend = useCallback(
+    (payload: { text: string; lexical: string }) => {
+      const body = payload.text.trim();
+      if (!body) return;
 
-    sendMessage(
-      {
-        json: {
-          workspaceId,
-          projectId: projectId ?? undefined,
-          body,
+      sendMessage(
+        {
+          json: {
+            workspaceId,
+            body,
+            bodyLexical: payload.lexical || undefined,
+          },
         },
-      },
-      {
-        onSuccess: () => {
-          setMessage("");
-          markRead({ json: { workspaceId } });
-        },
-      }
-    );
-  };
+        {
+          onSuccess: () => {
+            markRead({ json: { workspaceId } });
+          },
+        }
+      );
+    },
+    [markRead, sendMessage, workspaceId]
+  );
 
   return (
-    <div className="flex flex-col h-[65vh] border rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
       <div className="flex items-center gap-2 p-3 border-b">
         <div className="text-sm font-medium">Chat</div>
-        <div className="ml-auto w-[240px]">
-          <Select
-            value={projectId ?? "all"}
-            onValueChange={(v) => setProjectId(v === "all" ? null : v)}
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue placeholder="All projects" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="all">All projects</SelectItem>
-              {projectOptions.map((p) => (
-                <SelectItem key={p.value} value={p.value}>
-                  {p.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       <div ref={containerRef} className="flex-1">
@@ -175,17 +140,14 @@ export const WorkspaceChat = ({
       </ScrollArea>
       </div>
 
-      <form onSubmit={onSend} className="p-3 border-t flex gap-2">
-        <Input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Digite sua mensagem..."
+      <div className="p-3 border-t">
+        <ChatInput
+          onSend={onSend}
           disabled={isSending}
+          placeholder="Digite sua mensagem..."
+          maxLength={2000}
         />
-        <Button type="submit" disabled={isSending || !message.trim()}>
-          Send
-        </Button>
-      </form>
+      </div>
     </div>
   );
 };

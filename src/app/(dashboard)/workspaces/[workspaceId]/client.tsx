@@ -14,6 +14,7 @@ import { useGetTasks } from "@/src/features/tasks/api/use-get-tasks";
 import { useCreateTaskModal } from "@/src/features/tasks/hooks/use-create-task-modal";
 import { Task } from "@/src/features/tasks/types";
 import { useGetWorkspaceAnalytics } from "@/src/features/workspaces/api/use-get-workspace-analytics";
+import { WorkspaceWizard } from "@/src/features/workspaces/components/onboarding/workspace-wizard";
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
 import { Button } from "@/src/ui/button";
 import { Card, CardContent } from "@/src/ui/card";
@@ -130,6 +131,7 @@ export const ProjectList = ({ data, total }: ProjectListProps) => {
   const workspaceId = useWorkspaceId();
   return (
     <div className="flex flex-col gap-y-4 col-span-1">
+      {/* <WorkspaceWizard onComplete={() => {}} /> */}
       <div className="bg-white border rounded-lg p-4">
         <div className="flex items-center justify-between">
           <p className="text-lg font-semibold">Projects ({total})</p>

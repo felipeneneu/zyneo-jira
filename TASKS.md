@@ -64,6 +64,24 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
   - Fora de escopo: conversao automatica de workspaces existentes.
   - Dependencias: Appwrite Console (collections/attributes/indexes).
 
+- [ ] (BACKEND) Conectar onboarding de workspace ao backend
+  - Objetivo: persistir dados do wizard (purpose/type/teamSize/workflowStyle/mainGoal/tools) na criacao do workspace.
+  - Aceite: POST /api/workspaces aceita campos do onboarding e salva no Appwrite.
+  - Fora de escopo: envio real de convites e regras de negocio por role.
+  - Dependencias: atributos criados no Appwrite.
+
+- [ ] (OPS) Atualizar env vars do Appwrite
+  - Objetivo: garantir que o app possui ids/keys atualizados para novas collections e chat.
+  - Aceite: `.env.local` (ou env de deploy) inclui vars necessarias e documentadas.
+  - Fora de escopo: provisionamento automatico.
+  - Dependencias: ids das collections no Appwrite.
+
+- [ ] (BACKEND) Types do workspace evolutivo (UI)
+  - Objetivo: definir enums e tipos base para onboarding e configuracao de workspace.
+  - Aceite: `src/features/workspaces/types.ts` exporta purpose/workspaceType/teamSize/workflowStyle/roles/workspaceStatus e `Workspace` com campos opcionais.
+  - Fora de escopo: UI de onboarding e migracao de dados.
+  - Dependencias: alinhamento final dos enums do produto.
+
 - [ ] (FREELANCE) Menu e navegacao por workspaceType
   - Objetivo: ajustar opcoes do menu para freelancer.
   - Aceite: quando `workspaceType=FREELANCER`, menu mostra `Orcamentos` e `Emails` e oculta itens de time (ex: Membros/Roles).
@@ -174,9 +192,75 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
   - Aceite: mensagens persistem e carregam ao abrir; enviar funciona; UI sem `console.log`.
   - Fora de escopo: anexos, reactions.
 
+- [ ] (CHAT) Input Lexical + payload bodyLexical
+  - Objetivo: usar Lexical no input e enviar body + bodyLexical no chat.
+  - Aceite: input usa Lexical; API aceita `bodyLexical` opcional; envio continua funcionando.
+  - Fora de escopo: renderer Lexical completo e anexos.
+  - Dependencias: `chat_messages` com atributo `bodyLexical` e libs Lexical.
+
+- [ ] (CHAT) Emoji picker no input do chat
+  - Objetivo: permitir inserir emojis pelo botao do chat.
+  - Aceite: botao de emoji abre seletor simples e insere emoji no texto.
+  - Fora de escopo: catalogo completo e historico de favoritos.
+  - Dependencias: editor Lexical no chat.
+
+- [ ] (CHAT) Rota dedicada do chat
+  - Objetivo: tirar o chat do switcher de tasks e abrir em rota propria.
+  - Aceite: `/workspaces/:workspaceId/chat` renderiza `WorkspaceChat`; tab removida.
+  - Fora de escopo: filtro por projeto.
+  - Dependencias: menu de navegacao atualizado.
+
+- [ ] (CHAT) Padrao page/client e ajuste de funcionamento
+  - Objetivo: seguir o padrao de page.tsx + client.tsx e estabilizar o chat.
+  - Aceite: rota do chat usa `client.tsx` e renderiza corretamente sem erros.
+  - Fora de escopo: melhorias de realtime.
+  - Dependencias: rota `/workspaces/:workspaceId/chat` existente.
+
+- [ ] (CHAT) Editor Lexical rich text (estilo Slack)
+  - Objetivo: usar Lexical rich text com tamanho do input estilo Slack e cores do tema.
+  - Aceite: editor com plugins rich text ativos, altura minima e maximo consistente.
+  - Fora de escopo: upload de imagem e renderer rico das mensagens.
+  - Dependencias: pacotes Lexical adicionais.
+
+- [ ] (UI) Lexical com cores do sistema
+  - Objetivo: alinhar o editor do chat ao tema do app (sem cores fixas).
+  - Aceite: estilos do editor usam tokens do tema e nao hardcode de cor.
+  - Fora de escopo: toolbar rica e upload de imagem.
+  - Dependencias: tema global (vars CSS) definido.
+
+- [ ] (DOC) Atualizar schema Appwrite (workspace evolutivo + chat Lexical)
+  - Objetivo: documentar mudancas de collections, atributos, indices e permissoes.
+  - Aceite: arquivo com passo a passo para criar/atualizar tabelas e bucket.
+  - Fora de escopo: execucao manual no console.
+  - Dependencias: enums oficiais do workspace e colecoes existentes.
+
 - [ ] (CHAT) Realtime (MVP com Appwrite Realtime; fallback polling)
   - Objetivo: atualizar UI ao chegar nova mensagem.
   - Aceite: mensagens aparecem automaticamente sem refresh (polling ok no MVP).
+
+- [ ] (CHAT) Restaurar editor Lexical completo + limpar envio
+  - Objetivo: voltar ao editor Lexical completo com toolbar e limpar o input apos envio.
+  - Aceite: toolbar com funcionalidades basicas do pacote; enviar limpa o texto.
+  - Fora de escopo: upload de imagem e renderizador rico no feed.
+  - Dependencias: pacote Lexical instalado e rota de chat funcionando.
+
+- [ ] (CHAT) Corrigir reset do input apos envio
+  - Objetivo: garantir que o texto do Lexical seja limpo apos enviar mensagem.
+  - Aceite: ao enviar, o editor fica vazio visualmente e o contador zera.
+  - Fora de escopo: renderer rico e anexos.
+  - Dependencias: editor Lexical em uso no chat.
+
+- [ ] (BACKEND) Ajustar payload de criacao de workspace
+  - Objetivo: evitar envio de campos indefinidos e destravar a criacao do workspace.
+  - Aceite: POST /api/workspaces cria com dados do onboarding sem erro.
+  - Fora de escopo: migracao de workspaces antigos.
+  - Dependencias: atributos do Appwrite criados/atualizados.
+
+- [ ] (DOC/OPS) Revisao de build/deploy + documento tecnico
+  - Objetivo: revisar pontos de build/deploy e documentar checklist/ajustes.
+  - Aceite: doc tecnico criado com requisitos, env vars e pontos de atencao.
+  - Fora de escopo: pipeline CI/CD completo.
+  - Dependencias: contexto atual do repo e Appwrite.
 
 - [ ] (NOTIF) Unread por workspace
   - Objetivo: saber se ha mensagens novas no workspace desde a ultima leitura do usuario.
@@ -209,6 +293,12 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
   - Objetivo: se usuario tiver avatarUrl, renderizar imagem no `UserButton`.
   - Aceite: `UserButton` usa `user.prefs.avatarUrl` (fallback para iniciais); endpoint para sync do profile OAuth.
 
+
+- [ ] (DOC) Evolucao do workspace (WORKSPACE_EVOLUTION.md)
+  - Objetivo: documentar a evolucao do workspace para elemento central com enums, novo schema e impactos arquiteturais.
+  - Aceite: `WORKSPACE_EVOLUTION.md` criado com as 10 secoes obrigatorias em linguagem tecnica.
+  - Fora de escopo: implementacao de schema, UI ou APIs.
+  - Dependencias: contexto do produto e alinhamento dos enums.
 ## Sprint 2 (Audit Log do Sistema)
 
 - [ ] (AUDIT) Definir modelo de dados no Appwrite (audit log)

@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/src/lib/utils";
-import { SettingsIcon, UserIcon } from "lucide-react";
+import { MessageSquare, SettingsIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -24,6 +24,12 @@ const routes = [
     href: "/tasks",
     icon: GoCheckCircle,
     activeIcon: GoCheckCircleFill,
+  },
+  {
+    label: "Chat",
+    href: "/chat",
+    icon: MessageSquare,
+    activeIcon: MessageSquare,
   },
   {
     label: "Configurações",

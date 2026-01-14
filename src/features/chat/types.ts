@@ -5,6 +5,7 @@ export type ChatMessage = Models.Document & {
   projectId?: string;
   userId: string;
   body: string;
+  bodyLexical?: string;
   senderName: string;
   senderAvatarUrl?: string;
 };

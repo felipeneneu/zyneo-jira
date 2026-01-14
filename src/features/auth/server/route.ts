@@ -24,7 +24,7 @@ const app = new Hono()
       sameSite: "Strict",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
-    // console.log({ email, password });
+
     return c.json({ success: true });
   })
   .post("/register", zValidator("json", registerSchema), async (c) => {

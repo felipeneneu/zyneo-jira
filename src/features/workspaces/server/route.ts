@@ -90,7 +90,17 @@ const app = new Hono()
       const storage = c.get("storage");
       const user = c.get("user");
 
-      const { name, image } = c.req.valid("form");
+      const {
+        name,
+        image,
+        purpose,
+        workspaceType,
+        teamSize,
+        workflowStyle,
+        mainGoal,
+        workspaceStatus,
+        tools,
+      } = c.req.valid("form");
 
       let uploadedImageUrl: string | undefined;
 
@@ -117,16 +127,34 @@ const app = new Hono()
         uploadedImageUrl = file.$id;
       }
 
+      const payload: Record<string, unknown> = {
+        name,
+        userId: user.$id,
+        inviteCode: generateInviteCode(6),
+      };
+
+      if (typeof uploadedImageUrl !== "undefined") {
+        payload.imageUrl = uploadedImageUrl;
+      }
+      if (typeof purpose !== "undefined") payload.purpose = purpose;
+      if (typeof workspaceType !== "undefined") {
+        payload.workspaceType = workspaceType;
+      }
+      if (typeof teamSize !== "undefined") payload.teamSize = teamSize;
+      if (typeof workflowStyle !== "undefined") {
+        payload.workflowStyle = workflowStyle;
+      }
+      if (typeof mainGoal !== "undefined") payload.mainGoal = mainGoal;
+      if (typeof workspaceStatus !== "undefined") {
+        payload.workspaceStatus = workspaceStatus;
+      }
+      if (typeof tools !== "undefined") payload.tools = tools;
+
       const workspace = await databases.createDocument(
         DATABASE_ID,
         WORKSPACE_ID,
         ID.unique(),
-        {
-          name,
-          userId: user.$id,
-          imageUrl: uploadedImageUrl,
-          inviteCode: generateInviteCode(6),
-        }
+        payload
       );
 
       await databases.createDocument(DATABASE_ID, MEMBERS_ID, ID.unique(), {
@@ -148,7 +176,17 @@ const app = new Hono()
       const user = c.get("user");
 
       const { workspaceId } = c.req.param();
-      const { name, image } = c.req.valid("form");
+      const {
+        name,
+        image,
+        purpose,
+        workspaceType,
+        teamSize,
+        workflowStyle,
+        mainGoal,
+        workspaceStatus,
+        tools,
+      } = c.req.valid("form");
 
       const member = await getMember({
         databases,
@@ -173,14 +211,30 @@ const app = new Hono()
         uploadedImageUrl = image;
       }
 
+      const payload: Record<string, unknown> = {};
+      if (typeof name !== "undefined") payload.name = name;
+      if (typeof uploadedImageUrl !== "undefined") {
+        payload.imageUrl = uploadedImageUrl;
+      }
+      if (typeof purpose !== "undefined") payload.purpose = purpose;
+      if (typeof workspaceType !== "undefined") {
+        payload.workspaceType = workspaceType;
+      }
+      if (typeof teamSize !== "undefined") payload.teamSize = teamSize;
+      if (typeof workflowStyle !== "undefined") {
+        payload.workflowStyle = workflowStyle;
+      }
+      if (typeof mainGoal !== "undefined") payload.mainGoal = mainGoal;
+      if (typeof workspaceStatus !== "undefined") {
+        payload.workspaceStatus = workspaceStatus;
+      }
+      if (typeof tools !== "undefined") payload.tools = tools;
+
       const workspace = await databases.updateDocument(
         DATABASE_ID,
         WORKSPACE_ID,
         workspaceId,
-        {
-          name,
-          imageUrl: uploadedImageUrl,
-        }
+        payload
       );
       return c.json({ data: workspace });
     }

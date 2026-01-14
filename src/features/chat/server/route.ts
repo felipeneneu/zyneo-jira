@@ -75,7 +75,7 @@ const app = new Hono()
       const databases = c.get("databases");
       const user = c.get("user");
 
-      const { workspaceId, projectId, body } = c.req.valid("json");
+      const { workspaceId, projectId, body, bodyLexical } = c.req.valid("json");
 
       const member = await getMember({ databases, workspaceId, userId: user.$id });
       if (!member) {
@@ -93,6 +93,7 @@ const app = new Hono()
           projectId: projectId ?? undefined,
           userId: user.$id,
           body,
+          bodyLexical: bodyLexical ?? undefined,
           senderName: user.name ?? "User",
           senderAvatarUrl: senderAvatarUrl ?? undefined,
         }

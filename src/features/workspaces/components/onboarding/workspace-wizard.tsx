@@ -1,0 +1,164 @@
+"use client";
+
+import React from "react";
+import { WizardProvider, useWizard } from "./store";
+import { StepPurpose } from "./step-purpose";
+import { StepType } from "./step-type";
+import { StepMethodology } from "./step-methodology";
+import { StepTools } from "./step-tools"; // New Step
+import { StepIdentity } from "./step-identity";
+import { StepInvite } from "./step-invite";
+import { WorkspaceOnboardingState } from "./types";
+import { cn } from "@/src/lib/utils";
+import { Dialog, DialogContent, DialogTitle } from "@/src/ui/dialog";
+import { Button } from "@/src/ui/button";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { ScrollArea } from "@/src/ui/scroll-area";
+import { step1Schema, step2Schema, step3Schema, step4Schema } from "./schemas";
+
+interface WorkspaceWizardProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onComplete: (data: WorkspaceOnboardingState) => void;
+}
+
+function WizardContent({
+  onComplete,
+}: {
+  onComplete: (data: WorkspaceOnboardingState) => void;
+}) {
+  const { state, dispatch } = useWizard();
+
+  const handleNext = () => {
+    // Validation Logic centralized here (simplified)
+    if (
+      state.step === 1 &&
+      !step1Schema.safeParse({ purpose: state.purpose }).success
+    )
+      return;
+    if (
+      state.step === 2 &&
+      !step2Schema.safeParse({ type: state.type }).success
+    )
+      return;
+    if (state.step === 3 && !step3Schema.safeParse({ ...state }).success)
+      return;
+    // Tools (Step 4) is optional, no validation needed
+    if (
+      state.step === 5 &&
+      !step4Schema.safeParse({ name: state.name }).success
+    )
+      return; // Identity is now Step 5
+
+    if (state.step === state.totalSteps) {
+      onComplete(state);
+    } else {
+      dispatch({ type: "NEXT_STEP" });
+    }
+  };
+
+  const handleBack = () => {
+    dispatch({ type: "PREV_STEP" });
+  };
+
+  // Determine if Next is disabled
+  const isNextDisabled =
+    (state.step === 1 && !state.purpose) ||
+    (state.step === 2 && !state.type) ||
+    (state.step === 3 &&
+      (!state.teamSize || !state.mainGoal || !state.workflowStyle)) ||
+    (state.step === 5 && !state.name); // Identity
+
+  return (
+    <div className="grid grid-rows-[auto_1fr_auto] h-full w-full bg-zinc-950 text-white">
+      {/* 1. Header (Logo) */}
+      <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-zinc-950 z-20">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-blue-600">
+            <div className="h-4 w-4 rotate-45 bg-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">Zyneo</span>
+        </div>
+        <div className="text-sm text-zinc-500 font-medium">
+          Passo {state.step} de {state.totalSteps}
+        </div>
+      </div>
+
+      {/* 2. Content (Scrollable) */}
+      <div className="relative overflow-hidden w-full max-w-[900px] mx-auto">
+        <ScrollArea className="h-full w-full">
+          <div className="p-8 md:p-12 pb-32 flex flex-col items-center text-center">
+            {state.step === 1 && <StepPurpose />}
+            {state.step === 2 && <StepType />}
+            {state.step === 3 && <StepMethodology />}
+            {state.step === 4 && <StepTools />}
+            {state.step === 5 && <StepIdentity />}
+            {state.step === 6 && <StepInvite />}
+          </div>
+        </ScrollArea>
+
+        {/* System-based Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-transparent to-cyan-900/30 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none z-10" />
+      </div>
+
+      {/* 3. Footer (Navigation) */}
+      <div className="px-8 py-6 border-t border-white/5 bg-zinc-900/30 backdrop-blur-sm z-20 flex items-center justify-between w-full max-w-[900px] mx-auto">
+        <Button
+          onClick={handleBack}
+          disabled={state.step === 1}
+          variant="ghost"
+          className="gap-2 text-zinc-400 hover:text-white hover:bg-white/5"
+        >
+          <FaChevronLeft className="h-3 w-3" />
+          Voltar
+        </Button>
+
+        <div className="flex gap-2">
+          <div className="flex gap-1 mr-4 items-center">
+            {Array.from({ length: state.totalSteps }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  i + 1 === state.step
+                    ? "w-8 bg-purple-500"
+                    : "w-1.5 bg-zinc-800"
+                )}
+              />
+            ))}
+          </div>
+
+          <Button
+            onClick={handleNext}
+            disabled={isNextDisabled}
+            className="gap-2 bg-white text-black hover:bg-zinc-200 font-medium px-8 rounded-full shadow-lg shadow-purple-500/10"
+          >
+            {state.step === state.totalSteps ? "Concluir" : "Próximo"}
+            <FaChevronRight className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function WorkspaceWizard({
+  open,
+  onOpenChange,
+  onComplete,
+}: WorkspaceWizardProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="w-full lg:w-[900px] max-w-[950px] h-[85vh] p-0 border-zinc-800 bg-zinc-950 overflow-hidden shadow-2xl"
+        aria-describedby="workspace-wizard"
+      >
+        <DialogTitle className="sr-only">Workspace Wizard</DialogTitle>
+        <WizardProvider>
+          <WizardContent onComplete={onComplete} />
+        </WizardProvider>
+      </DialogContent>
+    </Dialog>
+  );
+}
