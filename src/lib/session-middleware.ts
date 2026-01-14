@@ -6,7 +6,6 @@ import {
   type Account as AccountType,
   type Databases as DatabasesType,
   type Storage as StorageType,
-  type Users as UsersType,
   Models,
 } from "node-appwrite";
 
@@ -29,7 +28,11 @@ export const sessionMiddleware = createMiddleware<AdditionalContext>(
       .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
       .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
 
-    const session = getCookie(c, AUTH_COOKIE);
+    // Tenta cookie de email primeiro, depois OAuth
+    const emailSession = getCookie(c, AUTH_COOKIE);
+    const oauthSession = getCookie(c, `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
+    
+    const session = oauthSession ?? emailSession;
 
     if (session) {
       try {
@@ -45,13 +48,19 @@ export const sessionMiddleware = createMiddleware<AdditionalContext>(
         c.set("databases", databases);
         c.set("storage", storage);
         c.set("user", user);
-      } catch (err) {
-        // Se o cookie estiver expirado/inválido, apenas loga e deixa continuar
-        console.error("Invalid session:", err);
+        
+        console.log("✅ Sessão válida para usuário:", user.email);
+      } catch (err: any) {
+        console.error("⚠️ Sessão inválida:", err.message);
+        
+        // Remove cookies inválidos
+        const { deleteCookie } = await import("hono/cookie");
+        deleteCookie(c, AUTH_COOKIE);
+        deleteCookie(c, `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
       }
     }
 
-    // Permite que rotas de login/register ou OAuth continuem mesmo sem cookie
+    // Continua mesmo sem sessão (permite login/register)
     await next();
   }
 );
