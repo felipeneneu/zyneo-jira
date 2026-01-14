@@ -35,9 +35,9 @@ export const CreateWorkspaceModal = () => {
     mutate(
       { form: form as any },
       {
-        onSuccess: ({ data: workspace }) => {
+        onSuccess: ({ data }) => {
           close();
-          router.push(`/workspaces/${workspace.$id}`);
+          router.push(`/workspaces/${data.$id}`);
         },
       }
     );

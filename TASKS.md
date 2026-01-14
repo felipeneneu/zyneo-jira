@@ -262,6 +262,12 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
   - Fora de escopo: pipeline CI/CD completo.
   - Dependencias: contexto atual do repo e Appwrite.
 
+- [ ] (WORKSPACE) WorkspaceType com alta performance + seeds obrigatorios
+  - Objetivo: tornar o workspaceType o motor do produto, com templates/capabilities por area e seeds obrigatorios (projetos + tasks).
+  - Aceite: ao criar workspace, aplica capabilities por tipo, cria 3 projetos com 6 tasks cada (TODO, dueDate = hoje + 7 dias) e salva slug automatico.
+  - Fora de escopo: usar slug em URL e migracao de workspaces antigos.
+  - Dependencias: collections Appwrite atualizadas (workspaces/projects/tasks/agent_profiles) e enums fechados.
+
 - [ ] (NOTIF) Unread por workspace
   - Objetivo: saber se ha mensagens novas no workspace desde a ultima leitura do usuario.
   - Aceite: estado `chatLastReadAt` (por membro) + endpoint `GET /api/chat/unread?workspaceId`.
