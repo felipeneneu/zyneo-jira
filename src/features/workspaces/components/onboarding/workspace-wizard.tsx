@@ -74,10 +74,7 @@ function WizardContent({
       {/* 1. Header (Logo) */}
       <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-zinc-950 z-20">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-blue-600">
-            <div className="h-4 w-4 rotate-45 bg-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">Zyneo</span>
+          <span className="text-xl font-bold tracking-tight">ProjetaAi</span>
         </div>
         <div className="text-sm text-zinc-500 font-medium">
           Passo {state.step} de {state.totalSteps}
