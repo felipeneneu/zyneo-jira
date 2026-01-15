@@ -20,7 +20,7 @@ const app = new Hono()
     setCookie(c, AUTH_COOKIE, session.secret, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
@@ -38,7 +38,7 @@ const app = new Hono()
     setCookie(c, AUTH_COOKIE, session.secret, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });

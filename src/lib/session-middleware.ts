@@ -34,7 +34,7 @@ export const sessionMiddleware = createMiddleware<AdditionalContext>(
 
     const session = getCookie(c, AUTH_COOKIE);
 
-    if (!session) {
+    if (!session || session === "") {
       return c.json({ error: "Unauthenticated" }, 401);
     }
 
