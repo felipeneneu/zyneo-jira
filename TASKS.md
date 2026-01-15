@@ -4,6 +4,12 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
 
 ## Sprint Atual (Sprint Hoje - MVP Jarvis + Relatorio + Chat)
 
+- [ ] (PLAN 15-01-26) Workspace dev: dados + regras de negocio
+  - Objetivo: implementar modelo dev (sprints/epics/campos de task) e validar regras de negocio essenciais.
+  - Aceite: schema Appwrite definido + validacoes basicas no backend.
+  - Fora de escopo: migracao de dados antigos e automacoes avancadas.
+  - Dependencias: colecoes Appwrite criadas e presets do workspace dev ativos.
+
 - [ ] (WORKSPACE-DEV) Definir preset e UX do workspace dev
   - Objetivo: mapear capabilities/tools e a navegacao base do workspace de software.
   - Aceite: preset documentado e menu base definido (Backlog/Sprints/Docs/Reports/Settings).

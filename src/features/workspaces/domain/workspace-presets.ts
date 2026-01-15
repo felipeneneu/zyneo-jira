@@ -6,6 +6,7 @@ export type WorkspaceCapability =
   | "nav.chat"
   | "nav.members"
   | "nav.settings"
+  | "nav.dev"
   | "projects"
   | "backlog"
   | "sprints"
@@ -13,6 +14,9 @@ export type WorkspaceCapability =
   | "reports"
   | "automations"
   | "docs"
+  | "diagrams"
+  | "audit"
+  | "exports"
   | "assets"
   | "approvals"
   | "sop"
@@ -53,10 +57,14 @@ export const WORKSPACE_PRESETS: Record<WorkspaceType, WorkspacePreset> = {
   software_dev: {
     capabilities: [
       ...BASE_CAPABILITIES,
+      "nav.dev",
       "backlog",
       "sprints",
       "reports",
       "docs",
+      "diagrams",
+      "audit",
+      "exports",
       "automations",
     ],
     tools: ["github", "jira", "slack", "notion", "google_drive"],

@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/src/lib/utils";
-import { MessageSquare, SettingsIcon, UserIcon } from "lucide-react";
+import { Code2, MessageSquare, SettingsIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -35,6 +35,13 @@ const routes = [
     icon: MessageSquare,
     activeIcon: MessageSquare,
     capability: "nav.chat",
+  },
+  {
+    label: "Dev Hub",
+    href: "/dev",
+    icon: Code2,
+    activeIcon: Code2,
+    capability: "nav.dev",
   },
   {
     label: "Configurações",
