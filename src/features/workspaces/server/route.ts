@@ -17,6 +17,8 @@ import { getMember } from "../../members/utils";
 import { Workspace } from "../types";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { TaskStatus } from "../../tasks/types";
+import { resolveWorkspaceConfig } from "./use-cases/resolve-workspace-config";
+import { resolveAgentProfileId } from "./use-cases/resolve-agent-profile-id";
 
 const app = new Hono()
   .get("/", sessionMiddleware, async (c) => {
@@ -99,6 +101,7 @@ const app = new Hono()
         workflowStyle,
         mainGoal,
         workspaceStatus,
+        capabilities,
         tools,
       } = c.req.valid("form");
 
@@ -148,7 +151,28 @@ const app = new Hono()
       if (typeof workspaceStatus !== "undefined") {
         payload.workspaceStatus = workspaceStatus;
       }
-      if (typeof tools !== "undefined") payload.tools = tools;
+      const resolvedConfig = resolveWorkspaceConfig({
+        workspaceType,
+        tools,
+        capabilities,
+      });
+
+      if (typeof resolvedConfig.capabilities !== "undefined") {
+        payload.capabilities = resolvedConfig.capabilities;
+      }
+      if (typeof resolvedConfig.tools !== "undefined") {
+        payload.tools = resolvedConfig.tools;
+      }
+      const agentProfileId = await resolveAgentProfileId({
+        databases,
+        slug: resolvedConfig.agentProfileSlug,
+      });
+      if (resolvedConfig.agentProfileSlug && !agentProfileId) {
+        return c.json({ error: "Agent profile not found for workspace type" }, 400);
+      }
+      if (agentProfileId) {
+        payload.agentProfileId = agentProfileId;
+      }
 
       const workspace = await databases.createDocument(
         DATABASE_ID,
@@ -185,6 +209,7 @@ const app = new Hono()
         workflowStyle,
         mainGoal,
         workspaceStatus,
+        capabilities,
         tools,
       } = c.req.valid("form");
 
@@ -228,7 +253,28 @@ const app = new Hono()
       if (typeof workspaceStatus !== "undefined") {
         payload.workspaceStatus = workspaceStatus;
       }
-      if (typeof tools !== "undefined") payload.tools = tools;
+      const resolvedConfig = resolveWorkspaceConfig({
+        workspaceType,
+        tools,
+        capabilities,
+      });
+
+      if (typeof resolvedConfig.capabilities !== "undefined") {
+        payload.capabilities = resolvedConfig.capabilities;
+      }
+      if (typeof resolvedConfig.tools !== "undefined") {
+        payload.tools = resolvedConfig.tools;
+      }
+      const agentProfileId = await resolveAgentProfileId({
+        databases,
+        slug: resolvedConfig.agentProfileSlug,
+      });
+      if (resolvedConfig.agentProfileSlug && !agentProfileId) {
+        return c.json({ error: "Agent profile not found for workspace type" }, 400);
+      }
+      if (agentProfileId) {
+        payload.agentProfileId = agentProfileId;
+      }
 
       const workspace = await databases.updateDocument(
         DATABASE_ID,

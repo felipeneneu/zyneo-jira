@@ -35,6 +35,7 @@ export const createWorkspaceSchema = z.object({
   workflowStyle: z.enum(WORKSPACE_WORKFLOW_STYLES).optional(),
   mainGoal: z.enum(WORKSPACE_MAIN_GOALS).optional(),
   workspaceStatus: z.enum(WORKSPACE_STATUSES).optional(),
+  capabilities: stringArraySchema.optional(),
   tools: stringArraySchema.optional(),
   image: z
     .union([
@@ -52,6 +53,7 @@ export const updateWorkspaceSchema = z.object({
   workflowStyle: z.enum(WORKSPACE_WORKFLOW_STYLES).optional(),
   mainGoal: z.enum(WORKSPACE_MAIN_GOALS).optional(),
   workspaceStatus: z.enum(WORKSPACE_STATUSES).optional(),
+  capabilities: stringArraySchema.optional(),
   tools: stringArraySchema.optional(),
   image: z
     .union([

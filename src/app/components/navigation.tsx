@@ -11,6 +11,8 @@ import {
 } from "react-icons/go";
 
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
+import { useGetWorkspace } from "@/src/features/workspaces/api/use-get-workspace-id";
+import { getWorkspacePreset } from "@/src/features/workspaces/domain/workspace-presets";
 
 const routes = [
   {
@@ -18,39 +20,50 @@ const routes = [
     href: "/",
     icon: GoHome,
     activeIcon: GoHomeFill,
+    capability: "nav.home",
   },
   {
     label: "Minhas Tarefas",
     href: "/tasks",
     icon: GoCheckCircle,
     activeIcon: GoCheckCircleFill,
+    capability: "nav.tasks",
   },
   {
     label: "Chat",
     href: "/chat",
     icon: MessageSquare,
     activeIcon: MessageSquare,
+    capability: "nav.chat",
   },
   {
     label: "Configurações",
     href: "/settings",
     icon: SettingsIcon,
     activeIcon: SettingsIcon,
+    capability: "nav.settings",
   },
   {
     label: "Membros",
     href: "/members",
     icon: UserIcon,
     activeIcon: UserIcon,
+    capability: "nav.members",
   },
 ];
 
 export const Navigation = () => {
   const workspaceId = useWorkspaceId();
   const pathname = usePathname();
+  const { data: workspace } = useGetWorkspace({ workspaceId });
+  const preset = getWorkspacePreset(workspace?.workspaceType);
+  const capabilities = workspace?.capabilities ?? preset?.capabilities;
+  const visibleRoutes = capabilities
+    ? routes.filter((route) => capabilities.includes(route.capability))
+    : routes;
   return (
     <ul className="flex flex-col">
-      {routes.map((item) => {
+      {visibleRoutes.map((item) => {
         const fullHref = `/workspaces/${workspaceId}${item.href}`;
         const isActive = pathname === fullHref;
         const Icon = isActive ? item.activeIcon : item.icon;

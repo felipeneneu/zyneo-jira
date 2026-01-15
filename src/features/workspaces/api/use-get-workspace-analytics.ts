@@ -5,6 +5,7 @@ import { InferResponseType } from "hono";
 
 interface useGetWorkspaceAnalyticsProps {
   workspaceId: string;
+  enabled?: boolean;
 }
 
 export type WorkspaceAnalyticsResponseType = InferResponseType<
@@ -14,9 +15,11 @@ export type WorkspaceAnalyticsResponseType = InferResponseType<
 
 export const useGetWorkspaceAnalytics = ({
   workspaceId,
+  enabled = true,
 }: useGetWorkspaceAnalyticsProps) => {
   const query = useQuery({
     queryKey: ["workspace-analytics", workspaceId],
+    enabled,
     queryFn: async () => {
       const response = await client.api.workspaces[":workspaceId"][
         "analytics"

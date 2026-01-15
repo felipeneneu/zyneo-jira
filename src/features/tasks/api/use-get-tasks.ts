@@ -13,6 +13,7 @@ interface useGetTasksProps {
   search?: string | null;
   assigneeId?: string | null;
   dueDate?: string | null;
+  enabled?: boolean;
 }
 
 export const useGetTasks = ({
@@ -22,6 +23,7 @@ export const useGetTasks = ({
   search,
   assigneeId,
   dueDate,
+  enabled = true,
 }: useGetTasksProps) => {
   return useQuery<DataType>({
     queryKey: [
@@ -33,6 +35,7 @@ export const useGetTasks = ({
       assigneeId,
       dueDate,
     ],
+    enabled,
     queryFn: async () => {
       const response = await client.api.tasks.$get({
         query: {

@@ -14,8 +14,10 @@ import { useGetTasks } from "@/src/features/tasks/api/use-get-tasks";
 import { useCreateTaskModal } from "@/src/features/tasks/hooks/use-create-task-modal";
 import { Task } from "@/src/features/tasks/types";
 import { useGetWorkspaceAnalytics } from "@/src/features/workspaces/api/use-get-workspace-analytics";
+import { useGetWorkspace } from "@/src/features/workspaces/api/use-get-workspace-id";
 
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
+import { getWorkspacePreset } from "@/src/features/workspaces/domain/workspace-presets";
 import { Button } from "@/src/ui/button";
 import { Card, CardContent } from "@/src/ui/card";
 import { DottedSeparator } from "@/src/ui/dotted-separator";
@@ -25,40 +27,62 @@ import Link from "next/link";
 
 export const WorkspaceIdClient = () => {
   const workspaceId = useWorkspaceId();
+  const { data: workspace } = useGetWorkspace({ workspaceId });
+  const preset = getWorkspacePreset(workspace?.workspaceType);
+  const capabilities = workspace?.capabilities ?? preset?.capabilities;
+  const canShowAnalytics = capabilities ? capabilities.includes("reports") : true;
+  const canShowTasks = capabilities ? capabilities.includes("nav.tasks") : true;
+  const canShowProjects = capabilities ? capabilities.includes("projects") : true;
+  const canShowMembers = capabilities ? capabilities.includes("nav.members") : true;
 
   const { data: analytics, isLoading: isLoadingAnalytics } =
-    useGetWorkspaceAnalytics({ workspaceId });
+    useGetWorkspaceAnalytics({ workspaceId, enabled: canShowAnalytics });
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
+    enabled: canShowTasks,
   });
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects({
     workspaceId,
+    enabled: canShowProjects,
   });
   const { data: members, isLoading: isLoadingMembers } = useGetMembers({
     workspaceId,
+    enabled: canShowMembers,
   });
 
   const isLoading =
-    isLoadingAnalytics ||
-    isLoadingMembers ||
-    isLoadingProjects ||
-    isLoadingTasks;
+    (canShowAnalytics && isLoadingAnalytics) ||
+    (canShowMembers && isLoadingMembers) ||
+    (canShowProjects && isLoadingProjects) ||
+    (canShowTasks && isLoadingTasks);
 
   if (isLoading) {
     return <PageLoader />;
   }
 
-  if (!analytics || !tasks || !projects || !members) {
+  const missingData =
+    (canShowAnalytics && !analytics) ||
+    (canShowTasks && !tasks) ||
+    (canShowProjects && !projects) ||
+    (canShowMembers && !members);
+
+  if (missingData) {
     return <PageError message="Failed to load workspace data" />;
   }
 
   return (
     <div className="h-full flex flex-col space-y-4 w-full">
-      <Analytics data={analytics} />
+      {canShowAnalytics && analytics && <Analytics data={analytics} />}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 ">
-        <TaskList data={tasks.documents} total={tasks.total} />
-        <ProjectList data={projects.documents} total={projects.total} />
-        <MembersList data={members.documents} total={members.total} />
+        {canShowTasks && tasks && (
+          <TaskList data={tasks.documents} total={tasks.total} />
+        )}
+        {canShowProjects && projects && (
+          <ProjectList data={projects.documents} total={projects.total} />
+        )}
+        {canShowMembers && members && (
+          <MembersList data={members.documents} total={members.total} />
+        )}
       </div>
     </div>
   );

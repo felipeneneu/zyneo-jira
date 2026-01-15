@@ -4,6 +4,96 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
 
 ## Sprint Atual (Sprint Hoje - MVP Jarvis + Relatorio + Chat)
 
+- [ ] (WORKSPACE-DEV) Definir preset e UX do workspace dev
+  - Objetivo: mapear capabilities/tools e a navegacao base do workspace de software.
+  - Aceite: preset documentado e menu base definido (Backlog/Sprints/Docs/Reports/Settings).
+  - Fora de escopo: personalizacao por usuario.
+  - Dependencias: alinhamento do workflow (scrum vs kanban).
+
+- [ ] (DATA) Modelo dev: sprints, epics e campos de task
+  - Objetivo: criar entidades para sprints/epics e campos de task (priority, type, sprintId, epicId, startDate, endDate).
+  - Aceite: schema Appwrite definido com atributos e indices recomendados.
+  - Fora de escopo: migracao de dados existentes.
+  - Dependencias: colecoes Appwrite criadas.
+
+- [ ] (UI) Task dev: abas Docs e Comments
+  - Objetivo: adicionar abas de documentacao e comentarios na task.
+  - Aceite: task exibe tabs e salva dados basicos no Appwrite.
+  - Fora de escopo: markdown avançado e mencionamentos.
+  - Dependencias: collection task_comments (ou equivalente).
+
+- [ ] (INTEGRATION) GitHub links em tasks (MVP manual)
+  - Objetivo: permitir associar PRs/links a uma task.
+  - Aceite: campo de links na task e renderizacao na UI.
+  - Fora de escopo: webhooks e sync automatico.
+  - Dependencias: atributo/collection para links externos.
+
+- [x] (WORKSPACE) Definir matriz de capabilities/tools por workspaceType
+  - Objetivo: mapear defaults de ferramentas e capacidades por tipo (software_dev/design/operations/sales_crm).
+  - Aceite: matriz documentada e validada com lista de capabilities/tools por tipo.
+  - Fora de escopo: UI para editar presets e permissoes avancadas.
+  - Dependencias: enums finais de workspaceType.
+
+- [x] (BACKEND) Aplicar presets de workspace na criacao
+  - Objetivo: preencher capabilities/tools/agentProfileId ao criar workspace com base no tipo.
+  - Aceite: POST /api/workspaces retorna workspace com presets quando workspaceType existe.
+  - Fora de escopo: migracao de workspaces antigos e UI de override.
+  - Dependencias: matriz de presets definida e agent_profiles seedados.
+
+- [x] (BACKEND) Resolver agentProfileId pelo slug do preset
+  - Objetivo: vincular o workspace ao agent_profile correto no momento da criacao/edicao.
+  - Aceite: workspace salvo com agentProfileId quando existir slug default do tipo.
+  - Fora de escopo: migracao de workspaces antigos.
+  - Dependencias: collection agent_profiles com documentos seedados.
+
+- [x] (DATA) Script/seed de agent_profiles (4 modulos)
+  - Objetivo: disponibilizar perfis padrao de IA por workspaceType.
+  - Aceite: script/JSON pronto com 4 perfis default (software_dev/design/operations/sales_crm).
+  - Fora de escopo: execucao automatica em prod.
+  - Dependencias: schema agent_profiles criado no Appwrite.
+
+- [x] (BACKEND) Validar agentProfileId no create/update de workspace
+  - Objetivo: garantir que o preset aponte para um agent_profile existente.
+  - Aceite: se existir slug default e nao houver profile, API retorna 400 com erro explicito.
+  - Fora de escopo: migracao automatica de workspaces antigos.
+  - Dependencias: agent_profiles seedados.
+
+- [x] (UI) Modular dashboard por capabilities
+  - Objetivo: esconder seções (tasks/projetos/membros/analytics) conforme capabilities do workspace.
+  - Aceite: dashboard nao faz fetch nem renderiza cards desabilitados.
+  - Fora de escopo: regras de permissao por role.
+  - Dependencias: capabilities presentes no workspace ou preset.
+
+- [ ] (DATA) Seed de agent_profiles por workspaceType
+  - Objetivo: criar perfis de IA padrao por tipo de workspace no Appwrite.
+  - Aceite: collection agent_profiles possui 1 perfil default por workspaceType com status active.
+  - Fora de escopo: prompts finais de producao e testes A/B.
+  - Dependencias: schema agent_profiles criado no Appwrite.
+
+- [x] (UI) Revisar modal de criacao de workspace (responsivo + ScrollArea)
+  - Objetivo: garantir que o wizard fique 100% responsivo em telas pequenas e use ScrollArea corretamente.
+  - Aceite: modal ocupa viewport em mobile sem cortar footer; conteudo rola dentro do ScrollArea.
+  - Fora de escopo: redesign completo do onboarding e novas features.
+  - Dependencias: nenhuma.
+
+- [x] (AUTH) Corrigir sessao do usuario no createSessionClient
+  - Objetivo: remover erro que invalida sessao e bloqueia o reconhecimento do login.
+  - Aceite: usuarios autenticados nao sao redirecionados para /sign-in; `getCurrent()` retorna user valido.
+  - Fora de escopo: alteracoes de auth no Appwrite Console.
+  - Dependencias: nenhuma.
+
+- [x] (AUTH) Revisar SignInCard (imports/strings/UX)
+  - Objetivo: remover duplicidade de import e ajustar texto quebrado.
+  - Aceite: build sem erro de import duplicado; texto do CTA exibido corretamente.
+  - Fora de escopo: redesign completo do formulario.
+  - Dependencias: nenhuma.
+
+- [x] (TEST) Rodar testes de auth
+  - Objetivo: validar fluxo do callback OAuth e regressao do login.
+  - Aceite: `npm run test:auth` executa sem falhas.
+  - Fora de escopo: cobertura geral do app.
+  - Dependencias: vitest e dependencias instaladas.
+
 - [ ] (TECH) Reverter traducoes automaticas no codigo
   - Objetivo: desfazer substituicoes automaticas que quebraram identifiers/strings.
   - Aceite: build sem erros; tipos/ids originais (Project/Task/etc); UI volta ao ingles base.
@@ -340,24 +430,6 @@ Este arquivo e o quadro simples de tarefas do projeto para acompanhar o que esta
   - Aceite: documento curto com regras e exemplos; tarefas derivadas.
 
 - [ ] (ARCH) Criar camada de services/use-cases e refatorar rotas
-  - Objetivo: tirar regra de negocio de dentro das rotas Hono para facilitar evolucao/testes.
-  - Aceite: pelo menos `tasks` refatorado; rotas finas; comportamento igual.
-
-## Sprints anteriores
-
-### Sprint 0 - Deploy de teste
-- [x] (SEC) Remover log de senha no registro (src/features/auth/server/route.ts)
-  - Aceite: nenhum log contendo senha/email/sensitive no servidor
-- [x] (SEC) Ajustar cookie do OAuth para `secure` em producao (src/app/oauth/route.ts)
-  - Aceite: em `NODE_ENV=production`, cookie sai com `secure: true`
-- [x] (OPS) Checklist deploy Vercel (env vars + Appwrite + Gemini)
-  - Aceite: app sobe, login funciona, CRUD principal funciona
-
-## Backlog (geral)
-- [ ] (AUTH) Recuperacao de senha (forgot/reset) via Appwrite SMTP
-- [ ] (AUTH) Verificacao de email (opcional, mas recomendado)
-- [ ] (SEC) Rate limit em endpoints sensiveis (login/registro/ai)
-- [ ] (INT) Webhooks/integ n8n (webhook direto vs outbox + retries)
 
 ## Convencoes de tarefa
 - Cada tarefa deve ter: objetivo, aceite, escopo fora, dependencias.
