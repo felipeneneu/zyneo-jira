@@ -14,6 +14,7 @@ import { resolveWorkspaceId } from "../../workspaces/utils";
 
 import { Task, TaskStatus } from "../types";
 import { createTaskSchema } from "../schemas";
+import { checkRulesForWorkspace } from "../utils/check-rules";
 
 const buildProjectKeyBase = (name: string) => {
   const letters = name.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -86,6 +87,11 @@ const app = new Hono()
       if (!member) {
         return c.json({ error: "Unauthorized" }, 401);
       }
+
+      // Best-effort: keep list responsive even if rule checks fail.
+      try {
+        await checkRulesForWorkspace(databases, resolvedWorkspaceId);
+      } catch {}
 
       const query = [
         Query.equal("workspaceId", resolvedWorkspaceId),
