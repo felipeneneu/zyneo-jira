@@ -1,6 +1,12 @@
 "use client";
 import { cn } from "@/src/lib/utils";
-import { Code2, MessageSquare, SettingsIcon, UserIcon } from "lucide-react";
+import {
+  Bell,
+  Code2,
+  MessageSquare,
+  SettingsIcon,
+  UserIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -37,6 +43,14 @@ const routes = [
     capability: "nav.chat",
   },
   {
+    label: "Notificações",
+    href: "/notifications",
+    icon: Bell,
+    activeIcon: Bell,
+    capability: "nav.notifications",
+    absolute: true,
+  },
+  {
     label: "Dev Hub",
     href: "/dev",
     icon: Code2,
@@ -71,8 +85,12 @@ export const Navigation = () => {
   return (
     <ul className="flex flex-col">
       {visibleRoutes.map((item) => {
-        const fullHref = `/workspaces/${workspaceId}${item.href}`;
-        const isActive = pathname === fullHref;
+        const fullHref = item.absolute
+          ? item.href
+          : `/workspaces/${workspaceId}${item.href}`;
+        const isActive = item.absolute
+          ? pathname === item.href
+          : pathname === fullHref;
         const Icon = isActive ? item.activeIcon : item.icon;
         return (
           <Link href={fullHref} key={item.href}>

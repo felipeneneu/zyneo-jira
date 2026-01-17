@@ -4,6 +4,7 @@ export type WorkspaceCapability =
   | "nav.home"
   | "nav.tasks"
   | "nav.chat"
+  | "nav.notifications"
   | "nav.members"
   | "nav.settings"
   | "nav.dev"
@@ -48,6 +49,7 @@ const BASE_CAPABILITIES: WorkspaceCapability[] = [
   "nav.home",
   "nav.tasks",
   "nav.chat",
+  "nav.notifications",
   "nav.members",
   "nav.settings",
   "projects",
