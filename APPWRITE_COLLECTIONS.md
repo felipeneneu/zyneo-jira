@@ -50,6 +50,38 @@ Uso no app:
 
 ---
 
+## Collection: `workspaces` (ajuste)
+
+Adicionar atributos:
+- `slug` (string, unique, required)
+- `description` (string, optional, max 240)
+
+Indexes (sugestao):
+- `slug` (unique)
+
+---
+
+## Collection: `projects` (ajuste)
+
+Adicionar atributos:
+- `projectKey` (string, unique, required)
+- `taskSeq` (integer, default 0)
+
+Indexes (sugestao):
+- `projectKey` (unique)
+
+---
+
+## Collection: `tasks` (ajuste)
+
+Adicionar atributos:
+- `taskKey` (string, unique, required)
+
+Indexes (sugestao):
+- `taskKey` (unique)
+
+---
+
 ## (Preparacao) Collection: `audit_logs`
 
 ### Objetivo

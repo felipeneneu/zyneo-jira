@@ -15,6 +15,8 @@ export default async function Home() {
   if (workspace.total === 0) {
     return <RedirectToCreateWorkspaceModal />;
   } else {
-    redirect(`/workspaces/${workspace.documents[0].$id}`);
+    const first = workspace.documents[0];
+    const slugOrId = first.slug ?? first.$id;
+    redirect(`/workspaces/${slugOrId}`);
   }
 }

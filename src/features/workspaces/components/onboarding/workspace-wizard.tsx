@@ -2,19 +2,15 @@
 
 import React from "react";
 import { WizardProvider, useWizard } from "./store";
-import { StepPurpose } from "./step-purpose";
 import { StepType } from "./step-type";
-import { StepMethodology } from "./step-methodology";
-import { StepTools } from "./step-tools"; // New Step
 import { StepIdentity } from "./step-identity";
-import { StepInvite } from "./step-invite";
 import { WorkspaceOnboardingState } from "./types";
 import { cn } from "@/src/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/src/ui/dialog";
 import { Button } from "@/src/ui/button";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { ScrollArea } from "@/src/ui/scroll-area";
-import { step1Schema, step2Schema, step3Schema, step4Schema } from "./schemas";
+import { step1Schema, step2Schema } from "./schemas";
 
 interface WorkspaceWizardProps {
   open: boolean;
@@ -33,22 +29,11 @@ function WizardContent({
     // Validation Logic centralized here (simplified)
     if (
       state.step === 1 &&
-      !step1Schema.safeParse({ purpose: state.purpose }).success
+      !step1Schema.safeParse({ type: state.type }).success
     )
       return;
-    if (
-      state.step === 2 &&
-      !step2Schema.safeParse({ type: state.type }).success
-    )
+    if (state.step === 2 && !step2Schema.safeParse({ ...state }).success)
       return;
-    if (state.step === 3 && !step3Schema.safeParse({ ...state }).success)
-      return;
-    // Tools (Step 4) is optional, no validation needed
-    if (
-      state.step === 5 &&
-      !step4Schema.safeParse({ name: state.name }).success
-    )
-      return; // Identity is now Step 5
 
     if (state.step === state.totalSteps) {
       onComplete(state);
@@ -63,11 +48,8 @@ function WizardContent({
 
   // Determine if Next is disabled
   const isNextDisabled =
-    (state.step === 1 && !state.purpose) ||
-    (state.step === 2 && !state.type) ||
-    (state.step === 3 &&
-      (!state.teamSize || !state.mainGoal || !state.workflowStyle)) ||
-    (state.step === 5 && !state.name); // Identity
+    (state.step === 1 && !state.type) ||
+    (state.step === 2 && !state.name.trim());
 
   return (
     <div className="grid min-h-0 grid-rows-[auto_1fr_auto] h-full w-full bg-zinc-950 text-white">
@@ -85,12 +67,8 @@ function WizardContent({
       <div className="relative min-h-0 overflow-hidden w-full max-w-[950px] mx-auto">
         <ScrollArea className="h-full w-full">
           <div className="px-4 py-6 pb-28 sm:px-6 sm:py-8 sm:pb-32 md:p-12 md:pb-32 flex flex-col items-center text-center">
-            {state.step === 1 && <StepPurpose />}
-            {state.step === 2 && <StepType />}
-            {state.step === 3 && <StepMethodology />}
-            {state.step === 4 && <StepTools />}
-            {state.step === 5 && <StepIdentity />}
-            {state.step === 6 && <StepInvite />}
+            {state.step === 1 && <StepType />}
+            {state.step === 2 && <StepIdentity />}
           </div>
         </ScrollArea>
 

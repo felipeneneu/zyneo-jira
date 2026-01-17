@@ -29,6 +29,7 @@ const stringArraySchema = z.preprocess(
 
 export const createWorkspaceSchema = z.object({
   name: z.string().trim().min(1, "Required"),
+  description: z.string().trim().max(200, "Max 200 caracteres").optional(),
   purpose: z.enum(WORKSPACE_PURPOSES).optional(),
   workspaceType: z.enum(WORKSPACE_TYPES).optional(),
   teamSize: z.enum(WORKSPACE_TEAM_SIZES).optional(),
@@ -47,6 +48,7 @@ export const createWorkspaceSchema = z.object({
 
 export const updateWorkspaceSchema = z.object({
   name: z.string().trim().min(1, "Must be 1 or more characters").optional(),
+  description: z.string().trim().max(200, "Max 200 caracteres").optional(),
   purpose: z.enum(WORKSPACE_PURPOSES).optional(),
   workspaceType: z.enum(WORKSPACE_TYPES).optional(),
   teamSize: z.enum(WORKSPACE_TEAM_SIZES).optional(),

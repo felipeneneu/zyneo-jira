@@ -3,15 +3,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useWizard } from "./store";
 import { WizardStepLayout } from "./wizard-step-layout";
-import { step4Schema } from "./schemas";
+import { step2Schema } from "./schemas";
 import { Label } from "@/src/ui/label";
 import { Input } from "@/src/ui/input";
+import { Textarea } from "@/src/ui/textarea";
 import { Button } from "@/src/ui/button";
 import { FaImage, FaXmark } from "react-icons/fa6";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/ui/avatar";
 
 type Step4FormData = {
   name: string;
+  description?: string;
 };
 
 export function StepIdentity() {
@@ -21,9 +23,10 @@ export function StepIdentity() {
   );
   
   const { register } = useForm<Step4FormData>({
-    resolver: zodResolver(step4Schema.omit({ image: true })), 
+    resolver: zodResolver(step2Schema.omit({ image: true })),
     defaultValues: {
       name: state.name,
+      description: state.description ?? "",
     },
     mode: "onChange"
   });
@@ -32,13 +35,19 @@ export function StepIdentity() {
     const file = e.target.files?.[0];
     if (file) {
       setImagePreview(URL.createObjectURL(file));
-      dispatch({ type: "SET_IDENTITY", payload: { name: state.name, image: file } });
+      dispatch({
+        type: "SET_IDENTITY",
+        payload: { name: state.name, description: state.description, image: file },
+      });
     }
   };
 
   const handleRemoveImage = () => {
     setImagePreview(null);
-    dispatch({ type: "SET_IDENTITY", payload: { name: state.name, image: undefined } });
+    dispatch({
+      type: "SET_IDENTITY",
+      payload: { name: state.name, description: state.description, image: undefined },
+    });
   };
 
   return (
@@ -85,9 +94,40 @@ export function StepIdentity() {
             id="workspace-name"
             placeholder="Ex: Minha Empresa"
             {...register("name", {
-                onChange: (e) => dispatch({ type: "SET_IDENTITY", payload: { name: e.target.value, image: state.image } })
+                onChange: (e) =>
+                  dispatch({
+                    type: "SET_IDENTITY",
+                    payload: {
+                      name: e.target.value,
+                      description: state.description,
+                      image: state.image,
+                    },
+                  })
             })}
             className="h-12 border-gray-700 bg-gray-900/50 text-white placeholder:text-gray-500 focus-visible:ring-purple-500/50"
+          />
+        </div>
+
+        <div className="space-y-3 text-left">
+          <Label htmlFor="workspace-description" className="text-gray-300">
+            Descricao curta
+          </Label>
+          <Textarea
+            id="workspace-description"
+            placeholder="Ex: Projetos de front-end e entregas semanais"
+            rows={3}
+            {...register("description", {
+              onChange: (e) =>
+                dispatch({
+                  type: "SET_IDENTITY",
+                  payload: {
+                    name: state.name,
+                    description: e.target.value,
+                    image: state.image,
+                  },
+                }),
+            })}
+            className="border-gray-700 bg-gray-900/50 text-white placeholder:text-gray-500 focus-visible:ring-purple-500/50"
           />
         </div>
       </div>

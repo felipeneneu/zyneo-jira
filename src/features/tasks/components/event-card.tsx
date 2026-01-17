@@ -12,6 +12,7 @@ interface EventCardProps {
   project?: Project;
   status: TaskStatus;
   id: string;
+  taskKey?: string;
 }
 
 const statusColorMap: Record<TaskStatus, string> = {
@@ -28,7 +29,8 @@ export const EventCard = ({ ...event }: EventCardProps) => {
 
   const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    router.push(`/workspaces/${workspaceId}/tasks/${event.id}`);
+    const taskSlug = event.taskKey ?? event.id;
+    router.push(`/workspaces/${workspaceId}/tasks/${taskSlug}`);
   };
 
   return (

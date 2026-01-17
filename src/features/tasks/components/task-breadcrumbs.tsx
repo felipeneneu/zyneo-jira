@@ -53,7 +53,12 @@ export const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
         </p>
       </Link>
       <ChevronRightIcon className="size-4 lg:size-5 text-muted-foreground" />
-      <p className="text-sm lg:text-lg font-semibold">{task.name}</p>
+      <div className="flex items-baseline gap-2">
+        {task.taskKey ? (
+          <span className="text-xs text-muted-foreground">{task.taskKey}</span>
+        ) : null}
+        <p className="text-sm lg:text-lg font-semibold">{task.name}</p>
+      </div>
       <Button
         className="ml-auto"
         variant={"destructive"}

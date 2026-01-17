@@ -21,8 +21,8 @@ export const WorkspaceSwitcher = () => {
 
   const { open } = useWorkspaceModal();
 
-  const onSelect = (id: string) => {
-    router.push(`/workspaces/${id}`);
+  const onSelect = (idOrSlug: string) => {
+    router.push(`/workspaces/${idOrSlug}`);
   };
   return (
     <div className="flex flex-col">
@@ -43,8 +43,10 @@ export const WorkspaceSwitcher = () => {
           sideOffset={8}
           position="popper"
         >
-          {workspaces?.documents.map((workspace) => (
-            <SelectItem key={workspace.$id} value={workspace.$id}>
+          {workspaces?.documents.map((workspace) => {
+            const slugOrId = workspace.slug ?? workspace.$id;
+            return (
+            <SelectItem key={workspace.$id} value={slugOrId}>
               <div className="flex justify-start items-center gap-3 font-medium">
                 <WorkspaceAvatar
                   name={workspace.name}
@@ -53,7 +55,7 @@ export const WorkspaceSwitcher = () => {
                 <span className="truncate">{workspace.name}</span>
               </div>
             </SelectItem>
-          ))}
+          )})}
         </SelectContent>
       </Select>
     </div>

@@ -8,6 +8,7 @@ import { getMember } from "../utils";
 import { DATABASE_ID, MEMBERS_ID } from "@/src/config";
 import { Query } from "node-appwrite";
 import { Member, MemberRole } from "../types";
+import { resolveWorkspaceId } from "../../workspaces/utils";
 
 const app = new Hono()
   .get(
@@ -20,9 +21,14 @@ const app = new Hono()
       const user = c.get("user");
       const { workspaceId } = c.req.valid("query");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({
         databases,
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
       });
 
@@ -33,7 +39,7 @@ const app = new Hono()
       const members = await databases.listDocuments<Member>(
         DATABASE_ID,
         MEMBERS_ID,
-        [Query.equal("workspaceId", workspaceId)]
+        [Query.equal("workspaceId", resolvedWorkspaceId)]
       );
 
       const populatedMembers = await Promise.all(

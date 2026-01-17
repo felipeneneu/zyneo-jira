@@ -33,6 +33,7 @@ Relatorios: usar o bucket existente (`NEXT_PUBLIC_APPWRITE_IMAGES_BUCKET_ID`).
 Adicionar atributos (opcionais para nao quebrar legado):
 
 - `slug` (string, size 80)
+- `description` (string, size 240, optional)
 - `purpose` (enum: work | personal | school)
 - `workspaceType` (enum: software_dev | design | operations | sales_crm)
 - `teamSize` (enum: solo | small | medium | large | enterprise)
@@ -56,6 +57,34 @@ Indices recomendados:
 Adicionar atributo:
 
 - `chatLastReadAt` (datetime, optional)
+
+### Collection: projects
+
+Adicionar atributos (opcionais para nao quebrar legado):
+
+- `projectKey` (string, size 16, optional) — prefixo Jira-like (ex: ACME)
+- `taskSeq` (integer, optional) — contador por projeto para gerar taskKey
+
+Indices recomendados:
+
+- `projectKey` (unique)
+
+### Collection: tasks
+
+Adicionar atributos (opcionais para nao quebrar legado):
+
+- `documentation` (string, size 12000, optional)
+- `diagramUrl` (string, size 1024, optional) — pode ser fileId ou URL do Excalidraw
+- `githubPrs` (string array, item size 512, optional) — links/ids de PR
+- `completedAt` (datetime, optional)
+- `commentsCount` (integer, optional) — contador para UI/analytics
+- `taskKey` (string, size 32, optional) — identificador Jira-like (ex: ACME-123)
+
+Indices recomendados:
+
+- `workspaceId + status + completedAt` (key) para consultas de entregas
+- `workspaceId + projectId + completedAt` (key) opcional
+- `taskKey` (unique)
 
 ### Collection: chat_messages
 

@@ -23,6 +23,7 @@ export interface WorkspaceOnboardingState {
   mainGoal: WorkspaceMainGoal;
   workflowStyle: WorkspaceWorkflowStyle;
   name: string;
+  description?: string;
   image?: File | string;
   invites: string[];
   tools: string[];
@@ -41,7 +42,10 @@ export type WizardAction =
         workflowStyle: WorkspaceWorkflowStyle;
       };
     }
-  | { type: "SET_IDENTITY"; payload: { name: string; image?: File | string } }
+  | {
+      type: "SET_IDENTITY";
+      payload: { name: string; description?: string; image?: File | string };
+    }
   | { type: "SET_INVITES"; payload: string[] }
   | { type: "SET_TOOLS"; payload: string[] }
   | { type: "RESET" };

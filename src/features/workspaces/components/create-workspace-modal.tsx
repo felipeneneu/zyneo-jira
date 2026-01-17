@@ -14,22 +14,16 @@ export const CreateWorkspaceModal = () => {
   const handleComplete = (data: WorkspaceOnboardingState) => {
     const form: Record<string, unknown> = {
       name: data.name.trim(),
-      teamSize: data.teamSize,
-      workflowStyle: data.workflowStyle,
-      mainGoal: data.mainGoal,
     };
 
     if (data.image instanceof File) {
       form.image = data.image;
     }
-    if (data.purpose) {
-      form.purpose = data.purpose;
-    }
     if (data.type) {
       form.workspaceType = data.type;
     }
-    if (data.tools?.length) {
-      form.tools = JSON.stringify(data.tools);
+    if (data.description?.trim()) {
+      form.description = data.description.trim();
     }
 
     mutate(
@@ -37,7 +31,8 @@ export const CreateWorkspaceModal = () => {
       {
         onSuccess: ({ data }) => {
           close();
-          router.push(`/workspaces/${data.$id}`);
+          const slugOrId = data.slug ?? data.$id;
+          router.push(`/workspaces/${slugOrId}`);
         },
       }
     );

@@ -22,6 +22,14 @@ import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/src/lib/utils";
+import { Textarea } from "@/src/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/ui/select";
 
 interface CreateWorkspaceFormProps {
   onCancel?: () => void;
@@ -37,6 +45,8 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
     resolver: zodResolver(createWorkspaceSchema) as any,
     defaultValues: {
       name: "",
+      description: "",
+      workspaceType: "software_dev",
     },
   });
   const onSubmit = (values: z.infer<typeof createWorkspaceSchema>) => {
@@ -49,7 +59,8 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
       {
         onSuccess: ({ data }) => {
           form.reset();
-          router.push(`/workspaces/${data.$id}`);
+          const slugOrId = data.slug ?? data.$id;
+          router.push(`/workspaces/${slugOrId}`);
         },
       }
     );
@@ -84,6 +95,47 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
                     <FormLabel>Workspace Name</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="Enter workspace name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="workspaceType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Workspace Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select workspace type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="software_dev">Dev</SelectItem>
+                        <SelectItem value="design">Design</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Short Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        placeholder="Short context for this workspace"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

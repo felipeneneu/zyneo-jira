@@ -14,8 +14,17 @@ export const KanbanCard = ({ task }: kanbanCardProps) => {
   return (
     <div className="bg-white p-2.5 mb-1.5 rounded shadow-sm space-y-3">
       <div className="flex items-start justify-between gap-x-2">
-        <p className="text-sm line-clamp-2">{task.name}</p>
-        <TaskActions id={task.$id} projectId={task.projectId}>
+        <div className="flex flex-col gap-0.5">
+          {task.taskKey ? (
+            <span className="text-xs text-neutral-500">{task.taskKey}</span>
+          ) : null}
+          <p className="text-sm line-clamp-2">{task.name}</p>
+        </div>
+        <TaskActions
+          id={task.$id}
+          projectId={task.projectId}
+          taskKey={task.taskKey}
+        >
           <MoreHorizontal className="size-4.5 stroke-1 shrink-0 text-neutral-700 hover:opacity-75 transition" />
         </TaskActions>
       </div>

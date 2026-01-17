@@ -24,6 +24,16 @@ export function snakeCaseToTitleCase(str: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+export function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+    .trim();
+}
+
 export const formatDate = (date: Date | string, pattern = "dd/MM/yyyy") => {
   if (!date) return "";
 

@@ -14,10 +14,16 @@ import { useEditTaskModal } from "../hooks/use-edit-task-modal";
 interface TaskActionsProps {
   id: string;
   projectId: string;
+  taskKey?: string;
   children: React.ReactNode;
 }
 
-export const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
+export const TaskActions = ({
+  id,
+  projectId,
+  taskKey,
+  children,
+}: TaskActionsProps) => {
   const workspaceId = useWorkspaceId();
   const router = useRouter();
 
@@ -39,7 +45,8 @@ export const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
   };
 
   const onOpenTask = () => {
-    router.push(`/workspaces/${workspaceId}/tasks/${id}`);
+    const taskSlug = taskKey ?? id;
+    router.push(`/workspaces/${workspaceId}/tasks/${taskSlug}`);
   };
 
   const onOpenProject = () => {

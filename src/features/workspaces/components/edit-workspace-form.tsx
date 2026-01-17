@@ -65,6 +65,7 @@ export const EditWorkspaceForm = ({
     defaultValues: {
       ...initialValues,
       image: initialValues.imageUrl ? initialValues.imageUrl : "",
+      description: initialValues.description ?? "",
     },
   });
 
@@ -106,7 +107,8 @@ export const EditWorkspaceForm = ({
     }
   };
 
-  const fullInviteLink = `${window.location.origin}/workspaces/${initialValues.$id}/join/${initialValues.inviteCode}`;
+  const slugOrId = initialValues.slug ?? initialValues.$id;
+  const fullInviteLink = `${window.location.origin}/workspaces/${slugOrId}/join/${initialValues.inviteCode}`;
 
   const handleCopyInviteLink = () => {
     navigator.clipboard
@@ -152,6 +154,22 @@ export const EditWorkspaceForm = ({
                       <FormLabel>Workspace Name</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Enter workspace name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Short Description</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Short context for this workspace"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

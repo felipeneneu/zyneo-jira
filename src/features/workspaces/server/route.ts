@@ -10,7 +10,7 @@ import {
   TASKS_ID,
   WORKSPACE_ID,
 } from "@/src/config";
-import { ID, Query } from "node-appwrite";
+import { ID, Query, type Databases } from "node-appwrite";
 import { MemberRole } from "../../members/types";
 import { generateInviteCode } from "@/src/lib/utils";
 import { getMember } from "../../members/utils";
@@ -19,6 +19,31 @@ import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { TaskStatus } from "../../tasks/types";
 import { resolveWorkspaceConfig } from "./use-cases/resolve-workspace-config";
 import { resolveAgentProfileId } from "./use-cases/resolve-agent-profile-id";
+import { slugify } from "@/src/lib/utils";
+import { resolveWorkspaceId } from "../utils";
+
+const generateUniqueWorkspaceSlug = async (
+  databases: Databases,
+  baseSlug: string
+) => {
+  let slug = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const existing = await databases.listDocuments<Workspace>(
+      DATABASE_ID,
+      WORKSPACE_ID,
+      [Query.equal("slug", slug), Query.limit(1)]
+    );
+
+    if (existing.total === 0) {
+      return slug;
+    }
+
+    suffix += 1;
+    slug = `${baseSlug}-${suffix}`;
+  }
+};
 
 const app = new Hono()
   .get("/", sessionMiddleware, async (c) => {
@@ -47,9 +72,14 @@ const app = new Hono()
     const databases = c.get("databases");
     const { workspaceId } = c.req.param();
 
+    const resolvedWorkspaceId = await resolveWorkspaceId(
+      databases,
+      workspaceId
+    );
+
     const member = await getMember({
       databases,
-      workspaceId,
+      workspaceId: resolvedWorkspaceId,
       userId: user.$id,
     });
 
@@ -60,7 +90,7 @@ const app = new Hono()
     const workspace = await databases.getDocument<Workspace>(
       DATABASE_ID,
       WORKSPACE_ID,
-      workspaceId
+      resolvedWorkspaceId
     );
 
     return c.json({ data: workspace });
@@ -69,10 +99,15 @@ const app = new Hono()
     const databases = c.get("databases");
     const { workspaceId } = c.req.param();
 
+    const resolvedWorkspaceId = await resolveWorkspaceId(
+      databases,
+      workspaceId
+    );
+
     const workspace = await databases.getDocument<Workspace>(
       DATABASE_ID,
       WORKSPACE_ID,
-      workspaceId
+      resolvedWorkspaceId
     );
 
     return c.json({
@@ -80,6 +115,7 @@ const app = new Hono()
         $id: workspace.$id,
         name: workspace.name,
         imageUrl: workspace.imageUrl,
+        slug: workspace.slug,
       },
     });
   })
@@ -94,6 +130,7 @@ const app = new Hono()
 
       const {
         name,
+        description,
         image,
         purpose,
         workspaceType,
@@ -130,18 +167,27 @@ const app = new Hono()
         uploadedImageUrl = file.$id;
       }
 
+      const baseSlug = slugify(name) || "workspace";
+      const slug = await generateUniqueWorkspaceSlug(databases, baseSlug);
+
       const payload: Record<string, unknown> = {
         name,
         userId: user.$id,
         inviteCode: generateInviteCode(6),
+        slug,
       };
 
       if (typeof uploadedImageUrl !== "undefined") {
         payload.imageUrl = uploadedImageUrl;
       }
+      if (typeof description !== "undefined") {
+        payload.description = description;
+      }
       if (typeof purpose !== "undefined") payload.purpose = purpose;
       if (typeof workspaceType !== "undefined") {
         payload.workspaceType = workspaceType;
+      } else {
+        payload.workspaceType = "software_dev";
       }
       if (typeof teamSize !== "undefined") payload.teamSize = teamSize;
       if (typeof workflowStyle !== "undefined") {
@@ -202,6 +248,7 @@ const app = new Hono()
       const { workspaceId } = c.req.param();
       const {
         name,
+        description,
         image,
         purpose,
         workspaceType,
@@ -213,9 +260,14 @@ const app = new Hono()
         tools,
       } = c.req.valid("form");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({
         databases,
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
       });
 
@@ -238,6 +290,9 @@ const app = new Hono()
 
       const payload: Record<string, unknown> = {};
       if (typeof name !== "undefined") payload.name = name;
+      if (typeof description !== "undefined") {
+        payload.description = description;
+      }
       if (typeof uploadedImageUrl !== "undefined") {
         payload.imageUrl = uploadedImageUrl;
       }
@@ -279,7 +334,7 @@ const app = new Hono()
       const workspace = await databases.updateDocument(
         DATABASE_ID,
         WORKSPACE_ID,
-        workspaceId,
+        resolvedWorkspaceId,
         payload
       );
       return c.json({ data: workspace });
@@ -291,9 +346,14 @@ const app = new Hono()
 
     const { workspaceId } = c.req.param();
 
+    const resolvedWorkspaceId = await resolveWorkspaceId(
+      databases,
+      workspaceId
+    );
+
     const member = await getMember({
       databases,
-      workspaceId,
+      workspaceId: resolvedWorkspaceId,
       userId: user.$id,
     });
     if (!member || member.role !== MemberRole.ADMIN) {
@@ -303,7 +363,7 @@ const app = new Hono()
     await databases.deleteDocument({
       databaseId: DATABASE_ID,
       collectionId: WORKSPACE_ID,
-      documentId: workspaceId,
+      documentId: resolvedWorkspaceId,
     });
 
     return c.json({ data: { $id: workspaceId } });
@@ -314,9 +374,14 @@ const app = new Hono()
 
     const { workspaceId } = c.req.param();
 
+    const resolvedWorkspaceId = await resolveWorkspaceId(
+      databases,
+      workspaceId
+    );
+
     const member = await getMember({
       databases,
-      workspaceId,
+      workspaceId: resolvedWorkspaceId,
       userId: user.$id,
     });
     if (!member || member.role !== MemberRole.ADMIN) {
@@ -326,7 +391,7 @@ const app = new Hono()
     const workspace = await databases.updateDocument({
       databaseId: DATABASE_ID,
       collectionId: WORKSPACE_ID,
-      documentId: workspaceId,
+      documentId: resolvedWorkspaceId,
       data: {
         inviteCode: generateInviteCode(6),
       },
@@ -345,9 +410,14 @@ const app = new Hono()
       const databases = c.get("databases");
       const user = c.get("user");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({
         databases,
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
       });
       if (member) {
@@ -357,7 +427,7 @@ const app = new Hono()
       const workspace = await databases.getDocument<Workspace>(
         DATABASE_ID,
         WORKSPACE_ID,
-        workspaceId
+        resolvedWorkspaceId
       );
 
       if (workspace.inviteCode !== code) {
@@ -365,7 +435,7 @@ const app = new Hono()
       }
 
       await databases.createDocument(DATABASE_ID, MEMBERS_ID, ID.unique(), {
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
         role: MemberRole.MEMBER,
       });
@@ -378,9 +448,14 @@ const app = new Hono()
     const user = c.get("user");
     const { workspaceId } = c.req.param();
 
+    const resolvedWorkspaceId = await resolveWorkspaceId(
+      databases,
+      workspaceId
+    );
+
     const member = await getMember({
       databases,
-      workspaceId,
+      workspaceId: resolvedWorkspaceId,
       userId: user.$id,
     });
 
@@ -398,7 +473,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString()),
       ]
@@ -408,7 +483,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString()),
       ]
@@ -421,7 +496,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.equal("assigneeId", member.$id),
         Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString()),
@@ -432,7 +507,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.equal("assigneeId", member.$id),
         Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString()),
@@ -447,7 +522,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.notEqual("status", TaskStatus.DONE),
         Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString()),
@@ -458,7 +533,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.notEqual("status", TaskStatus.DONE),
         Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString()),
@@ -473,7 +548,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.equal("status", TaskStatus.DONE),
         Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString()),
@@ -484,7 +559,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.equal("status", TaskStatus.DONE),
         Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
         Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString()),
@@ -499,7 +574,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.notEqual("status", TaskStatus.DONE),
         Query.lessThan("dueDate", now.toISOString()),
         Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
@@ -511,7 +586,7 @@ const app = new Hono()
       DATABASE_ID,
       TASKS_ID,
       [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.notEqual("status", TaskStatus.DONE),
         Query.lessThan("dueDate", now.toISOString()),
         Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),

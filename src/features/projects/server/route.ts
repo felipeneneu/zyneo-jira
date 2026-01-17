@@ -9,11 +9,45 @@ import {
   PROJECTS_ID,
   TASKS_ID,
 } from "@/src/config";
-import { ID, Query } from "node-appwrite";
+import { ID, Query, type Databases } from "node-appwrite";
 import { createProjectSchema, updateProjectSchema } from "../schemas";
 import { Project } from "../types";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { TaskStatus } from "../../tasks/types";
+import { resolveWorkspaceId } from "../../workspaces/utils";
+
+const buildProjectKeyBase = (name: string) => {
+  const letters = name.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const base = letters.slice(0, 5);
+  if (base.length >= 3) {
+    return base;
+  }
+  return (base + "XXX").slice(0, 3);
+};
+
+const generateUniqueProjectKey = async (
+  databases: Databases,
+  name: string
+) => {
+  const base = buildProjectKeyBase(name);
+  let key = base;
+  let suffix = 1;
+
+  while (true) {
+    const existing = await databases.listDocuments<Project>(
+      DATABASE_ID,
+      PROJECTS_ID,
+      [Query.equal("projectKey", key), Query.limit(1)]
+    );
+
+    if (existing.total === 0) {
+      return key;
+    }
+
+    suffix += 1;
+    key = `${base}${suffix}`;
+  }
+};
 
 const app = new Hono()
   .delete("/:projectId", sessionMiddleware, async (c) => {
@@ -109,9 +143,14 @@ const app = new Hono()
 
       const { name, image, workspaceId } = c.req.valid("form");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({
         databases,
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
       });
 
@@ -131,6 +170,8 @@ const app = new Hono()
         uploadedImageUrl = file.$id;
       }
 
+      const projectKey = await generateUniqueProjectKey(databases, name);
+
       const project = await databases.createDocument(
         DATABASE_ID,
         PROJECTS_ID,
@@ -138,7 +179,9 @@ const app = new Hono()
         {
           name,
           imageUrl: uploadedImageUrl,
-          workspaceId,
+          workspaceId: resolvedWorkspaceId,
+          projectKey,
+          taskSeq: 0,
         }
       );
 
@@ -159,9 +202,14 @@ const app = new Hono()
         return c.json({ error: "Missing workspaceId" }, 400);
       }
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({
         databases,
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
       });
 
@@ -172,7 +220,10 @@ const app = new Hono()
       const projetcs = await databases.listDocuments<Project>(
         DATABASE_ID,
         PROJECTS_ID,
-        [Query.equal("workspaceId", workspaceId), Query.orderDesc("$createdAt")]
+        [
+          Query.equal("workspaceId", resolvedWorkspaceId),
+          Query.orderDesc("$createdAt"),
+        ]
       );
       return c.json({ data: projetcs });
     }

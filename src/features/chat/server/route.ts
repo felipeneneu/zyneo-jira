@@ -5,6 +5,7 @@ import { ID, Query } from "node-appwrite";
 import { sessionMiddleware } from "@/src/lib/session-middleware";
 import { getMember } from "@/src/features/members/utils";
 import { DATABASE_ID, CHAT_MESSAGES_ID, MEMBERS_ID } from "@/src/config";
+import { resolveWorkspaceId } from "@/src/features/workspaces/utils";
 
 import {
   createMessageSchema,
@@ -26,6 +27,11 @@ const app = new Hono()
       const user = c.get("user");
       const { workspaceId, projectId, cursor, limit } = c.req.valid("query");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({ databases, workspaceId, userId: user.$id });
       if (!member) {
         return c.json({ error: "Unauthorized" }, 401);
@@ -34,7 +40,7 @@ const app = new Hono()
       const safeLimit = limit ?? DEFAULT_LIMIT;
 
       const query = [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.orderDesc("$createdAt"),
         Query.limit(safeLimit),
       ];
@@ -77,6 +83,11 @@ const app = new Hono()
 
       const { workspaceId, projectId, body, bodyLexical } = c.req.valid("json");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({ databases, workspaceId, userId: user.$id });
       if (!member) {
         return c.json({ error: "Unauthorized" }, 401);
@@ -89,7 +100,7 @@ const app = new Hono()
         CHAT_MESSAGES_ID,
         ID.unique(),
         {
-          workspaceId,
+          workspaceId: resolvedWorkspaceId,
           projectId: projectId ?? undefined,
           userId: user.$id,
           body,
@@ -116,6 +127,11 @@ const app = new Hono()
       const databases = c.get("databases");
       const user = c.get("user");
       const { workspaceId } = c.req.valid("json");
+
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
 
       const member = await getMember({ databases, workspaceId, userId: user.$id });
       if (!member) {
@@ -156,6 +172,11 @@ const app = new Hono()
       const user = c.get("user");
       const { workspaceId } = c.req.valid("query");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({ databases, workspaceId, userId: user.$id });
       if (!member) {
         return c.json({ error: "Unauthorized" }, 401);
@@ -165,7 +186,7 @@ const app = new Hono()
         DATABASE_ID,
         CHAT_MESSAGES_ID,
         [
-          Query.equal("workspaceId", workspaceId),
+          Query.equal("workspaceId", resolvedWorkspaceId),
           Query.orderDesc("$createdAt"),
           Query.limit(1),
         ]
@@ -179,7 +200,7 @@ const app = new Hono()
       const lastMessageAt = lastMessage.$createdAt;
       const lastReadAt = member['chatLastReadAt'] as string | undefined;
       const unreadQuery = [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.notEqual("userId", user.$id),
         Query.limit(1),
       ];

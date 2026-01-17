@@ -50,6 +50,7 @@ export type WorkspaceStatus = (typeof WORKSPACE_STATUSES)[number];
 export type WorkspaceOnboardingDraft = {
   name: string;
   slug?: string;
+  description?: string;
   purpose?: WorkspacePurpose;
   workspaceType?: WorkspaceType;
   teamSize?: WorkspaceTeamSize;
@@ -68,6 +69,7 @@ export type Workspace = Models.Document & {
   inviteCode: string;
   userId: string;
   slug?: string;
+  description?: string;
   purpose?: WorkspacePurpose;
   workspaceType?: WorkspaceType;
   teamSize?: WorkspaceTeamSize;

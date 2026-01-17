@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 interface JoinWorkspaceFormProps {
   initialValues: {
     name: string;
+    slug?: string;
   };
 }
 
@@ -38,7 +39,8 @@ export const JoinWorkspaceForm = ({
       },
       {
         onSuccess: ({ data }) => {
-          router.push(`/workspaces/${data.$id}`);
+          const slugOrId = data.slug ?? data.$id;
+          router.push(`/workspaces/${slugOrId}`);
         },
       }
     );

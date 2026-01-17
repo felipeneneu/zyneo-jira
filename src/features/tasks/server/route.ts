@@ -10,9 +10,19 @@ import { Project } from "../../projects/types";
 import { DATABASE_ID, MEMBERS_ID, PROJECTS_ID, TASKS_ID } from "@/src/config";
 import { createAdminClient } from "@/src/lib/appwrite";
 import { sessionMiddleware } from "@/src/lib/session-middleware";
+import { resolveWorkspaceId } from "../../workspaces/utils";
 
 import { Task, TaskStatus } from "../types";
 import { createTaskSchema } from "../schemas";
+
+const buildProjectKeyBase = (name: string) => {
+  const letters = name.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const base = letters.slice(0, 5);
+  if (base.length >= 3) {
+    return base;
+  }
+  return (base + "XXX").slice(0, 3);
+};
 
 const app = new Hono()
   .delete("/:taskId", sessionMiddleware, async (c) => {
@@ -62,9 +72,14 @@ const app = new Hono()
       const { workspaceId, projectId, assigneeId, status, search, dueDate } =
         c.req.valid("query");
 
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
       const member = await getMember({
         databases,
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
       });
 
@@ -73,7 +88,7 @@ const app = new Hono()
       }
 
       const query = [
-        Query.equal("workspaceId", workspaceId),
+        Query.equal("workspaceId", resolvedWorkspaceId),
         Query.orderDesc("$createdAt"),
       ];
 
@@ -161,12 +176,28 @@ const app = new Hono()
     async (c) => {
       const user = await c.get("user");
       const databases = await c.get("databases");
-      const { name, status, workspaceId, projectId, dueDate, assigneeId } =
-        c.req.valid("json");
+      const {
+        name,
+        status,
+        workspaceId,
+        projectId,
+        dueDate,
+        assigneeId,
+        description,
+        documentation,
+        diagramUrl,
+        githubPrs,
+        completedAt,
+      } = c.req.valid("json");
+
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
 
       const member = await getMember({
         databases,
-        workspaceId,
+        workspaceId: resolvedWorkspaceId,
         userId: user.$id,
       });
 
@@ -179,7 +210,7 @@ const app = new Hono()
         TASKS_ID,
         [
           Query.equal("status", status),
-          Query.equal("workspaceId", workspaceId),
+          Query.equal("workspaceId", resolvedWorkspaceId),
           Query.orderDesc("position"),
           Query.limit(1),
         ]
@@ -189,22 +220,68 @@ const app = new Hono()
           ? highestPositionTask.documents[0].position + 1000
           : 1000;
 
-      const task = await databases.createDocument(
-        DATABASE_ID,
-        TASKS_ID,
-        ID.unique(),
-        {
-          name,
-          status,
-          workspaceId,
-          projectId,
-          dueDate: dueDate instanceof Date ? dueDate.toISOString() : dueDate,
-          assigneeId,
-          position: newPosition,
-        }
-      );
+      let createdTask: Task | null = null;
+      let attempts = 0;
 
-      return c.json({ data: task });
+      while (!createdTask && attempts < 3) {
+        attempts += 1;
+        const project = await databases.getDocument<Project>(
+          DATABASE_ID,
+          PROJECTS_ID,
+          projectId
+        );
+
+        const projectKey =
+          project.projectKey ?? buildProjectKeyBase(project.name);
+        const nextSeq = (project.taskSeq ?? 0) + 1;
+        const taskKey = `${projectKey}-${nextSeq}`;
+
+        try {
+          await databases.updateDocument(DATABASE_ID, PROJECTS_ID, projectId, {
+            taskSeq: nextSeq,
+            ...(project.projectKey ? {} : { projectKey }),
+          });
+        } catch {}
+
+        try {
+          createdTask = await databases.createDocument(
+            DATABASE_ID,
+            TASKS_ID,
+            ID.unique(),
+            {
+              name,
+              status,
+              workspaceId: resolvedWorkspaceId,
+              projectId,
+              dueDate:
+                dueDate instanceof Date ? dueDate.toISOString() : dueDate,
+              assigneeId,
+              position: newPosition,
+              description,
+              documentation,
+              diagramUrl,
+              githubPrs,
+              taskKey,
+              completedAt:
+                status === TaskStatus.DONE
+                  ? completedAt instanceof Date
+                    ? completedAt.toISOString()
+                    : completedAt ?? new Date().toISOString()
+                  : undefined,
+            }
+          );
+        } catch (error) {
+          if (attempts >= 3) {
+            throw error;
+          }
+        }
+      }
+
+      if (!createdTask) {
+        return c.json({ error: "Failed to create task" }, 500);
+      }
+
+      return c.json({ data: createdTask });
     }
   )
   .patch(
@@ -214,8 +291,18 @@ const app = new Hono()
     async (c) => {
       const user = await c.get("user");
       const databases = await c.get("databases");
-      const { name, status, description, projectId, dueDate, assigneeId } =
-        c.req.valid("json");
+      const {
+        name,
+        status,
+        description,
+        projectId,
+        dueDate,
+        assigneeId,
+        documentation,
+        diagramUrl,
+        githubPrs,
+        completedAt,
+      } = c.req.valid("json");
 
       const { taskId } = c.req.param();
 
@@ -246,6 +333,15 @@ const app = new Hono()
           dueDate: dueDate instanceof Date ? dueDate.toISOString() : dueDate,
           assigneeId,
           description,
+          documentation,
+          diagramUrl,
+          githubPrs,
+          completedAt:
+            status === TaskStatus.DONE
+              ? completedAt instanceof Date
+                ? completedAt.toISOString()
+                : completedAt ?? new Date().toISOString()
+              : undefined,
         }
       );
 
@@ -325,11 +421,24 @@ Prazo: ${task.dueDate ?? "-"}
     const { users } = await createAdminClient();
     const { taskId } = c.req.param();
 
-    const task = await databases.getDocument<Task>(
-      DATABASE_ID,
-      TASKS_ID,
-      taskId
-    );
+    let task: Task | null = null;
+
+    try {
+      task = await databases.getDocument<Task>(DATABASE_ID, TASKS_ID, taskId);
+    } catch {}
+
+    if (!task) {
+      const byKey = await databases.listDocuments<Task>(
+        DATABASE_ID,
+        TASKS_ID,
+        [Query.equal("taskKey", taskId), Query.limit(1)]
+      );
+      task = byKey.documents[0] ?? null;
+    }
+
+    if (!task) {
+      return c.json({ error: "Task not found" }, 404);
+    }
 
     const currentMember = await getMember({
       databases,

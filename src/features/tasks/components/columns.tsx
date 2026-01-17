@@ -27,8 +27,16 @@ export const columns: ColumnDef<Task>[] = [
     },
     cell: ({ row }) => {
       const name = row.original.name;
+      const taskKey = row.original.taskKey;
 
-      return <p className="line-clamp-1">{name}</p>;
+      return (
+        <div className="flex flex-col gap-0.5">
+          {taskKey ? (
+            <span className="text-xs text-muted-foreground">{taskKey}</span>
+          ) : null}
+          <p className="line-clamp-1">{name}</p>
+        </div>
+      );
     },
   },
   {
@@ -136,9 +144,10 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => {
       const id = row.original.$id;
       const projectId = row.original.projectId;
+      const taskKey = row.original.taskKey;
 
       return (
-        <TaskActions id={id} projectId={projectId}>
+        <TaskActions id={id} projectId={projectId} taskKey={taskKey}>
           <Button variant={"ghost"} className="size-8 p-0">
             <MoreVertical />
           </Button>

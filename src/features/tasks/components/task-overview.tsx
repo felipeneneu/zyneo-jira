@@ -31,6 +31,11 @@ export const TaskOverview = ({ task }: TaskOverviewProps) => {
         <DottedSeparator className="my-4" />
 
         <div className="flex flex-col gap-y-4">
+          {task.taskKey ? (
+            <OverviewProperty label="Key:">
+              <p className="text-sm font-medium">{task.taskKey}</p>
+            </OverviewProperty>
+          ) : null}
           <OverviewProperty label="Assignee:">
             <MembersAvatar
               name={task.assignee?.name ?? "Unknown"}

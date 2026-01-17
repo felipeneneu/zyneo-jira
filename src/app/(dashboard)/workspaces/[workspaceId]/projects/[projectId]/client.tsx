@@ -7,6 +7,7 @@ import { useGetProject } from "@/src/features/projects/api/use-get-project";
 import { useGetProjectAnalytics } from "@/src/features/projects/api/use-get-project-analytics";
 import { ProjectAvatar } from "@/src/features/projects/components/project-avatar";
 import { useProjectId } from "@/src/features/projects/hooks/use-project-id";
+import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
 import { TaskViewSwitcher } from "@/src/features/tasks/components/task-view-switcher";
 import { Button } from "@/src/ui/button";
 import { PencilIcon } from "lucide-react";
@@ -14,6 +15,7 @@ import Link from "next/link";
 
 export const ProjectIdClient = () => {
   const projectId = useProjectId();
+  const workspaceId = useWorkspaceId();
   const { data: project, isLoading: isLoadingProject } = useGetProject({
     projectId,
   });
@@ -43,7 +45,7 @@ export const ProjectIdClient = () => {
         </div>
         <Button variant={"secondary"} size={"sm"} asChild>
           <Link
-            href={`/workspaces/${project.workspaceId}/projects/${project.$id}/settings`}
+            href={`/workspaces/${workspaceId}/projects/${project.$id}/settings`}
           >
             <PencilIcon className="size-4 mr-2" />
             Edit Project

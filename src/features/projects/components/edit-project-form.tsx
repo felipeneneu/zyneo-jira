@@ -27,6 +27,7 @@ import { useConfirm } from "@/src/hooks/use-confirm";
 // import { toast } from "sonner";
 import { getAppwriteFileViewUrl } from "../../workspaces/hooks/get_appwrite-file-view-url";
 import { useDeleteProject } from "../api/use-delete-project";
+import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
 
 interface EditProjectFormProps {
   onCancel?: () => void;
@@ -38,6 +39,7 @@ export const EditProjectForm = ({
   initialValues,
 }: EditProjectFormProps) => {
   const router = useRouter();
+  const workspaceId = useWorkspaceId();
   const { mutate, isPending } = useUpdateProject();
   const { mutate: deleteProject, isPending: isDeletingProject } =
     useDeleteProject();
@@ -101,7 +103,7 @@ export const EditProjectForm = ({
                 ? onCancel
                 : () =>
                     router.push(
-                      `/workspaces/${initialValues.workspaceId}/projects/${initialValues.$id}`
+                      `/workspaces/${workspaceId}/projects/${initialValues.$id}`
                     )
             }
             className="cursor-pointer"

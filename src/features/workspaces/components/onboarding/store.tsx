@@ -5,13 +5,14 @@ import { WorkspaceOnboardingState, WizardAction } from './types';
 
 const initialState: WorkspaceOnboardingState = {
   step: 1,
-  totalSteps: 6, // Increased steps to include Tools
+  totalSteps: 2,
   purpose: null,
   type: null,
   teamSize: "solo",
   mainGoal: "organize",
   workflowStyle: "simple",
   name: '',
+  description: '',
   invites: [],
   tools: [],
 };

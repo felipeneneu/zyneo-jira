@@ -26,7 +26,13 @@ export type Task = Models.Document & {
   workspaceId: string;
   position: number;
   dueDate: string;
+  taskKey?: string;
   description?: string;
+  documentation?: string;
+  commentsCount?: number;
+  diagramUrl?: string;
+  githubPrs?: string[];
+  completedAt?: string;
 
   project?: Project;
   assignee?: TaskAssignee;
