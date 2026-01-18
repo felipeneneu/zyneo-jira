@@ -8,6 +8,7 @@ import { TaskDescription } from "@/src/features/tasks/components/task-descriptio
 import { TaskOverview } from "@/src/features/tasks/components/task-overview";
 import { useTaskId } from "@/src/features/tasks/hooks/use-task-id";
 import { DottedSeparator } from "@/src/ui/dotted-separator";
+import { TaskComments } from "@/src/features/comments/components/task-comments";
 
 export const TaskIdClient = () => {
   const taskId = useTaskId();
@@ -27,6 +28,8 @@ export const TaskIdClient = () => {
         <TaskOverview task={data} />
         <TaskDescription task={data} />
       </div>
+      <DottedSeparator className="my-4" />
+      <TaskComments taskId={data.$id} />
     </div>
   );
 };

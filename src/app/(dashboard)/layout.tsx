@@ -5,6 +5,7 @@ import { CreateTaskModal } from "@/src/features/tasks/components/create-task-mod
 import { Navbar } from "../components/navbar";
 import { Sidebar } from "../components/sidebar";
 import { EditTaskModal } from "@/src/features/tasks/components/edit-task-modal";
+import Header from "../components/header";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -23,6 +24,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
         <div className="lg:pl-66 w-full">
           <div className="mx-auto max-w-screen-2xl h-full">
+            <Header />
             <Navbar />
             <main className="h-full py-8 px-6 flex flex-col">{children}</main>
           </div>

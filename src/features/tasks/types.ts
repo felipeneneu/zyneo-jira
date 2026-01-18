@@ -33,7 +33,11 @@ export type Task = Models.Document & {
   diagramUrl?: string;
   githubPrs?: string[];
   completedAt?: string;
+  // Sprint 04: Copilot Core
+  lastActivityAt?: string;
+  flags?: string[];
 
   project?: Project;
   assignee?: TaskAssignee;
 };
+

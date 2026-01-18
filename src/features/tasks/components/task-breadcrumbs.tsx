@@ -20,9 +20,9 @@ export const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
   const { mutate, isPending } = useDeleteTask();
 
   const [ConfirmDialog, confirm] = useConfirm(
-    "Delete task?",
-    "This action cannot be undone.",
-    "destructive"
+    "Excluir tarefa?",
+    "Esta ação não poderá ser desfeita.",
+    "destructive",
   );
 
   const handleDeleteTask = async () => {
@@ -35,7 +35,7 @@ export const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
         onSuccess: () => {
           router.push(`/workspaces/${workspaceId}/tasks`);
         },
-      }
+      },
     );
   };
 
@@ -67,7 +67,7 @@ export const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
         disabled={isPending}
       >
         <TrashIcon className="size-4 lg:mr-2" />
-        <span className="hidden lg:block">Delete Task</span>
+        <span className="hidden lg:block">Excluir tarefa</span>
       </Button>
     </div>
   );

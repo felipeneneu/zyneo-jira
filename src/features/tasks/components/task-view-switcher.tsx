@@ -72,13 +72,13 @@ export const TaskViewSwitcher = ({
         <div className="flex flex-col gap-y-2 lg:flex-row justify-between items-center">
           <TabsList className="w-full lg:w-auto">
             <TabsTrigger className="h-8 w-full lg:w-auto" value="table">
-              Table
+              Tabelas
             </TabsTrigger>
             <TabsTrigger className="h-8 w-full lg:w-auto" value="kaban">
               Kanban
             </TabsTrigger>
             <TabsTrigger className="h-8 w-full lg:w-auto" value="calendar">
-              Calendar
+              Calendario
             </TabsTrigger>
             <TabsTrigger className="h-8 w-full lg:w-auto" value="backlog">
               Backlog
@@ -90,7 +90,7 @@ export const TaskViewSwitcher = ({
             onClick={() => open()}
           >
             <PlusIcon className="size-4 mr-2" />
-            New
+            Novo
           </Button>
         </div>
         <DottedSeparator className="my-4" />
@@ -118,7 +118,6 @@ export const TaskViewSwitcher = ({
             <TabsContent value="backlog" className="mt-0">
               <DataTable columns={columns} data={tasks?.documents ?? []} />
             </TabsContent>
-
           </>
         )}
       </div>

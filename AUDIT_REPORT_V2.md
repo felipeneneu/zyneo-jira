@@ -98,6 +98,14 @@ Conforme README:
 - Isso tende a pegar o menor `position` e pode gerar duplicacao de `position` (ou ordem errada).
   Arquivo: `src/features/tasks/server/route.ts` (create).
 
+### BUG: Erro critico no callback OAuth (`TypeError: e._formData.get`)
+
+- **Sintoma**: Apos login social (Google/GitHub), ocorre erro 500 com `TypeError: e._formData.get is not a function`.
+- **Causa Raiz**: O arquivo `src/app/oauth/route.ts` chama `account.createSession({ userId, secret })` passando um objeto.
+- **Analise**: O SDK `node-appwrite` espera argumentos posicionais: `createSession(userId, secret)`.
+- **Consequencia**: O metodo recebe um objeto no lugar do `userId` e `undefined` no `secret`, falhando a chamada. O erro resultante engatilha uma falha interna no Next.js (ao tentar inspecionar o request/erro) gerando o `TypeError` em `_formData`.
+- **Correcao**: Alterar para `account.createSession(userId, secret)`.
+
 ### Logs residuais / ruido em prod
 
 - Existem `console.log` em filtros de tasks, chat mock e hooks.

@@ -20,7 +20,7 @@ export const columns: ColumnDef<Task>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Task Name
+          Nome da tarefa
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -47,7 +47,7 @@ export const columns: ColumnDef<Task>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Project
+          Projeto
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -78,7 +78,7 @@ export const columns: ColumnDef<Task>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Assignee
+          Responsável
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -109,7 +109,7 @@ export const columns: ColumnDef<Task>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Due Date
+          Data de vencimento
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );

@@ -64,25 +64,21 @@ export const TaskDescription = ({ task }: TaskDescriptionProps) => {
   return (
     <div className="p-4 border rounded-lg">
       <div className="flex items-center justify-between">
-        <p className="text-lg font-semibold">Overview</p>
-        <Button
-          size={"sm"}
-          variant={"secondary"}
-          onClick={handleToggleEditing}
-        >
+        <p className="text-lg font-semibold">Descrição</p>
+        <Button size={"sm"} variant={"secondary"} onClick={handleToggleEditing}>
           {isEditing ? (
             <XIcon className="size-4 mr-2" />
           ) : (
             <PencilIcon className="size-4 mr-2" />
           )}
-          {isEditing ? "Cancel" : "Edit"}
+          {isEditing ? "Cancelar" : "Editar"}
         </Button>
       </div>
       <DottedSeparator className="my-4" />
       {isEditing ? (
         <div className="flex flex-col gap-y-4">
           <Textarea
-            placeholder="Add a description..."
+            placeholder="Adicionar uma descrição..."
             value={value}
             rows={4}
             onChange={(e) => setValue(e.target.value)}
@@ -109,7 +105,7 @@ export const TaskDescription = ({ task }: TaskDescriptionProps) => {
               onClick={handleSave}
               disabled={isPending}
             >
-              {isPending ? "Saving..." : "Save Change"}
+              {isPending ? "Salvando..." : "Salvar alterações"}
             </Button>
           </div>
         </div>
@@ -118,7 +114,9 @@ export const TaskDescription = ({ task }: TaskDescriptionProps) => {
           {value?.trim() ? (
             <ReactMarkdown>{value}</ReactMarkdown>
           ) : (
-            <span className="text-muted-foreground">No description set</span>
+            <span className="text-muted-foreground">
+              Nenhuma descrição definida
+            </span>
           )}
         </div>
       )}

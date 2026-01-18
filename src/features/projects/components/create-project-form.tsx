@@ -70,7 +70,7 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
     <Card className="w-full h-full border-none shadow-none">
       <CardHeader className="flex p-7">
         <CardTitle className="text-xl font-bold">
-          Create a new project
+          Criar um novo projeto
         </CardTitle>
       </CardHeader>
       <div className="px-7">
@@ -85,9 +85,12 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project Name</FormLabel>
+                    <FormLabel>Nome do Projeto</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter project name" />
+                      <Input
+                        {...field}
+                        placeholder="Digite o nome do projeto"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -109,7 +112,7 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
                                 ? URL.createObjectURL(field.value)
                                 : field.value
                             }
-                            alt="Workspace Avatar"
+                            alt="Avatar do Projeto"
                           />
                         </div>
                       ) : (
@@ -120,9 +123,9 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
                         </Avatar>
                       )}
                       <div className="flex flex-col">
-                        <p className="text-sm">Project Icon</p>
+                        <p className="text-sm">Logo do projeto</p>
                         <p className="text-sm text-muted-foreground">
-                          JPG, PNG, SVG or JPEG, max 1mb
+                          JPG, PNG, SVG ou JPEG, max 1mb
                         </p>
                         <input
                           className="hidden"
@@ -146,7 +149,7 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
                               }
                             }}
                           >
-                            Remove Image
+                            Remover Imagem
                           </Button>
                         ) : (
                           <Button
@@ -157,7 +160,7 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
                             className="w-fit mt-2 cursor-pointer"
                             onClick={() => inputRef.current?.click()}
                           >
-                            Upload Image
+                            Upload Imagem
                           </Button>
                         )}
                       </div>
@@ -176,10 +179,10 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
                 disabled={isPending}
                 className={cn(!onCancel && "invisible")}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" size={"lg"} disabled={isPending}>
-                Create Project
+                Criar Projeto
               </Button>
             </div>
           </form>

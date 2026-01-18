@@ -81,7 +81,9 @@ export const UserButton = () => {
           </span>
         ) : null}
         <Avatar className="size-10 hover:opacity-75 transition border border-neutral-300">
-          {avatarUrl ? <AvatarImage src={avatarUrl} alt={name || email} /> : null}
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt={name || email} />
+          ) : null}
           <AvatarFallback className="bg-neutral-200 font-medium text-neutral-500 flex items-center justify-center">
             {avatarFallback}
           </AvatarFallback>
@@ -95,7 +97,9 @@ export const UserButton = () => {
       >
         <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-4">
           <Avatar className="size-13 hover:opacity-75 transition border border-neutral-300">
-            {avatarUrl ? <AvatarImage src={avatarUrl} alt={name || email} /> : null}
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={name || email} />
+            ) : null}
             <AvatarFallback className="bg-neutral-200 text-xl font-medium text-neutral-500 flex items-center justify-center">
               {avatarFallback}
             </AvatarFallback>
@@ -113,7 +117,7 @@ export const UserButton = () => {
           className="h-10 flex items-center justify-center text-amber-700 font-medium cursor-pointer"
         >
           <LogOut className="size-4 mr-2" />
-          Logout
+          Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

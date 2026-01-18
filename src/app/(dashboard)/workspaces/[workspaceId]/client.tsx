@@ -15,6 +15,7 @@ import { useCreateTaskModal } from "@/src/features/tasks/hooks/use-create-task-m
 import { Task } from "@/src/features/tasks/types";
 import { useGetWorkspaceAnalytics } from "@/src/features/workspaces/api/use-get-workspace-analytics";
 import { useGetWorkspace } from "@/src/features/workspaces/api/use-get-workspace-id";
+import { ptBR } from "date-fns/locale"; // Importe o locale brasileiro
 
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
 import { getWorkspacePreset } from "@/src/features/workspaces/domain/workspace-presets";
@@ -30,10 +31,16 @@ export const WorkspaceIdClient = () => {
   const { data: workspace } = useGetWorkspace({ workspaceId });
   const preset = getWorkspacePreset(workspace?.workspaceType);
   const capabilities = workspace?.capabilities ?? preset?.capabilities;
-  const canShowAnalytics = capabilities ? capabilities.includes("reports") : true;
+  const canShowAnalytics = capabilities
+    ? capabilities.includes("reports")
+    : true;
   const canShowTasks = capabilities ? capabilities.includes("nav.tasks") : true;
-  const canShowProjects = capabilities ? capabilities.includes("projects") : true;
-  const canShowMembers = capabilities ? capabilities.includes("nav.members") : true;
+  const canShowProjects = capabilities
+    ? capabilities.includes("projects")
+    : true;
+  const canShowMembers = capabilities
+    ? capabilities.includes("nav.members")
+    : true;
 
   const { data: analytics, isLoading: isLoadingAnalytics } =
     useGetWorkspaceAnalytics({ workspaceId, enabled: canShowAnalytics });
@@ -100,7 +107,7 @@ export const TaskList = ({ data, total }: TaskListProps) => {
     <div className="flex flex-col gap-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold">Tasks ({total})</p>
+          <p className="text-lg font-semibold">Tarefas ({total})</p>
           <Button
             variant={"muted"}
             size={"icon"}
@@ -112,7 +119,7 @@ export const TaskList = ({ data, total }: TaskListProps) => {
         </div>
         <DottedSeparator className="my-4" />
         <ul className="flex flex-col gap-y-4">
-          {data.map((task) => (
+          {data.slice(0, 4).map((task) => (
             <li key={task.$id}>
               <Link
                 href={`/workspaces/${workspaceId}/tasks/${task.taskKey ?? task.$id}`}
@@ -126,7 +133,10 @@ export const TaskList = ({ data, total }: TaskListProps) => {
                       <div className="text-sm text-muted-foreground flex items-center">
                         <CalendarIcon className="size-3 mr-1" />
                         <span className="truncate">
-                          {formatDistanceToNow(new Date(task.dueDate))}
+                          {formatDistanceToNow(new Date(task.dueDate), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
                         </span>
                       </div>
                     </div>
@@ -136,10 +146,10 @@ export const TaskList = ({ data, total }: TaskListProps) => {
             </li>
           ))}
           <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-            No tasks found
+            Nenhuma tarefa encontrada
           </li>
           <Button variant={"muted"} className="mt-4 w-full" asChild>
-            <Link href={`/workspaces/${workspaceId}/tasks`}>Show All</Link>
+            <Link href={`/workspaces/${workspaceId}/tasks`}>Mostrar todos</Link>
           </Button>
         </ul>
       </div>
@@ -160,7 +170,7 @@ export const ProjectList = ({ data, total }: ProjectListProps) => {
       {/* <WorkspaceWizard onComplete={() => {}} /> */}
       <div className="bg-white border rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold">Projects ({total})</p>
+          <p className="text-lg font-semibold">Projetos ({total})</p>
           <Button
             variant={"secondary"}
             size={"icon"}
@@ -195,7 +205,7 @@ export const ProjectList = ({ data, total }: ProjectListProps) => {
               </li>
             ))}
             <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-              No projects found
+              Nenhum projeto encontrado
             </li>
           </ul>
         </div>
@@ -216,7 +226,7 @@ export const MembersList = ({ data, total }: MembersListProps) => {
     <div className="flex flex-col gap-y-4 col-span-1">
       <div className="bg-white border rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold">Members ({total})</p>
+          <p className="text-lg font-semibold">Membros ({total})</p>
           <Button
             variant={"secondary"}
             size={"icon"}
@@ -253,7 +263,7 @@ export const MembersList = ({ data, total }: MembersListProps) => {
               </li>
             ))}
             <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-              No members found
+              Nenhum membro encontrado
             </li>
           </ul>
         </div>

@@ -67,7 +67,7 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
         <SelectTrigger className="w-full lg:w-auto h-8" size="sm">
           <div className="flex items-center pr-2">
             <ListCheckIcon className="size-4 mr-2" />
-            <SelectValue placeholder="All statuses" />
+            <SelectValue placeholder="Todos os status" />
           </div>
         </SelectTrigger>
         <SelectContent
@@ -76,13 +76,13 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
           sideOffset={2}
           position="popper"
         >
-          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="all">Todos os status</SelectItem>
           <SelectSeparator />
           <SelectItem value={TaskStatus.BACKLOG}>Backlog</SelectItem>
-          <SelectItem value={TaskStatus.IN_PROGRESS}>In progress</SelectItem>
-          <SelectItem value={TaskStatus.IN_REVIEW}>In review</SelectItem>
-          <SelectItem value={TaskStatus.TODO}>Todo</SelectItem>
-          <SelectItem value={TaskStatus.DONE}>Done</SelectItem>
+          <SelectItem value={TaskStatus.TODO}>A fazer</SelectItem>
+          <SelectItem value={TaskStatus.IN_PROGRESS}>Em andamento</SelectItem>
+          <SelectItem value={TaskStatus.IN_REVIEW}>Em revisão</SelectItem>
+          <SelectItem value={TaskStatus.DONE}>Concluído</SelectItem>
         </SelectContent>
       </Select>
 
@@ -94,7 +94,7 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
           <div className="flex items-center pr-2">
             <UserIcon className="size-4 mr-2" />
             <SelectValue
-              placeholder="All assignees"
+              placeholder="Todos os responsáveis"
               className="placeholder:text-black"
             />
           </div>
@@ -105,7 +105,7 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
           sideOffset={2}
           position="popper"
         >
-          <SelectItem value="all">All assignees</SelectItem>
+          <SelectItem value="all">Todos os responsáveis</SelectItem>
           <SelectSeparator />
           {memberOptions?.map((member) => (
             <SelectItem key={member.value} value={member.value}>
@@ -123,7 +123,7 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
             <div className="flex items-center pr-2">
               <FolderIcon className="size-4 mr-2" />
               <SelectValue
-                placeholder="All projects"
+                placeholder="Todos os projetos"
                 className="placeholder:text-black"
               />
             </div>
@@ -134,7 +134,7 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
             sideOffset={2}
             position="popper"
           >
-            <SelectItem value="all">All projects</SelectItem>
+            <SelectItem value="all">Todos os projetos</SelectItem>
             <SelectSeparator />
             {projectOptions?.map((project) => (
               <SelectItem key={project.value} value={project.value}>
@@ -145,7 +145,7 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
         </Select>
       )}
       <DatePicker
-        placeholder="Due date"
+        placeholder="Data de vencimento"
         className="h-8 w-full lg:w-auto"
         value={dueDate ? new Date(dueDate) : undefined}
         onChange={(date) => {

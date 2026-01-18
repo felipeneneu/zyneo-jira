@@ -24,7 +24,6 @@ import { Project } from "../types";
 import { useUpdateProject } from "../api/use-update-project";
 import { updateProjectSchema } from "../schemas";
 import { useConfirm } from "@/src/hooks/use-confirm";
-// import { toast } from "sonner";
 import { getAppwriteFileViewUrl } from "../../workspaces/hooks/get_appwrite-file-view-url";
 import { useDeleteProject } from "../api/use-delete-project";
 import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
@@ -45,9 +44,9 @@ export const EditProjectForm = ({
     useDeleteProject();
 
   const [DeleteDialog, confirmDelete] = useConfirm(
-    "Delete Workspace",
-    "Are you sure you want to delete this workspace? This action cannot be undone.",
-    "destructive"
+    "Excluir Projeto",
+    "Tem certeza que deseja excluir este projeto? Esta ação não poderá ser desfeita.",
+    "destructive",
   );
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +70,7 @@ export const EditProjectForm = ({
         onSuccess: () => {
           window.location.href = "/";
         },
-      }
+      },
     );
   };
 
@@ -103,13 +102,13 @@ export const EditProjectForm = ({
                 ? onCancel
                 : () =>
                     router.push(
-                      `/workspaces/${workspaceId}/projects/${initialValues.$id}`
+                      `/workspaces/${workspaceId}/projects/${initialValues.$id}`,
                     )
             }
             className="cursor-pointer"
           >
             <ArrowLeftIcon className="size-4 mr-2" />
-            Back
+            Voltar
           </Button>
           <CardTitle className="text-xl font-bold">
             {initialValues.name}
@@ -127,9 +126,12 @@ export const EditProjectForm = ({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Name</FormLabel>
+                      <FormLabel>Nome do Projeto</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Enter project name" />
+                        <Input
+                          {...field}
+                          placeholder="Digite o nome do projeto"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -150,10 +152,10 @@ export const EditProjectForm = ({
                                 field.value instanceof File
                                   ? URL.createObjectURL(field.value)
                                   : field.value
-                                  ? getAppwriteFileViewUrl(field.value) // 👈 adapta aqui
-                                  : ""
+                                    ? getAppwriteFileViewUrl(field.value)
+                                    : ""
                               }
-                              alt="Project Avatar"
+                              alt="Avatar do Projeto"
                             />
                           </div>
                         ) : (
@@ -164,9 +166,9 @@ export const EditProjectForm = ({
                           </Avatar>
                         )}
                         <div className="flex flex-col">
-                          <p className="text-sm">Project Icon</p>
+                          <p className="text-sm">Ícone do Projeto</p>
                           <p className="text-sm text-muted-foreground">
-                            JPG, PNG, SVG or JPEG, max 1mb
+                            JPG, PNG, SVG ou JPEG, máx 1mb
                           </p>
                           <input
                             className="hidden"
@@ -191,7 +193,7 @@ export const EditProjectForm = ({
                                 }
                               }}
                             >
-                              Remove Image
+                              Remover Imagem
                             </Button>
                           ) : (
                             <Button
@@ -202,7 +204,7 @@ export const EditProjectForm = ({
                               className="w-fit mt-2 cursor-pointer"
                               onClick={() => inputRef.current?.click()}
                             >
-                              Upload Image
+                              Fazer Upload
                             </Button>
                           )}
                         </div>
@@ -211,7 +213,9 @@ export const EditProjectForm = ({
                   )}
                 />
               </div>
-              <DottedSeparator className="py-7" />
+              <div className="py-7">
+                <DottedSeparator />
+              </div>
               <div className="flex items-center justify-between">
                 <Button
                   type="button"
@@ -221,10 +225,10 @@ export const EditProjectForm = ({
                   disabled={isPending}
                   className={cn(!onCancel && "invisible")}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button type="submit" size={"lg"} disabled={isPending}>
-                  Save Changes
+                  Salvar Alterações
                 </Button>
               </div>
             </form>
@@ -235,12 +239,14 @@ export const EditProjectForm = ({
       <Card className="w-full h-full border-none shadow-none">
         <CardContent className="p-7">
           <div className="flex flex-col">
-            <h3 className="font-bold">Danger Zone</h3>
+            <h3 className="font-bold">Zona de Perigo</h3>
             <p className="text-sm text-muted-foreground">
-              Deleting a project is a irreversible and will remove all
-              associated data.
+              Excluir um projeto é uma ação irreversível e removerá todos os
+              dados associados a ele.
             </p>
-            <DottedSeparator className="py-7" />
+            <div className="py-7">
+              <DottedSeparator />
+            </div>
             <Button
               className="mt-6 w-fit ml-auto cursor-pointer"
               size={"sm"}
@@ -249,7 +255,7 @@ export const EditProjectForm = ({
               disabled={isPending || isDeletingProject}
               onClick={handleDelete}
             >
-              Delete Project
+              Excluir Projeto
             </Button>
           </div>
         </CardContent>
