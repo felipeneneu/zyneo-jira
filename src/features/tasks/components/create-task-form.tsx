@@ -71,7 +71,9 @@ export const CreateTaskForm = ({
   return (
     <Card className="w-full h-full border-none shadow-none">
       <CardHeader className="flex p-7">
-        <CardTitle className="text-xl font-bold">Create a new task</CardTitle>
+        <CardTitle className="text-xl font-bold">
+          Criar uma nova tarefa
+        </CardTitle>
       </CardHeader>
       <div className="px-7">
         <DottedSeparator />
@@ -85,9 +87,9 @@ export const CreateTaskForm = ({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Task Name</FormLabel>
+                    <FormLabel>Nome da Tarefa</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter task name" />
+                      <Input {...field} placeholder="Digite o nome da tarefa" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -99,7 +101,7 @@ export const CreateTaskForm = ({
                 name="dueDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Due Date</FormLabel>
+                    <FormLabel>Data de Vencimento</FormLabel>
                     <FormControl>
                       <DatePicker {...field} />
                     </FormControl>
@@ -113,14 +115,14 @@ export const CreateTaskForm = ({
                 name="assigneeId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assignee</FormLabel>
+                    <FormLabel>Responsável</FormLabel>
                     <Select
                       defaultValue={field.value}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select assignee" />
+                          <SelectValue placeholder="Selecione o responsável" />
                         </SelectTrigger>
                       </FormControl>
                       <FormMessage />
@@ -172,18 +174,19 @@ export const CreateTaskForm = ({
                         <SelectItem value={TaskStatus.BACKLOG}>
                           Backlog
                         </SelectItem>
+                        <SelectItem value={TaskStatus.TODO}>A fazer</SelectItem>
 
                         <SelectItem value={TaskStatus.IN_PROGRESS}>
-                          In Progress
+                          Em progresso
                         </SelectItem>
 
                         <SelectItem value={TaskStatus.IN_REVIEW}>
-                          In Review
+                          Em revisão
                         </SelectItem>
 
-                        <SelectItem value={TaskStatus.TODO}>Todo</SelectItem>
-
-                        <SelectItem value={TaskStatus.DONE}>Done</SelectItem>
+                        <SelectItem value={TaskStatus.DONE}>
+                          Concluído
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -195,14 +198,14 @@ export const CreateTaskForm = ({
                 name="projectId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project</FormLabel>
+                    <FormLabel>Projeto</FormLabel>
                     <Select
                       defaultValue={field.value}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select project" />
+                          <SelectValue placeholder="Selecione o projeto" />
                         </SelectTrigger>
                       </FormControl>
                       <FormMessage />
@@ -240,10 +243,10 @@ export const CreateTaskForm = ({
                 disabled={isPending}
                 className={cn(!onCancel && "invisible")}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" size={"lg"} disabled={isPending}>
-                Create Task
+                Criar Tarefa
               </Button>
             </div>
           </form>

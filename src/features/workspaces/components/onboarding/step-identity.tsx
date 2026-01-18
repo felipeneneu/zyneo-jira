@@ -56,26 +56,25 @@ export function StepIdentity() {
       description="Insira o nome da equipe ou organização."
     >
       <div className="space-y-8 max-w-lg mx-auto mt-6">
-        
         <div className="flex flex-col items-center gap-4">
-           {/* Avatar Upload UI */}
-           <div className="relative group">
-            <Avatar className="h-24 w-24 border-2 border-dashed border-gray-700 bg-gray-900/50 group-hover:border-purple-500/50 transition-colors">
-              <AvatarImage src={imagePreview || ""} />
+          {/* Avatar Upload UI */}
+          <div className="relative group cursor-pointer">
+            <Avatar className="size-24 border-2 border-dashed border-gray-700 bg-gray-900/50 group-hover:border-purple-500/50 transition-colors">
+              <AvatarImage src={imagePreview || ""} className="object-cover" />
               <AvatarFallback className="bg-transparent">
                 <FaImage className="h-8 w-8 text-gray-500 group-hover:text-purple-400 transition-colors" />
               </AvatarFallback>
             </Avatar>
-            
+
             {imagePreview ? (
-               <Button
-                 size="icon"
-                 variant="destructive"
-                 className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                 onClick={handleRemoveImage}
-               >
-                 <FaXmark className="h-3 w-3" />
-               </Button>
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                onClick={handleRemoveImage}
+              >
+                <FaXmark className="h-3 w-3" />
+              </Button>
             ) : (
               <Input
                 type="file"
@@ -84,25 +83,29 @@ export function StepIdentity() {
                 onChange={handleImageChange}
               />
             )}
-           </div>
-           <p className="text-xs text-gray-400">Toque para enviar ícone (opcional)</p>
+          </div>
+          <p className="text-xs text-gray-400">
+            Toque para enviar ícone (opcional)
+          </p>
         </div>
 
         <div className="space-y-3 text-left">
-          <Label htmlFor="workspace-name" className="text-gray-300">Nome do espaço de trabalho</Label>
+          <Label htmlFor="workspace-name" className="text-gray-300">
+            Nome do espaço de trabalho
+          </Label>
           <Input
             id="workspace-name"
             placeholder="Ex: Minha Empresa"
             {...register("name", {
-                onChange: (e) =>
-                  dispatch({
-                    type: "SET_IDENTITY",
-                    payload: {
-                      name: e.target.value,
-                      description: state.description,
-                      image: state.image,
-                    },
-                  })
+              onChange: (e) =>
+                dispatch({
+                  type: "SET_IDENTITY",
+                  payload: {
+                    name: e.target.value,
+                    description: state.description,
+                    image: state.image,
+                  },
+                }),
             })}
             className="h-12 border-gray-700 bg-gray-900/50 text-white placeholder:text-gray-500 focus-visible:ring-purple-500/50"
           />

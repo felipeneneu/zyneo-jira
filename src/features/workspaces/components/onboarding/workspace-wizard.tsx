@@ -73,8 +73,13 @@ function WizardContent({
         </ScrollArea>
 
         {/* System-based Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-transparent to-cyan-900/30 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none z-10" />
+        {/* <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-transparent to-cyan-900/30 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none z-10" /> */}
+        {/* Gradiente de fundo com efeito suave e acinzentado */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 via-transparent to-slate-500/10 pointer-events-none " />
+
+        {/* Gradiente inferior estilo "Glass" (vidro) mais neutro */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-950/80 to-transparent pointer-events-none z-10 " />
       </div>
 
       {/* 3. Footer (Navigation) */}
@@ -108,7 +113,7 @@ function WizardContent({
                     "h-1.5 rounded-full transition-all duration-300",
                     i + 1 === state.step
                       ? "w-8 bg-purple-500"
-                      : "w-1.5 bg-zinc-800"
+                      : "w-1.5 bg-zinc-800",
                   )}
                 />
               ))}
