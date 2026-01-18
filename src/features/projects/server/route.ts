@@ -10,6 +10,7 @@ import {
   TASKS_ID,
 } from "@/src/config";
 import { ID, Query, type Databases } from "node-appwrite";
+import { File as AppwriteFile } from "node-fetch-native-with-agent";
 import { createProjectSchema, updateProjectSchema } from "../schemas";
 import { Project } from "../types";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
@@ -47,6 +48,13 @@ const generateUniqueProjectKey = async (
     suffix += 1;
     key = `${base}${suffix}`;
   }
+};
+
+const toAppwriteFile = async (image: File) => {
+  const buffer = Buffer.from(await image.arrayBuffer());
+  return new AppwriteFile([buffer], image.name, {
+    type: image.type || "application/octet-stream",
+  });
 };
 
 const app = new Hono()
@@ -113,7 +121,7 @@ const app = new Hono()
         const file = await storage.createFile(
           IMAGES_BUCKET_ID,
           ID.unique(),
-          image
+          await toAppwriteFile(image)
         );
         uploadedImageUrl = file.$id;
       } else {
@@ -164,7 +172,7 @@ const app = new Hono()
         const file = await storage.createFile(
           IMAGES_BUCKET_ID,
           ID.unique(),
-          image
+          await toAppwriteFile(image)
         );
 
         uploadedImageUrl = file.$id;

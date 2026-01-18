@@ -7,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/src/ui/dropdown-menu";
-import { DottedSeparator } from "@/src/ui/dotted-separator";
 
 import { useLogout } from "../api/use-logout";
 import { useCurrent } from "../api/use-current";
@@ -15,19 +14,29 @@ import { Loader, LogOut } from "lucide-react";
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
 import { useChatUnread } from "@/src/features/chat/api/use-chat-unread";
 import { useSyncProfile } from "../api/use-sync-profile";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useChatRealtime } from "@/src/features/chat/hooks/use-chat-realtime";
+import { useEffect, useMemo, useRef } from "react";
+import { useGetNotifications } from "@/src/features/notifications/api/use-get-notifications";
+import { NotificationsMenuItems } from "@/src/features/notifications/components/notifications-menu-items";
+import { DottedSeparator } from "@/src/ui/dotted-separator";
 
-export const UserButton = () => {
+interface UserButtonProps {
+  showNotificationsBadge?: boolean;
+}
+
+export const UserButton = ({
+  showNotificationsBadge = false,
+}: UserButtonProps) => {
   const { data: user, isLoading } = useCurrent();
   const { mutate: logout } = useLogout();
 
   const workspaceId = useWorkspaceId() as string | undefined;
   const { data: unreadData } = useChatUnread(workspaceId);
+  const { data: systemUnreadData } = useGetNotifications({
+    filter: "unread",
+    enabled: !!user,
+  });
   const { mutate: syncProfile } = useSyncProfile();
   const didTrySync = useRef(false);
-  const queryClient = useQueryClient();
   const avatarUrl = useMemo(
     () => (user?.prefs as Record<string, string>)?.avatarUrl,
     [user]
@@ -40,19 +49,6 @@ export const UserButton = () => {
     didTrySync.current = true;
     syncProfile();
   }, [avatarUrl, syncProfile, user]);
-
-  const handleUnreadRealtime = useCallback(() => {
-    if (!workspaceId) return;
-    queryClient.invalidateQueries({
-      queryKey: ["chat", "unread", workspaceId],
-    });
-  }, [queryClient, workspaceId]);
-
-  useChatRealtime({
-    workspaceId,
-    enabled: !!workspaceId,
-    onMessage: handleUnreadRealtime,
-  });
 
   if (isLoading) {
     return (
@@ -71,11 +67,13 @@ export const UserButton = () => {
     ? name.charAt(0).toUpperCase()
     : email.charAt(0).toUpperCase() ?? "0";
   const unreadCount = (unreadData && "count" in unreadData ? unreadData.count : 0) ?? (unreadData?.unread ? 1 : 0);
-  const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
+  const systemUnreadCount = systemUnreadData?.total ?? 0;
+  const totalUnreadCount = unreadCount + systemUnreadCount;
+  const unreadLabel = totalUnreadCount > 99 ? "99+" : String(totalUnreadCount);
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="outline-none relative cursor-pointer">
-        {unreadCount > 0 ? (
+        {showNotificationsBadge && totalUnreadCount > 0 ? (
           <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1.5 rounded-full bg-red-500 ring-2 ring-white text-[10px] leading-4 font-semibold text-white flex items-center justify-center">
             {unreadLabel}
           </span>
@@ -112,6 +110,12 @@ export const UserButton = () => {
           </div>
         </div>
         <DottedSeparator className="mb-1" />
+        <NotificationsMenuItems
+          workspaceId={workspaceId}
+          chatUnreadCount={unreadCount}
+          systemUnreadCount={systemUnreadCount}
+        />
+        <DottedSeparator className="my-1" />
         <DropdownMenuItem
           onClick={() => logout()}
           className="h-10 flex items-center justify-center text-amber-700 font-medium cursor-pointer"

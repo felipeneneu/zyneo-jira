@@ -38,7 +38,7 @@ export const Navbar = () => {
       </div>
       <MobileSidebar />
       <div className="block md:hidden">
-        <UserButton />
+        <UserButton showNotificationsBadge />
       </div>
     </nav>
   );

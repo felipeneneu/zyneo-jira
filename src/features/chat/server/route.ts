@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { ID, Query } from "node-appwrite";
+import { ID, Permission, Query, Role } from "node-appwrite";
 
 import { sessionMiddleware } from "@/src/lib/session-middleware";
 import { getMember } from "@/src/features/members/utils";
@@ -95,6 +95,12 @@ const app = new Hono()
 
       const senderAvatarUrl = (user.prefs as Record<string, string>).avatarUrl;
 
+      const permissions = [
+        Permission.read(Role.users()),
+        Permission.update(Role.user(user.$id)),
+        Permission.delete(Role.user(user.$id)),
+      ];
+
       const message = await databases.createDocument<ChatMessage>(
         DATABASE_ID,
         CHAT_MESSAGES_ID,
@@ -107,7 +113,8 @@ const app = new Hono()
           bodyLexical: bodyLexical ?? undefined,
           senderName: user.name ?? "User",
           senderAvatarUrl: senderAvatarUrl ?? undefined,
-        }
+        },
+        permissions
       );
 
       try {

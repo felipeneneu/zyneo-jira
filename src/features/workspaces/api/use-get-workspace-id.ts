@@ -4,11 +4,16 @@ import { client } from "@/src/lib/rpc";
 
 interface useGetWorkspaceProps {
   workspaceId: string;
+  enabled?: boolean;
 }
 
-export const useGetWorkspace = ({ workspaceId }: useGetWorkspaceProps) => {
+export const useGetWorkspace = ({
+  workspaceId,
+  enabled = true,
+}: useGetWorkspaceProps) => {
   const query = useQuery({
     queryKey: ["workspace", workspaceId],
+    enabled,
     queryFn: async () => {
       const response = await client.api.workspaces[":workspaceId"].$get({
         param: { workspaceId },

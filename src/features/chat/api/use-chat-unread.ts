@@ -3,14 +3,27 @@ import { InferResponseType } from "hono";
 
 import { client } from "@/src/lib/rpc";
 
-type ResponseType = InferResponseType<(typeof client.api.chat.unread)["$get"], 200>;
+type ResponseType = InferResponseType<
+  (typeof client.api.chat.unread)["$get"],
+  200
+>;
 
 type DataType = ResponseType["data"];
 
-export const useChatUnread = (workspaceId?: string) => {
+interface UseChatUnreadOptions {
+  enabled?: boolean;
+  refetchInterval?: number;
+}
+
+export const useChatUnread = (
+  workspaceId?: string,
+  options: UseChatUnreadOptions = {}
+) => {
+  const { enabled = !!workspaceId, refetchInterval } = options;
   return useQuery<DataType>({
     queryKey: ["chat", "unread", workspaceId],
-    enabled: !!workspaceId,
+    enabled,
+    refetchInterval,
     queryFn: async () => {
       if (!workspaceId) {
         return { unread: false, count: 0, lastMessageAt: null };
