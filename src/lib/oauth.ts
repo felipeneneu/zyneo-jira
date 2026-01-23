@@ -28,13 +28,13 @@ export async function signUpWithGoogle() {
   const failureUrl = `${origin}/sign-in?error=oauth_failed`;
 
   // ⚠️ NÃO use redirect()
-  await account.createOAuth2Token(
+  const url = account.createOAuth2Session(
     OAuthProvider.Google,
     successUrl,
     failureUrl
   );
 
-  // nunca chega aqui
+    redirect(url);
 }
 
 // Faça o mesmo para GitHub (copie e mude o provider)
