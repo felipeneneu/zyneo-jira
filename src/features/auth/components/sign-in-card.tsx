@@ -94,27 +94,31 @@ export const SignInCard = () => {
         <div className="px-7">
           <DottedSeparator />
         </div>
-         <CardContent className="p-7 flex flex-col gap-y-4">
-          <Button
-            disabled={isPending}
-            variant={"secondary"}
-            size="lg"
-            className="w-full"
-             onClick={() => signUpWithGoogle(new FormData())}
-          >
-            <FcGoogle className="mr-2 size-5" />
-            Login with Google
-          </Button>
-          <Button
-            disabled={isPending}
-            variant={"secondary"}
-            size="lg"
-            className="w-full"
-            onClick={() => signUpWithGithub()}
-          >
-            <FaGithub className="mr-2 size-5" />
-            Login with Github
-          </Button>
+        <CardContent className="p-7 flex flex-col gap-y-4">
+          <form action={signUpWithGoogle} className="w-full">
+            <Button
+              disabled={isPending}
+              variant={"secondary"}
+              size="lg"
+              className="w-full"
+              type="submit"
+            >
+              <FcGoogle className="mr-2 size-5" />
+              Login with Google
+            </Button>
+          </form>
+          <form action={signUpWithGithub} className="w-full">
+            <Button
+              disabled={isPending}
+              variant={"secondary"}
+              size="lg"
+              className="w-full"
+              type="submit"
+            >
+              <FaGithub className="mr-2 size-5" />
+              Login with Github
+            </Button>
+          </form>
         </CardContent>
         <div className="px-7">
           <DottedSeparator />
