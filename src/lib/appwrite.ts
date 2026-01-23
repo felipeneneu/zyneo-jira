@@ -5,25 +5,25 @@ import { AUTH_COOKIE } from "../features/auth/constants";
 export async function createSessionClient() {
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
-
+  
   if (!endpoint || !projectId) {
     throw new Error("APPWRITE_NOT_CONFIGURED");
   }
 
   const client = new Client().setEndpoint(endpoint).setProject(projectId);
-
+  
   const cookieStore = await cookies();
   const emailSession = cookieStore.get(AUTH_COOKIE)?.value;
-  const oauthSession = cookieStore.get(`a_session_${projectId}`)?.value;
-
+  const oauthSession = cookieStore.get(`a_session_${projectId}`)?.value; // ← CORRIGIDO!
+  
   const session = oauthSession ?? emailSession;
-
+  
   if (!session) {
     throw new Error("NO_SESSION");
   }
-
+  
   client.setSession(session);
-
+  
   return {
     get account() {
       return new Account(client);
@@ -38,7 +38,7 @@ export async function createAdminClient() {
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
   const apiKey = process.env.NEXT_APPWRITE_KEY;
-
+  
   if (!endpoint || !projectId || !apiKey) {
     throw new Error("APPWRITE_NOT_CONFIGURED");
   }
@@ -58,7 +58,7 @@ export async function createAdminClient() {
   };
 }
 
-// NOVA FUNÇÃO: Limpa todas as sessões
+// Limpa todas as sessões
 export async function forceCleanup() {
   try {
     const cookieStore = await cookies();
