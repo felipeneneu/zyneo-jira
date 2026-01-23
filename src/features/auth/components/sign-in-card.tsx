@@ -98,13 +98,16 @@ export const SignInCard = () => {
           
 <Button
   disabled={isPending}
-  variant={"secondary"}
+  variant="secondary"
   size="lg"
   className="w-full"
   onClick={async () => {
-    // Chame a action manualmente (ou melhor: crie uma rota separada)
-    const formData = new FormData(); // dummy, já que não usa
-    await signUpWithGoogle(formData); // vai redirecionar
+    try {
+      await signUpWithGoogle(); // sem argumentos!
+    } catch (err) {
+      console.error("Falha ao iniciar Google login:", err);
+      // opcional: toast.error("Erro ao conectar com Google")
+    }
   }}
 >
   <FcGoogle className="mr-2 size-5" />
@@ -138,6 +141,7 @@ export const SignInCard = () => {
     </div>
   );
 };
+
 
 
 
