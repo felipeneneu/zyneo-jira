@@ -1,58 +1,82 @@
 "use server";
+
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { OAuthProvider } from "node-appwrite";
-import { createAdminClient, forceCleanup } from "./appwrite";
+import { createAdminClient, forceCleanup } from "./appwrite"; // ajuste o path se necessário
 
 const resolveOrigin = async () => {
-  const origin = (await headers()).get("origin");
-  if (!origin) {
-    throw new Error("MISSING_ORIGIN");
+  const originHeader = (await headers()).get("origin");
+  
+  // Fallback importante para produção e testes locais
+  if (!originHeader) {
+    // Em Vercel, use o domínio do projeto se origin não estiver presente
+    const host = (await headers()).get("host") || "localhost:3000";
+    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    return `${protocol}://${host}`;
   }
-  return origin;
+
+  return originHeader;
 };
 
-export async function signUpWithGithub() {
-  let redirectUrl: string;
+export async function signUpWithGoogle() {
   try {
-    // CRÍTICO: Limpa sessões anteriores
+    // Limpa sessões antigas (muito bom ter isso!)
     await forceCleanup();
-    
+
     const { account } = await createAdminClient();
     const origin = await resolveOrigin();
-    
-    // Adiciona nonce para prevenir reuso
-    const nonce = Date.now();
-    redirectUrl = await account.createOAuth2Token(
-      OAuthProvider.Github,
-      `${origin}/oauth?nonce=${nonce}`,
-      `${origin}/sign-up?error=oauth_failed`
+
+    const nonce = Date.now().toString(); // string para evitar problemas em query params
+    const successUrl = `${origin}/oauth?nonce=${nonce}`;
+    const failureUrl = `${origin}/sign-in?error=oauth_failed`; // ← use /sign-in aqui, já que é login
+
+    const redirectUrl = await account.createOAuth2Token(
+      OAuthProvider.Google,
+      successUrl,
+      failureUrl
     );
+
+    return redirect(redirectUrl);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`OAuth failed: ${message}`); // ← CORRIGIDO: parênteses normais
+    console.error("Google OAuth error:", error); // ← log útil no Vercel
+
+    const origin = await resolveOrigin().catch(() => "http://localhost:3000");
+    const errorUrl = `${origin}/sign-in?error=oauth_failed&message=${encodeURIComponent(
+      error instanceof Error ? error.message : "Falha desconhecida"
+    )}`;
+
+    return redirect(errorUrl);
   }
-  return redirect(redirectUrl);
 }
 
-export async function signUpWithGoogle() {
-  let redirectUrl: string;
+// Faça o mesmo para GitHub (copie e mude o provider)
+export async function signUpWithGithub() {
   try {
-    // CRÍTICO: Limpa sessões anteriores
     await forceCleanup();
-    
+
     const { account } = await createAdminClient();
     const origin = await resolveOrigin();
-    
-    const nonce = Date.now();
-    redirectUrl = await account.createOAuth2Token(
-      OAuthProvider.Google,
-      `${origin}/oauth?nonce=${nonce}`,
-      `${origin}/sign-up?error=oauth_failed`
+
+    const nonce = Date.now().toString();
+    const successUrl = `${origin}/oauth?nonce=${nonce}`;
+    const failureUrl = `${origin}/sign-in?error=oauth_failed`;
+
+    const redirectUrl = await account.createOAuth2Token(
+      OAuthProvider.Github,
+      successUrl,
+      failureUrl
     );
+
+    return redirect(redirectUrl);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`OAuth failed: ${message}`); // ← CORRIGIDO: parênteses normais
+    console.error("GitHub OAuth error:", error);
+
+    const origin = await resolveOrigin().catch(() => "http://localhost:3000");
+    const errorUrl = `${origin}/sign-in?error=oauth_failed&message=${encodeURIComponent(
+      error instanceof Error ? error.message : "Falha desconhecida"
+    )}`;
+
+    return redirect(errorUrl);
   }
-  return redirect(redirectUrl);
 }
