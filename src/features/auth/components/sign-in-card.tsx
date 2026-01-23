@@ -37,21 +37,9 @@ export const SignInCard = () => {
     mutate({ json: values });
   };
 
-  const handleOAuthClick = async (provider: "google" | "github") => {
-    try {
-      const origin = window.location.origin;
-      const successUrl = `${origin}/oauth`;
-      const failureUrl = `${origin}/sign-in?error=oauth_failed`;
-
-      // Redireciona diretamente para a URL do Appwrite OAuth
-      const projectId = "693f71e20030f45a228c";
-      const endpoint = "https://nyc.cloud.appwrite.io/v1";
-      const oauthUrl = `${endpoint}/account/sessions/oauth2/${provider}?project=${projectId}&success=${encodeURIComponent(successUrl)}&failure=${encodeURIComponent(failureUrl)}`;
-
-      window.location.href = oauthUrl;
-    } catch (error) {
-      console.error(`[SignInCard] Erro ao iniciar OAuth ${provider}:`, error);
-    }
+  const handleOAuthClick = (provider: "google" | "github") => {
+    // Redireciona para a API route que inicia o OAuth
+    window.location.href = `/api/oauth/${provider}`;
   };
 
   return (
