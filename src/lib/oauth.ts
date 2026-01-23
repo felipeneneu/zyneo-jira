@@ -13,7 +13,9 @@ const resolveOrigin = async () => {
   return origin;
 };
 
-export async function signUpWithGithub() {
+export async function signUpWithGithub(_formData: FormData) {
+  let redirectUrl: string;
+
   try {
     // CRÍTICO: Limpa sessões anteriores
     await forceCleanup();
@@ -24,20 +26,22 @@ export async function signUpWithGithub() {
     // Adiciona nonce para prevenir reuso
     const nonce = Date.now();
 
-    const redirectUrl = await account.createOAuth2Token(
+    redirectUrl = await account.createOAuth2Token(
       OAuthProvider.Github,
       `${origin}/oauth?nonce=${nonce}`,
       `${origin}/sign-up?error=oauth_failed`
     );
-
-    return redirect(redirectUrl);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     throw new Error(`OAuth failed: ${message}`);
   }
+
+  return redirect(redirectUrl);
 }
 
-export async function signUpWithGoogle() {
+export async function signUpWithGoogle(_formData: FormData) {
+  let redirectUrl: string;
+
   try {
     // CRÍTICO: Limpa sessões anteriores
     await forceCleanup();
@@ -47,15 +51,15 @@ export async function signUpWithGoogle() {
     
     const nonce = Date.now();
 
-    const redirectUrl = await account.createOAuth2Token(
+    redirectUrl = await account.createOAuth2Token(
       OAuthProvider.Google,
       `${origin}/oauth?nonce=${nonce}`,
       `${origin}/sign-up?error=oauth_failed`
     );
-
-    return redirect(redirectUrl);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     throw new Error(`OAuth failed: ${message}`);
   }
+
+  return redirect(redirectUrl);
 }
