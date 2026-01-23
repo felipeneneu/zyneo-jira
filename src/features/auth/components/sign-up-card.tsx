@@ -37,9 +37,16 @@ export const SignUpCard = () => {
       name: "",
     },
   });
+
   const onSubmit = (values: z.infer<typeof registerSchema>) => {
     mutate({ json: values });
   };
+
+  const handleOAuthClick = (provider: "google" | "github") => {
+    // Redireciona para a API route que inicia o OAuth
+    window.location.href = `/api/oauth/${provider}`;
+  };
+
   return (
     <div>
       <Card className="w-full h-full md:w-[487px] border-none shadow-none">
@@ -128,6 +135,8 @@ export const SignUpCard = () => {
             variant={"secondary"}
             size="lg"
             className="w-full"
+            onClick={() => handleOAuthClick("google")}
+            type="button"
           >
             <FcGoogle className="mr-2 size-5" />
             Login com Google
@@ -137,6 +146,8 @@ export const SignUpCard = () => {
             variant={"secondary"}
             size="lg"
             className="w-full"
+            onClick={() => handleOAuthClick("github")}
+            type="button"
           >
             <FaGithub className="mr-2 size-5" />
             Login com Github
