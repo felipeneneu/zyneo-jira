@@ -95,17 +95,23 @@ export const SignInCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className="p-7 flex flex-col gap-y-4">
-          <form action={signUpWithGoogle}>
+          
             <Button
               disabled={isPending}
               variant={"secondary"}
               size="lg"
               className="w-full"
+              onClick={async () => {
+    // Chame a action manualmente (ou melhor: crie uma rota separada)
+    const formData = new FormData(); // dummy, já que não usa
+    await signUpWithGoogle(formData); // vai redirecionar
+  }}
+
             >
               <FcGoogle className="mr-2 size-5" />
               Login com Google
             </Button>
-          </form>
+         
           <form action={signUpWithGithub}>
             <Button
               disabled={isPending}
@@ -133,6 +139,7 @@ export const SignInCard = () => {
     </div>
   );
 };
+
 
 
 
