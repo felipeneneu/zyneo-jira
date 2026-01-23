@@ -18,7 +18,6 @@ import {
 import Link from "next/link";
 import { loginSchema } from "../schemas";
 import { useLogin } from "../api/use-login";
-import { signUpWithGoogle, signUpWithGithub } from "@/src/lib/oauth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -37,6 +36,24 @@ export const SignInCard = () => {
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     mutate({ json: values });
   };
+
+  const handleOAuthClick = async (provider: "google" | "github") => {
+    try {
+      const origin = window.location.origin;
+      const successUrl = `${origin}/oauth`;
+      const failureUrl = `${origin}/sign-in?error=oauth_failed`;
+
+      // Redireciona diretamente para a URL do Appwrite OAuth
+      const projectId = "693f71e20030f45a228c";
+      const endpoint = "https://nyc.cloud.appwrite.io/v1";
+      const oauthUrl = `${endpoint}/account/sessions/oauth2/${provider}?project=${projectId}&success=${encodeURIComponent(successUrl)}&failure=${encodeURIComponent(failureUrl)}`;
+
+      window.location.href = oauthUrl;
+    } catch (error) {
+      console.error(`[SignInCard] Erro ao iniciar OAuth ${provider}:`, error);
+    }
+  };
+
   return (
     <div>
       <Card className="w-full h-full md:w-[487px] border-none shadow-none">
@@ -95,30 +112,28 @@ export const SignInCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className="p-7 flex flex-col gap-y-4">
-          <form action={signUpWithGoogle} className="w-full">
-            <Button
-              disabled={isPending}
-              variant={"secondary"}
-              size="lg"
-              className="w-full"
-              type="submit"
-            >
-              <FcGoogle className="mr-2 size-5" />
-              Login with Google
-            </Button>
-          </form>
-          <form action={signUpWithGithub} className="w-full">
-            <Button
-              disabled={isPending}
-              variant={"secondary"}
-              size="lg"
-              className="w-full"
-              type="submit"
-            >
-              <FaGithub className="mr-2 size-5" />
-              Login with Github
-            </Button>
-          </form>
+          <Button
+            disabled={isPending}
+            variant={"secondary"}
+            size="lg"
+            className="w-full"
+            onClick={() => handleOAuthClick("google")}
+            type="button"
+          >
+            <FcGoogle className="mr-2 size-5" />
+            Login with Google
+          </Button>
+          <Button
+            disabled={isPending}
+            variant={"secondary"}
+            size="lg"
+            className="w-full"
+            onClick={() => handleOAuthClick("github")}
+            type="button"
+          >
+            <FaGithub className="mr-2 size-5" />
+            Login with Github
+          </Button>
         </CardContent>
         <div className="px-7">
           <DottedSeparator />
@@ -135,13 +150,3 @@ export const SignInCard = () => {
     </div>
   );
 };
-
-
-
-
-
-
-
-
-
-
