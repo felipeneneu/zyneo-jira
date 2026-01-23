@@ -1,7 +1,7 @@
 import { Client, Account, Databases, Users } from "node-appwrite";
 import { cookies } from "next/headers";
 import { AUTH_COOKIE } from "../features/auth/constants";
-
+/*
 export async function createSessionClient() {
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
@@ -33,7 +33,56 @@ export async function createSessionClient() {
     },
   };
 }
+*/
+export async function createSessionClient() {
+  console.log("[createSessionClient] Iniciando...");
+  
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
+  
+  console.log("[createSessionClient] Config:", { endpoint, projectId });
+  
+  if (!endpoint || !projectId) {
+    console.error("[createSessionClient] Configuração faltando!");
+    throw new Error("APPWRITE_NOT_CONFIGURED");
+  }
 
+  const client = new Client().setEndpoint(endpoint).setProject(projectId);
+  
+  console.log("[createSessionClient] Buscando cookies...");
+  const cookieStore = await cookies();
+  
+  console.log("[createSessionClient] Cookie store tipo:", typeof cookieStore);
+  console.log("[createSessionClient] Cookie store.get tipo:", typeof cookieStore.get);
+  
+  const emailSession = cookieStore.get(AUTH_COOKIE)?.value;
+  const oauthSession = cookieStore.get(`a_session_${projectId}`)?.value;
+  
+  console.log("[createSessionClient] Sessions encontradas:", { 
+    emailSession: !!emailSession, 
+    oauthSession: !!oauthSession 
+  });
+  
+  const session = oauthSession ?? emailSession;
+  
+  if (!session) {
+    console.log("[createSessionClient] Nenhuma sessão encontrada");
+    throw new Error("NO_SESSION");
+  }
+  
+  client.setSession(session);
+  
+  console.log("[createSessionClient] Sucesso!");
+  
+  return {
+    get account() {
+      return new Account(client);
+    },
+    get databases() {
+      return new Databases(client);
+    },
+  };
+}
 export async function createAdminClient() {
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
@@ -80,3 +129,4 @@ export async function forceCleanup() {
     } catch {}
   } catch {}
 }
+
