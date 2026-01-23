@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { loginSchema, registerSchema } from "../schemas";
-import { createAdminClient } from "@/src/lib/appwrite";
 import { ID } from "node-appwrite";
 import { deleteCookie, setCookie } from "hono/cookie";
+
+import { loginSchema, registerSchema } from "../schemas";
+import { createAdminClient } from "@/src/lib/appwrite";
 import { AUTH_COOKIE } from "../constants";
 import { sessionMiddleware } from "@/src/lib/session-middleware";
-
 
 const app = new Hono()
   .get("/current", sessionMiddleware, (c) => {
@@ -14,35 +14,44 @@ const app = new Hono()
     return c.json({ data: user });
   })
   .post("/login", zValidator("json", loginSchema), async (c) => {
-    const { email, password } = c.req.valid("json");
-    const { account } = await createAdminClient();
-    const session = await account.createEmailPasswordSession(email, password);
-    setCookie(c, AUTH_COOKIE, session.secret, {
-      path: "/",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+    try {
+      const { email, password } = c.req.valid("json");
+      const { account } = await createAdminClient();
+      const session = await account.createEmailPasswordSession(email, password);
 
-    return c.json({ success: true });
+      setCookie(c, AUTH_COOKIE, session.secret, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      });
+
+      return c.json({ success: true });
+    } catch (error) {
+      return c.json({ error: getErrorMessage(error) }, 401);
+    }
   })
   .post("/register", zValidator("json", registerSchema), async (c) => {
-    const { name, email, password } = c.req.valid("json");
+    try {
+      const { name, email, password } = c.req.valid("json");
+      const { account } = await createAdminClient();
+      await account.create(ID.unique(), email, password, name);
 
-    const { account } = await createAdminClient();
-    await account.create(ID.unique(), email, password, name);
+      const session = await account.createEmailPasswordSession(email, password);
 
-    const session = await account.createEmailPasswordSession(email, password);
+      setCookie(c, AUTH_COOKIE, session.secret, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      });
 
-    setCookie(c, AUTH_COOKIE, session.secret, {
-      path: "/",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-    return c.json({ success: true });
+      return c.json({ success: true });
+    } catch (error) {
+      return c.json({ error: getErrorMessage(error) }, 400);
+    }
   })
   .post("/sync-profile", sessionMiddleware, async (c) => {
     const account = c.get("account");
@@ -52,18 +61,25 @@ const app = new Hono()
     const identity = identities.identities?.[0];
 
     if (!identity?.providerAccessToken) {
-      return c.json({ data: { avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null } });
+      return c.json({
+        data: {
+          avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null,
+        },
+      });
     }
 
     let avatarUrl: string | null = null;
 
     try {
       if (identity.provider === "google") {
-        const res = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
-          headers: {
-            Authorization: `Bearer ${identity.providerAccessToken}`,
-          },
-        });
+        const res = await fetch(
+          "https://openidconnect.googleapis.com/v1/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${identity.providerAccessToken}`,
+            },
+          }
+        );
         if (res.ok) {
           const json = await res.json();
           avatarUrl = json.picture ?? null;
@@ -84,7 +100,11 @@ const app = new Hono()
     } catch {}
 
     if (!avatarUrl) {
-      return c.json({ data: { avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null } });
+      return c.json({
+        data: {
+          avatarUrl: (user.prefs as Record<string, string>).avatarUrl ?? null,
+        },
+      });
     }
 
     const nextPrefs = { ...(user.prefs as Record<string, string>), avatarUrl };
@@ -92,14 +112,27 @@ const app = new Hono()
 
     return c.json({ data: { avatarUrl } });
   })
-
   .post("/logout", sessionMiddleware, async (c) => {
-    const account = c.get("account");
-    deleteCookie(c, AUTH_COOKIE);
+    try {
+      const account = c.get("account");
 
-    await account.deleteSession("current");
+      deleteCookie(c, AUTH_COOKIE);
+      deleteCookie(c, `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
 
-    return c.json({ success: true });
+      try {
+        await account.deleteSession("current");
+      } catch {}
+
+      return c.json({ success: true });
+    } catch {
+      deleteCookie(c, AUTH_COOKIE);
+      deleteCookie(c, `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`);
+
+      return c.json({ success: true });
+    }
   });
 
 export default app;
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Unknown error";

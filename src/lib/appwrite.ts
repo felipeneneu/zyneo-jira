@@ -1,19 +1,28 @@
-import { Client, Account, Users, Databases } from "node-appwrite";
+import { Client, Account, Databases, Users } from "node-appwrite";
 import { cookies } from "next/headers";
 import { AUTH_COOKIE } from "../features/auth/constants";
 
 export async function createSessionClient() {
-  const client = new Client()
-    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
 
-  const session = (await cookies()).get(AUTH_COOKIE);
-  if (!session?.value) {
-    throw new Error("Unauthorized");
+  if (!endpoint || !projectId) {
+    throw new Error("APPWRITE_NOT_CONFIGURED");
   }
 
-  client.setSession(session.value);
+  const client = new Client().setEndpoint(endpoint).setProject(projectId);
 
+  const cookieStore = await cookies();
+  const emailSession = cookieStore.get(AUTH_COOKIE)?.value;
+  const oauthSession = cookieStore.get(`a_session_${projectId}`)?.value;
+
+  const session = oauthSession ?? emailSession;
+
+  if (!session) {
+    throw new Error("NO_SESSION");
+  }
+
+  client.setSession(session);
 
   return {
     get account() {
@@ -26,10 +35,19 @@ export async function createSessionClient() {
 }
 
 export async function createAdminClient() {
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
+  const apiKey = process.env.NEXT_APPWRITE_KEY;
+
+  if (!endpoint || !projectId || !apiKey) {
+    throw new Error("APPWRITE_NOT_CONFIGURED");
+  }
+
   const client = new Client()
-    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT as string)
-    .setKey(process.env.NEXT_APPWRITE_KEY as string);
+    .setEndpoint(endpoint)
+    .setProject(projectId)
+    .setKey(apiKey);
+
   return {
     get account() {
       return new Account(client);
@@ -38,4 +56,27 @@ export async function createAdminClient() {
       return new Users(client);
     },
   };
+}
+
+// NOVA FUNÇÃO: Limpa todas as sessões
+export async function forceCleanup() {
+  try {
+    const cookieStore = await cookies();
+    
+    // Remove cookie de email
+    cookieStore.delete(AUTH_COOKIE);
+    
+    // Remove cookie OAuth
+    const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
+    const oauthCookie = projectId ? `a_session_${projectId}` : null;
+    if (oauthCookie) {
+      cookieStore.delete(oauthCookie);
+    }
+    
+    // Tenta deletar sessão no Appwrite
+    try {
+      const { account } = await createSessionClient();
+      await account.deleteSession("current");
+    } catch {}
+  } catch {}
 }

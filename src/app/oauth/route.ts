@@ -1,35 +1,46 @@
-import { AUTH_COOKIE } from "@/src/features/auth/constants";
-import { createAdminClient } from "@/src/lib/appwrite";
+import { createAdminClient, forceCleanup } from "@/src/lib/appwrite";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const userId = request.nextUrl.searchParams.get("userId");
-  const secret = request.nextUrl.searchParams.get("secret");
-
-  if (!userId || !secret) {
-     // If missing fields, potentially redirect to login with error, 
-     // but for now just returning 400 is "safer" than crashing, 
-     // though user asked to handle empty states. 
-     // Let's redirect to sign-in if possible, or just stay 400 but valid.
-    return new NextResponse("Missing fields", { status: 400 });
-  }
-
-  const { account } = await createAdminClient();
-  
   try {
+    const userId = request.nextUrl.searchParams.get("userId");
+    const secret = request.nextUrl.searchParams.get("secret");
+
+    if (!userId || !secret) {
+      return NextResponse.redirect(
+        `${request.nextUrl.origin}/sign-up?error=missing_params`
+      );
+    }
+
+    // CRÍTICO: Limpa sessões anteriores antes de criar nova
+    await forceCleanup();
+
+    const { account } = await createAdminClient();
+    
+    // Cria nova sessão
     const session = await account.createSession(userId, secret);
 
-    (await cookies()).set(AUTH_COOKIE, session.secret, {
+    // Salva no cookie (usa o cookie OAuth padrão do Appwrite)
+    const cookieStore = await cookies();
+    const oauthCookieName = `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`;
+    
+    cookieStore.set(oauthCookieName, session.secret, {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30, // 30 dias
     });
-  } catch (error) {
-    console.error("OAuth Session Creation Failed:", error);
-    return NextResponse.redirect(`${request.nextUrl.origin}/sign-in`);
-  }
 
-  return NextResponse.redirect(`${request.nextUrl.origin}/`);
+    return NextResponse.redirect(`${request.nextUrl.origin}/`);
+    
+  } catch {
+    // Cleanup de emergência
+    await forceCleanup();
+    
+    return NextResponse.redirect(
+      `${request.nextUrl.origin}/sign-up?error=callback_failed`
+    );
+  }
 }

@@ -11,6 +11,8 @@ import { Button } from "@/src/ui/button";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { ScrollArea } from "@/src/ui/scroll-area";
 import { step1Schema, step2Schema } from "./schemas";
+import Link from "next/link";
+import Image from "next/image";
 
 interface WorkspaceWizardProps {
   open: boolean;
@@ -54,9 +56,17 @@ function WizardContent({
   return (
     <div className="grid min-h-0 grid-rows-[auto_1fr_auto] h-full w-full bg-zinc-950 text-white">
       {/* 1. Header (Logo) */}
-      <div className="px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 border-b border-white/5 flex items-center justify-between bg-zinc-950 z-20">
+      <div className="px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 border-b border-white/5 flex items-center justify-between bg-neutral-950 z-20">
         <div className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-tight">ProjetaAi</span>
+          <Link href="/">
+            <Image
+              src="/logo.svg"
+              alt="logo"
+              width={164}
+              height={48}
+              className="invert"
+            />
+          </Link>
         </div>
         <div className="text-sm text-zinc-500 font-medium">
           Passo {state.step} de {state.totalSteps}

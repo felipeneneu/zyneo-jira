@@ -96,6 +96,64 @@ ${focusCandidates.length > 0 ? focusCandidates.join("\n") : "- Nenhuma"}
 `;
 };
 
+const buildFallbackFocusJson = (params: {
+  total: number;
+  wipCount: number;
+  overdueCount: number;
+  blockedCount: number;
+  staleCount: number;
+  dueTodayCount: number;
+  dueSoonCount: number;
+  noDueDateCount: number;
+  focusCandidates: string[];
+}) => {
+  const {
+    total,
+    wipCount,
+    overdueCount,
+    blockedCount,
+    staleCount,
+    dueTodayCount,
+    dueSoonCount,
+    noDueDateCount,
+    focusCandidates,
+  } = params;
+
+  const risks: string[] = [];
+  if (overdueCount > 0) risks.push(`${overdueCount} tarefa(s) atrasada(s)`);
+  if (blockedCount > 0) risks.push(`${blockedCount} tarefa(s) bloqueada(s)`);
+  if (staleCount > 0) risks.push(`${staleCount} tarefa(s) parada(s)`);
+
+  const focusTitle = focusCandidates[0]
+    ? focusCandidates[0].replace(/^-\s*/, "")
+    : "Revisar prioridades do dia";
+
+  const pending: string[] = [];
+  if (dueTodayCount > 0)
+    pending.push(`${dueTodayCount} tarefa(s) vencem hoje`);
+  if (noDueDateCount > 0)
+    pending.push(`${noDueDateCount} tarefa(s) sem prazo`);
+
+  const trendBits = [];
+  if (dueSoonCount > 0)
+    trendBits.push(`${dueSoonCount} tarefa(s) vencem nos próximos 3 dias`);
+  if (wipCount > 0) trendBits.push(`${wipCount} em andamento`);
+
+  return {
+    fallback: true,
+    summary: `Hoje voce tem ${total} tarefa(s) atribuida(s), com ${wipCount} em andamento e ${overdueCount} atrasada(s).`,
+    risks: risks.slice(0, 3),
+    todayFocus: {
+      title: focusTitle,
+      description:
+        "Foque na tarefa mais proxima do prazo para reduzir risco.",
+    },
+    pending: pending.slice(0, 4),
+    trend: trendBits.length > 0 ? trendBits.join(" e ") : "Fluxo estavel",
+    humor: "IA indisponivel no momento, mas seu foco segue firme.",
+  };
+};
+
 const app = new Hono()
   // GET /api/notifications?filter=all|unread|starred
   .get(
@@ -138,11 +196,17 @@ const app = new Hono()
   .post(
     "/daily-focus",
     sessionMiddleware,
-    zValidator("json", z.object({ workspaceId: z.string().min(1) })),
+    zValidator(
+      "json",
+      z.object({
+        workspaceId: z.string().min(1),
+        force: z.boolean().optional(),
+      })
+    ),
     async (c) => {
       const databases = c.get("databases");
       const user = c.get("user");
-      const { workspaceId } = c.req.valid("json");
+      const { workspaceId, force } = c.req.valid("json");
 
       const resolvedWorkspaceId = await resolveWorkspaceId(
         databases,
@@ -173,7 +237,7 @@ const app = new Hono()
         ]
       );
 
-      if (existing.documents.length > 0) {
+      if (existing.documents.length > 0 && !force) {
         return c.json({ data: { notification: existing.documents[0] } });
       }
 
@@ -306,17 +370,20 @@ const app = new Hono()
           },
         });
         text = result.response.text().trim();
-      } catch (error) {
-        console.error("Gemini generation failed:", error);
-        // Fallback JSON if AI is down/rate-limited
-        text = JSON.stringify({
-          summary: "O sistema de IA está com alto tráfego no momento. Tente novamente em alguns instantes para obter seu resumo personalizado.",
-          risks: [],
-          todayFocus: { title: "Foco Manual", description: "Verifique suas tarefas prioritárias manualmente enquanto a IA recarrega." },
-          pending: [],
-          trend: "Indisponível temporariamente", 
-          humor: "Até robôs precisam de um cafezinho às vezes."
-        });
+      } catch {
+        text = JSON.stringify(
+          buildFallbackFocusJson({
+            total: tasks.total,
+            wipCount,
+            overdueCount,
+            blockedCount,
+            staleCount,
+            dueTodayCount,
+            dueSoonCount,
+            noDueDateCount,
+            focusCandidates,
+          })
+        );
       }
       
       // Sanitization to ensure we store valid JSON string
@@ -324,21 +391,25 @@ const app = new Hono()
       try {
         // Try to parse to validate, but store as string
         JSON.parse(text); 
-      } catch (e) {
-        console.error("Failed to parse Gemini JSON:", text);
+      } catch {
         // Fallback to a valid JSON error message or keep raw text if it was just markdown wrapped
         if (text.startsWith("```json")) {
            snippet = text.replace(/```json\n?|\n?```/g, "");
         } else {
            // Ultimate fallback if AI fails completely to give JSON
-           snippet = JSON.stringify({
-             summary: "Não foi possível processar o overview hoje. Tente novamente mais tarde.",
-             risks: [],
-             todayFocus: { title: "Check manual", description: "Verifique suas tarefas manualmente." },
-             pending: [],
-             trend: "Indefinido",
-             humor: "A IA tirou uma folga."
-           });
+           snippet = JSON.stringify(
+             buildFallbackFocusJson({
+               total: tasks.total,
+               wipCount,
+               overdueCount,
+               blockedCount,
+               staleCount,
+               dueTodayCount,
+               dueSoonCount,
+               noDueDateCount,
+               focusCandidates,
+             })
+           );
         }
       }
       
@@ -348,22 +419,38 @@ const app = new Hono()
       }
 
       const { ID } = await import("node-appwrite");
-      const notification = await databases.createDocument<Notification>(
-        DATABASE_ID,
-        NOTIFICATIONS_ID,
-        ID.unique(),
-        {
-          userId: user.$id,
-          workspaceId: resolvedWorkspaceId,
-          type: "system.daily_focus",
-          severity: "info",
-          title: `Overview diario - ${new Date().toLocaleDateString("pt-BR")}`,
-          snippet,
-          entityType: "workspace",
-          entityId: resolvedWorkspaceId,
-          threadKey,
-        }
-      );
+      let notification: Notification;
+      if (existing.documents.length > 0) {
+        const doc = existing.documents[0];
+        notification = await databases.updateDocument<Notification>(
+          DATABASE_ID,
+          NOTIFICATIONS_ID,
+          doc.$id,
+          {
+            severity: "info",
+            title: `Overview diario - ${new Date().toLocaleDateString("pt-BR")}`,
+            snippet,
+            readAt: undefined,
+          }
+        );
+      } else {
+        notification = await databases.createDocument<Notification>(
+          DATABASE_ID,
+          NOTIFICATIONS_ID,
+          ID.unique(),
+          {
+            userId: user.$id,
+            workspaceId: resolvedWorkspaceId,
+            type: "system.daily_focus",
+            severity: "info",
+            title: `Overview diario - ${new Date().toLocaleDateString("pt-BR")}`,
+            snippet,
+            entityType: "workspace",
+            entityId: resolvedWorkspaceId,
+            threadKey,
+          }
+        );
+      }
 
       return c.json({ data: { notification } });
     }
