@@ -96,21 +96,20 @@ export const SignInCard = () => {
         </div>
         <CardContent className="p-7 flex flex-col gap-y-4">
           
-            <Button
-              disabled={isPending}
-              variant={"secondary"}
-              size="lg"
-              className="w-full"
-              onClick={async () => {
+<Button
+  disabled={isPending}
+  variant={"secondary"}
+  size="lg"
+  className="w-full"
+  onClick={async () => {
     // Chame a action manualmente (ou melhor: crie uma rota separada)
     const formData = new FormData(); // dummy, já que não usa
     await signUpWithGoogle(formData); // vai redirecionar
   }}
-
-            >
-              <FcGoogle className="mr-2 size-5" />
-              Login com Google
-            </Button>
+>
+  <FcGoogle className="mr-2 size-5" />
+  Login com Google
+</Button>
          
           <form action={signUpWithGithub}>
             <Button
@@ -139,6 +138,7 @@ export const SignInCard = () => {
     </div>
   );
 };
+
 
 
 
