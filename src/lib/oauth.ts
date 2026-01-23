@@ -39,7 +39,7 @@ export async function signUpWithGoogle() {
 }
 */
 
-export async function signUpWithGoogle() {
+export async function signUpWithGoogle(formData: FormData) {
   const origin = "https://zyneolist.vercel.app"; // ou resolveOrigin()
   const clientId = process.env.APPWRITE_CLIENT_ID_GOOGLE;
   
