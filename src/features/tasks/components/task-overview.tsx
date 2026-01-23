@@ -78,6 +78,7 @@ export const TaskOverview = ({ task }: TaskOverviewProps) => {
           <OverviewProperty label="Assinatura:">
             <MembersAvatar
               name={task.assignee?.name ?? "Unknown"}
+              avatarUrl={task.assignee?.avatarUrl}
               className="size-6"
             />
             <p className="text-sm font-medium">

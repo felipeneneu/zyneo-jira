@@ -147,6 +147,8 @@ const app = new Hono()
             ...member,
             name: user.name,
             email: user.email,
+            avatarUrl:
+              (user.prefs as Record<string, string>)?.avatarUrl ?? null,
           };
         })
       );
@@ -474,6 +476,7 @@ Prazo: ${task.dueDate ?? "-"}
       ...member,
       name: user.name,
       email: user.email,
+      avatarUrl: (user.prefs as Record<string, string>)?.avatarUrl ?? null,
     };
 
     return c.json({

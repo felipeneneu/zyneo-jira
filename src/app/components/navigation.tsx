@@ -16,7 +16,7 @@ import {
   GoHomeFill,
 } from "react-icons/go";
 
-import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
+import { useResolvedWorkspaceId } from "@/src/features/workspaces/hooks/use-resolved-workspace-id";
 import { useGetWorkspace } from "@/src/features/workspaces/api/use-get-workspace-id";
 import { getWorkspacePreset } from "@/src/features/workspaces/domain/workspace-presets";
 
@@ -74,9 +74,12 @@ const routes = [
 ];
 
 export const Navigation = () => {
-  const workspaceId = useWorkspaceId();
+  const workspaceId = useResolvedWorkspaceId();
   const pathname = usePathname();
-  const { data: workspace } = useGetWorkspace({ workspaceId });
+  const { data: workspace } = useGetWorkspace({
+    workspaceId: workspaceId ?? "",
+    enabled: !!workspaceId,
+  });
   const preset = getWorkspacePreset(workspace?.workspaceType);
   const capabilities = workspace?.capabilities ?? preset?.capabilities;
   const visibleRoutes = capabilities
@@ -85,6 +88,9 @@ export const Navigation = () => {
   return (
     <ul className="flex flex-col">
       {visibleRoutes.map((item) => {
+        if (!item.absolute && !workspaceId) {
+          return null;
+        }
         const fullHref = item.absolute
           ? item.href
           : `/workspaces/${workspaceId}${item.href}`;

@@ -1,14 +1,16 @@
 import { cn } from "@/src/lib/utils";
-import { Avatar, AvatarFallback } from "@/src/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/src/ui/avatar";
 
 interface MembersAvatarProps {
   name: string;
+  avatarUrl?: string | null;
   className?: string;
   fallbackClassName?: string;
 }
 
 export const MembersAvatar = ({
   name,
+  avatarUrl,
   className,
   fallbackClassName,
 }: MembersAvatarProps) => {
@@ -19,6 +21,7 @@ export const MembersAvatar = ({
         className
       )}
     >
+      {avatarUrl ? <AvatarImage src={avatarUrl} alt={name} /> : null}
       <AvatarFallback
         className={cn(
           "bg-neutral-200 flex items-center justify-center",

@@ -4,7 +4,7 @@ import { UserButton } from "@/src/features/auth/components/user-button";
 import { useChatUnread } from "@/src/features/chat/api/use-chat-unread";
 import { NotificationsMenuItems } from "@/src/features/notifications/components/notifications-menu-items";
 import { useGetNotifications } from "@/src/features/notifications/api/use-get-notifications";
-import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
+import { useResolvedWorkspaceId } from "@/src/features/workspaces/hooks/use-resolved-workspace-id";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +17,7 @@ import { Bell, Calendar, Loader, Search } from "lucide-react";
 
 const Header = () => {
   const { data: user, isLoading } = useCurrent();
-  const workspaceId = useWorkspaceId() as string | undefined;
+  const workspaceId = useResolvedWorkspaceId();
   const { data: unreadData } = useChatUnread(workspaceId);
   const { data: systemUnreadData } = useGetNotifications({
     filter: "unread",

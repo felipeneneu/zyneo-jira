@@ -44,7 +44,10 @@ export const EventCard = ({ ...event }: EventCardProps) => {
       >
         <p>{event.title}</p>
         <div className="flex items-center gap-x-1">
-          <MembersAvatar name={event.assignee?.name ?? "Unknown"} />
+          <MembersAvatar
+            name={event.assignee?.name ?? "Unknown"}
+            avatarUrl={event.assignee?.avatarUrl}
+          />
           <div className="size-1 rounded-full bg-neutral-300" />
           <ProjectAvatar
             name={event.project?.name ?? "No project"}

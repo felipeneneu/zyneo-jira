@@ -95,6 +95,7 @@ export const columns: ColumnDef<Task>[] = [
             className="size-6"
             fallbackClassName="text-xs"
             name={assignee.name}
+            avatarUrl={assignee.avatarUrl}
           />
           <p className="line-clamp-1">{assignee.name}</p>
         </div>

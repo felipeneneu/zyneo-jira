@@ -32,6 +32,7 @@ export const KanbanCard = ({ task }: kanbanCardProps) => {
       <div className="flex items-center gap-x-1.5">
         <MembersAvatar
           name={task.assignee?.name ?? "Unassigned"}
+          avatarUrl={task.assignee?.avatarUrl}
           fallbackClassName="text-[10px]"
         />
         <div className="size-1 rounded-full bg-neutral-300" />

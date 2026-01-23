@@ -11,7 +11,7 @@ import {
 import { useLogout } from "../api/use-logout";
 import { useCurrent } from "../api/use-current";
 import { Loader, LogOut } from "lucide-react";
-import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
+import { useResolvedWorkspaceId } from "@/src/features/workspaces/hooks/use-resolved-workspace-id";
 import { useChatUnread } from "@/src/features/chat/api/use-chat-unread";
 import { useSyncProfile } from "../api/use-sync-profile";
 import { useEffect, useMemo, useRef } from "react";
@@ -29,7 +29,7 @@ export const UserButton = ({
   const { data: user, isLoading } = useCurrent();
   const { mutate: logout } = useLogout();
 
-  const workspaceId = useWorkspaceId() as string | undefined;
+  const workspaceId = useResolvedWorkspaceId();
   const { data: unreadData } = useChatUnread(workspaceId);
   const { data: systemUnreadData } = useGetNotifications({
     filter: "unread",

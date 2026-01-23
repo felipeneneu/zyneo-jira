@@ -33,7 +33,7 @@ import { ProjectAvatar } from "../../projects/components/project-avatar";
 interface CreateTaskFormProps {
   onCancel?: () => void;
   projectOptions: { id: string; name: string; imageUrl: string }[];
-  memberOptions: { id: string; name: string }[];
+  memberOptions: { id: string; name: string; avatarUrl?: string | null }[];
   status?: TaskStatus;
 }
 
@@ -138,6 +138,7 @@ export const CreateTaskForm = ({
                               <MembersAvatar
                                 className="size-6"
                                 name={member.name}
+                                avatarUrl={member.avatarUrl}
                               />
                               {member.name}
                             </div>

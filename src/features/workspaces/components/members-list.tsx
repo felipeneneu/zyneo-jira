@@ -70,10 +70,10 @@ export const MemberList = () => {
         >
           <Link href={linkBack}>
             <ArrowLeftIcon className="size-4 mr-2" />
-            Back
+            Voltar
           </Link>
         </Button>
-        <CardTitle className="text-xl font-bold">Members list</CardTitle>
+        <CardTitle className="text-xl font-bold">Lista de Membros</CardTitle>
       </CardHeader>
       <div className="px-7">
         <DottedSeparator />
@@ -84,6 +84,7 @@ export const MemberList = () => {
             <div className="flex items-center gap-2">
               <MembersAvatar
                 name={member.name}
+                avatarUrl={member.avatarUrl}
                 fallbackClassName="text-lg"
                 className="size-10"
               />
@@ -111,7 +112,7 @@ export const MemberList = () => {
                     }
                     disabled={isUpdatingMember}
                   >
-                    Set as Administrator
+                    Promover a Admin
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="font-medium"
@@ -120,14 +121,14 @@ export const MemberList = () => {
                     }
                     disabled={isUpdatingMember}
                   >
-                    Set as Member
+                    Promover a Membro
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="font-medium text-amber-700"
                     onClick={() => handleDeleteMember(member.$id)}
                     disabled={isDeletingMember}
                   >
-                    Remove {member.name}
+                    Remover {member.name}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

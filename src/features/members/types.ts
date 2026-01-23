@@ -11,4 +11,5 @@ export type Member = Models.Document & {
   role: MemberRole;
   name: string;
   email: string;
+  avatarUrl?: string | null;
 };

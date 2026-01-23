@@ -20,6 +20,7 @@ export const useMarkNotificationRead = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-focus"] });
     },
   });
 

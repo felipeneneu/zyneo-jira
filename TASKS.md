@@ -1,86 +1,58 @@
-## Correcoes - Upload de imagem no projeto
+# TASKS.md
+
+## Documentacao base do projeto (README, AGENTS, Context)
 
 Objetivo:
-- Corrigir o upload de imagem na criacao/edicao de projetos (Appwrite Storage) para aceitar File vindo do form.
+- Produzir README profissional com overview, features, stack e instalacao.
+- Definir AGENTS.md com personas de IA (frontend, backend, devops, QA, auditoria).
+- Criar Context.md como SSOT com arquitetura, estrutura e convencoes.
 
 Aceite:
-- Criar projeto com imagem gera arquivo no bucket e salva `imageUrl` com fileId.
-- Atualizar projeto com nova imagem substitui `imageUrl`.
-- Criar projeto sem imagem continua funcionando.
+- README.md cobre overview, features, stack, requisitos, instalacao, env vars, scripts e arquitetura.
+- AGENTS.md descreve cada agente (incluindo auditoria) com system prompt, foco de stack e responsabilidades.
+- Context.md documenta padroes arquiteturais, estrutura de pastas e convencoes de naming.
 
 Fora de escopo:
-- Alterar upload de imagem em workspaces ou tarefas.
-- Validacao de tamanho/tipo de arquivo.
-- Ajustes de UI.
+- Mudancas de codigo ou UI.
+- Implementacao de novas features.
 
 Dependencias:
-- `node-appwrite` com suporte a `InputFile.fromBuffer`.
+- Nenhuma.
 
-## Notificacao de chat responsiva + realtime com som
+## Analise 360 e documentacao estrategica (README, context, agents, requirements)
 
 Objetivo:
-- Exibir badge de notificacao do chat apenas no mobile (UserButton) e no desktop no icon Bell do Header.
-- Atualizar realtime para tocar som quando chegar mensagem nova no workspace.
+- Extrair requisitos funcionais e nao funcionais do sistema descrito.
+- Propor arquitetura e modelagem de dados em alto nivel.
+- Gerar README.md, context.md, agents.md e requirements.md em Markdown.
 
 Aceite:
-- No mobile, o badge aparece no UserButton; no desktop, o badge aparece no Bell do Header.
-- Ao chegar nova mensagem (de outro usuario), o badge atualiza em tempo real.
-- Som de notificacao toca em chegada de mensagem (quando permitido pelo browser).
+- requirements.md lista FR/NFR com foco em escalabilidade, seguranca e performance.
+- README.md descreve overview, features, stack e instalacao.
+- context.md documenta arquitetura, estrutura de pastas e convencoes.
+- agents.md define personas com system prompts e responsabilidades.
 
 Fora de escopo:
-- Persistencia de notificacoes de chat em Appwrite.
-- Preferencias por usuario (mutar som, volume, DND).
-- Notificacoes push do navegador.
+- Implementacao de codigo.
+- Execucao de testes ou deploy.
 
 Dependencias:
-- Realtime do Appwrite (JWT) ja configurado em `useChatRealtime`.
+- Nenhuma.
 
-## Dropdown de notificacoes (chat + sistema)
+## Correcao de workspaceId indefinido em notificacoes
 
 Objetivo:
-- Transformar o Bell (desktop) e o UserButton (mobile) em entradas de menu para acessar chat e notificacoes do sistema.
-- Unificar badge com contagem de chat nao lido + notificacoes nao lidas.
+- Evitar links e chamadas com `workspaceId=undefined` ao acessar `/notifications`.
+- Garantir selecao automatica do ultimo workspace criado ou adicionado pelo usuario.
 
 Aceite:
-- Bell abre menu com itens "Chat" (workspace) e "Notificacoes do sistema" (/notifications).
-- UserButton no mobile mostra os mesmos itens.
-- Badge mostra soma de nao lidas (chat + sistema).
+- Navigation e menus usam workspace valido quando nao ha param na rota.
+- Nao ha requisicoes para `/api/chat/*` com `workspaceId=undefined`.
+- Links nao geram `/workspaces/undefined`.
 
 Fora de escopo:
-- Realtime para notificacoes do sistema.
-- Preferencias de usuario (silenciar, filtros).
+- Alterar regras de permissao no backend.
+- Persistir preferencia de workspace no servidor.
 
 Dependencias:
-- Hook `useGetNotifications` para filtro `unread`.
-
-## Realtime do chat - permissoes de leitura
-
-Objetivo:
-- Garantir que mensagens do chat tenham permissoes de leitura para habilitar realtime no cliente.
-
-Aceite:
-- Evento realtime chega no client e atualiza badge/son.
-- Mensagens continuam sendo criadas via API.
-
-Fora de escopo:
-- Refatoracao completa de permissoes por workspace.
-- Paginação de membros para permissoes por usuario.
-
-Dependencias:
-- `node-appwrite` com `Permission` e `Role`.
-
-## Som de notificacao via polling (sem realtime)
-
-Objetivo:
-- Tocar som quando houver novas mensagens detectadas pelo polling do unread.
-
-Aceite:
-- Som toca ao detectar novo `lastMessageAt` e aumento de `count`.
-- Nao toca no carregamento inicial.
-
-Fora de escopo:
-- Deduplicacao perfeita por mensagem.
-- Preferencias de usuario (mutar/volume).
-
-Dependencias:
-- `useChatUnread` com suporte a `refetchInterval`.
+- Hook de listagem de workspaces (`useGetWorkspaces`).

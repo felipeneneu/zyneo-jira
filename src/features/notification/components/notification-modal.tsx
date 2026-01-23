@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Calendar,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Button } from "@/src/ui/button";
@@ -20,6 +21,7 @@ import { MembersAvatar } from "@/src/features/members/components/members-avatar"
 import { useMarkNotificationRead, useToggleNotificationStar } from "@/src/features/notifications/api/use-notification-actions";
 import { useCreateComment } from "@/src/features/comments/api/use-create-comment";
 import type { Notification } from "@/src/features/notifications/types";
+import ReactMarkdown from "react-markdown";
 
 interface NotificationModalProps {
   notification: Notification;
@@ -32,6 +34,8 @@ const getReasonText = (type: Notification["type"]) => {
       return "Esta tarefa está sem atividade há mais de 48 horas e está marcada como em progresso ou revisão.";
     case "system.overdue":
       return "Esta tarefa passou da data de entrega prevista e ainda não foi concluída.";
+    case "system.daily_focus":
+      return "Resumo diario gerado automaticamente com base nas suas tarefas atribuídas.";
     case "human.mention":
       return "Alguém mencionou você em um comentário desta tarefa.";
     default:
@@ -45,6 +49,8 @@ const getSuggestionText = (type: Notification["type"]) => {
       return "Considere adicionar uma atualização de progresso ou marcar como bloqueada se estiver aguardando algo.";
     case "system.overdue":
       return "Revise a prioridade desta tarefa ou ajuste a data de entrega se necessário.";
+    case "system.daily_focus":
+      return "Use este resumo para escolher 1-3 tarefas de maior impacto e evitar dispersão.";
     case "human.mention":
       return "Responda ao comentário para manter a equipe alinhada.";
     default:
@@ -58,6 +64,8 @@ const getIcon = (type: Notification["type"]) => {
       return <Clock className="size-5 text-amber-500" />;
     case "system.overdue":
       return <AlertTriangle className="size-5 text-red-500" />;
+    case "system.daily_focus":
+      return <Sparkles className="size-5 text-amber-500" />;
     case "human.mention":
       return <AtSign className="size-5 text-blue-500" />;
     default:
@@ -84,8 +92,12 @@ export function NotificationModal({
     onClose();
   };
 
-  const handleOpenTask = () => {
+  const handleOpenEntity = () => {
     handleMarkReadAndClose();
+    if (notification.entityType === "workspace") {
+      router.push(`/workspaces/${notification.entityId}`);
+      return;
+    }
     router.push(`/workspaces/${notification.workspaceId}/tasks/${notification.entityId}`);
   };
 
@@ -122,8 +134,10 @@ export function NotificationModal({
 
   const handleReplanDate = () => {
     // Navigate to task with date picker focus (simplified - just open task)
-    handleOpenTask();
+    handleOpenEntity();
   };
+
+
 
   return (
     <div
@@ -178,9 +192,71 @@ export function NotificationModal({
         {/* Content */}
         <div className="px-6 py-4 space-y-4">
           {/* Snippet */}
-          <p className="text-sm text-gray-700">{notification.snippet}</p>
+          {notification.type === "system.daily_focus" ? (
+            <div className="text-sm text-gray-700">
+               {(() => {
+                 try {
+                   const data = JSON.parse(notification.snippet);
+                   if (!data.summary) throw new Error("Not our JSON");
+                   
+                   return (
+                     <div className="space-y-4">
+                       {/* Intro/Summary */}
+                       <div className="space-y-1">
+                         <div className="flex items-center gap-2">
+                           <Sparkles className="size-4 text-amber-500" />
+                           <span className="font-semibold text-gray-900">Overview</span>
+                         </div>
+                         <p className="text-gray-600 leading-relaxed">{data.summary}</p>
+                       </div>
 
-          {/* Why you got this */}
+                       {/* Focus */}
+                       {data.todayFocus && (
+                         <div className="rounded-lg bg-amber-50 p-3 border border-amber-100">
+                           <p className="font-semibold text-amber-900 mb-1">Foco Principal: {data.todayFocus.title}</p>
+                           <p className="text-amber-800/80">{data.todayFocus.description}</p>
+                         </div>
+                       )}
+                       
+                       {/* Risks / Pending */}
+                       <div className="grid grid-cols-2 gap-4">
+                         {data.risks?.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-red-600 mb-1 flex items-center gap-1"><AlertTriangle className="size-3"/> Riscos</p>
+                              <ul className="list-disc list-inside text-red-700/80">
+                                {data.risks.map((r: string, i: number) => <li key={i}>{r}</li>)}
+                              </ul>
+                            </div>
+                         )}
+                          {data.pending?.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-orange-600 mb-1 flex items-center gap-1"><Clock className="size-3"/> Atenção</p>
+                              <ul className="list-disc list-inside text-orange-700/80">
+                                {data.pending.map((p: string, i: number) => <li key={i}>{p}</li>)}
+                              </ul>
+                            </div>
+                         )}
+                       </div>
+                       
+                       {data.trend && (
+                         <p className="text-xs text-center text-gray-400 italic border-t border-gray-100 pt-2">
+                           Tendência: {data.trend}
+                         </p>
+                       )}
+                     </div>
+                   );
+                 } catch {
+                   return (
+                      <div className="prose prose-sm max-w-none text-gray-700">
+                        <ReactMarkdown>{notification.snippet}</ReactMarkdown>
+                      </div>
+                   );
+                 }
+               })()}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-700">{notification.snippet}</p>
+          )}
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs font-medium text-gray-500 uppercase mb-1">
               Por que você recebeu isso
@@ -278,9 +354,9 @@ export function NotificationModal({
             </Button>
           )}
 
-          <Button variant="ghost" onClick={handleOpenTask} className="gap-2 ml-auto">
+          <Button variant="ghost" onClick={handleOpenEntity} className="gap-2 ml-auto">
             <ExternalLink className="size-4" />
-            Abrir tarefa
+            {notification.entityType === "workspace" ? "Abrir dashboard" : "Abrir tarefa"}
           </Button>
         </div>
       </div>

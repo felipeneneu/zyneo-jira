@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Clock,
   AtSign,
+  Sparkles,
 } from "lucide-react";
 import { cn, formatDate } from "@/src/lib/utils";
 import { NotificationModal } from "./notification-modal";
@@ -32,6 +33,8 @@ const getNotificationIcon = (type: Notification["type"]) => {
       return <Clock className="size-4 text-amber-500" />;
     case "system.overdue":
       return <AlertTriangle className="size-4 text-red-500" />;
+    case "system.daily_focus":
+      return <Sparkles className="size-4 text-amber-500" />;
     case "human.mention":
       return <AtSign className="size-4 text-blue-500" />;
     default:
@@ -226,7 +229,14 @@ export function NotificationsList() {
                     </span>
                   </div>
                   <p className="mt-1 line-clamp-2 text-sm text-gray-500">
-                    {notification.snippet}
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(notification.snippet);
+                        return parsed.summary || notification.snippet;
+                      } catch {
+                        return notification.snippet;
+                      }
+                    })()}
                   </p>
                 </div>
 

@@ -12,6 +12,7 @@ export enum TaskStatus {
 export type TaskAssignee = Models.Document & {
   name: string;
   email: string;
+  avatarUrl?: string | null;
   // opcionalmente:
   userId?: string;
   role?: MemberRole;

@@ -15,6 +15,7 @@ import { useCreateTaskModal } from "@/src/features/tasks/hooks/use-create-task-m
 import { Task } from "@/src/features/tasks/types";
 import { useGetWorkspaceAnalytics } from "@/src/features/workspaces/api/use-get-workspace-analytics";
 import { useGetWorkspace } from "@/src/features/workspaces/api/use-get-workspace-id";
+import { DailyFocusCard } from "@/src/features/notifications/components/daily-focus-card";
 import { ptBR } from "date-fns/locale"; // Importe o locale brasileiro
 
 import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
@@ -79,6 +80,7 @@ export const WorkspaceIdClient = () => {
 
   return (
     <div className="h-full flex flex-col space-y-4 w-full">
+      {canShowTasks && <DailyFocusCard />}
       {canShowAnalytics && analytics && <Analytics data={analytics} />}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 ">
         {canShowTasks && tasks && (
