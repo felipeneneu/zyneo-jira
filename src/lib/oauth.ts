@@ -1,5 +1,4 @@
 "use server";
-
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { OAuthProvider } from "node-appwrite";
@@ -13,9 +12,8 @@ const resolveOrigin = async () => {
   return origin;
 };
 
-export async function signUpWithGithub(_formData: FormData) {
+export async function signUpWithGithub() {
   let redirectUrl: string;
-
   try {
     // CRÍTICO: Limpa sessões anteriores
     await forceCleanup();
@@ -25,7 +23,6 @@ export async function signUpWithGithub(_formData: FormData) {
     
     // Adiciona nonce para prevenir reuso
     const nonce = Date.now();
-
     redirectUrl = await account.createOAuth2Token(
       OAuthProvider.Github,
       `${origin}/oauth?nonce=${nonce}`,
@@ -33,15 +30,13 @@ export async function signUpWithGithub(_formData: FormData) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`OAuth failed: ${message}`);
+    throw new Error(`OAuth failed: ${message}`); // ← CORRIGIDO: parênteses normais
   }
-
   return redirect(redirectUrl);
 }
 
-export async function signUpWithGoogle(_formData: FormData) {
+export async function signUpWithGoogle() {
   let redirectUrl: string;
-
   try {
     // CRÍTICO: Limpa sessões anteriores
     await forceCleanup();
@@ -50,7 +45,6 @@ export async function signUpWithGoogle(_formData: FormData) {
     const origin = await resolveOrigin();
     
     const nonce = Date.now();
-
     redirectUrl = await account.createOAuth2Token(
       OAuthProvider.Google,
       `${origin}/oauth?nonce=${nonce}`,
@@ -58,8 +52,7 @@ export async function signUpWithGoogle(_formData: FormData) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`OAuth failed: ${message}`);
+    throw new Error(`OAuth failed: ${message}`); // ← CORRIGIDO: parênteses normais
   }
-
   return redirect(redirectUrl);
 }
