@@ -17,6 +17,7 @@ const resolveOrigin = async () => {
   return `${protocol}://${host}`;
 };
 
+/*
 export async function signUpWithGoogle() {
   await forceCleanup();
 
@@ -35,6 +36,19 @@ export async function signUpWithGoogle() {
   );
 
     redirect(url);
+}
+*/
+
+export async function signUpWithGoogle() {
+  const origin = "https://zyneolist.vercel.app"; // ou resolveOrigin()
+  const clientId = process.env.APPWRITE_CLIENT_ID_GOOGLE;
+  
+  const successUrl = `${origin}/oauth`;
+  const failureUrl = `${origin}/sign-in?error=oauth_failed`;
+
+  const url = `https://nyc.cloud.appwrite.io/v1/account/sessions/oauth2/google?success=${encodeURIComponent(successUrl)}&failure=${encodeURIComponent(failureUrl)}&project=693f71e20030f45a228c`;
+
+  redirect(url);
 }
 
 // Faça o mesmo para GitHub (copie e mude o provider)
