@@ -3,46 +3,33 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { OAuthProvider } from "node-appwrite";
-import { createAdminClient, forceCleanup } from "./appwrite"; // ajuste o path se necessário
+import { createAdminClient } from "./appwrite";
 
 const resolveOrigin = async () => {
-  const h = await headers();
+  try {
+    const h = await headers();
 
-  const origin = h.get("origin");
-  if (origin) return origin;
+    const origin = h.get("origin");
+    if (origin) return origin;
 
-  const host = h.get("host") ?? "localhost:3000";
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    const host = h.get("host") ?? "localhost:3000";
+    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
 
-  return `${protocol}://${host}`;
+    return `${protocol}://${host}`;
+  } catch (error) {
+    // Em Next.js 16, headers() pode falhar em certos contextos
+    console.error("[resolveOrigin] Erro ao obter headers:", error);
+    // Fallback para produção
+    if (process.env.NODE_ENV === "production") {
+      return "https://zyneolist.vercel.app";
+    }
+    return "http://localhost:3000";
+  }
 };
 
-/*
-export async function signUpWithGoogle() {
-  await forceCleanup();
-
-  const { account } = await createAdminClient();
+export async function signUpWithGoogle(formData: FormData) {
   const origin = await resolveOrigin();
 
-  const nonce = Date.now().toString();
-  const successUrl = `${origin}/oauth?nonce=${nonce}`;
-  const failureUrl = `${origin}/sign-in?error=oauth_failed`;
-
-  // ⚠️ NÃO use redirect()
-  const url = account.createOAuth2Session(
-    OAuthProvider.Google,
-    successUrl,
-    failureUrl
-  );
-
-    redirect(url);
-}
-*/
-
-export async function signUpWithGoogle(formData: FormData) {
-  const origin = "https://zyneolist.vercel.app"; // ou resolveOrigin()
-  const clientId = process.env.APPWRITE_CLIENT_ID_GOOGLE;
-  
   const successUrl = `${origin}/oauth`;
   const failureUrl = `${origin}/sign-in?error=oauth_failed`;
 
@@ -51,10 +38,10 @@ export async function signUpWithGoogle(formData: FormData) {
   redirect(url);
 }
 
-// Faça o mesmo para GitHub (copie e mude o provider)
 export async function signUpWithGithub() {
   try {
-    await forceCleanup();
+    // REMOVIDO: await forceCleanup() - causava erro com cookies() no Next.js 16
+    // A limpeza de sessão será feita no callback OAuth
 
     const { account } = await createAdminClient();
     const origin = await resolveOrigin();
@@ -71,9 +58,9 @@ export async function signUpWithGithub() {
 
     return redirect(redirectUrl);
   } catch (error) {
-    console.error("GitHub OAuth error:", error);
+    console.error("[signUpWithGithub] Erro:", error);
 
-    const origin = await resolveOrigin().catch(() => "http://localhost:3000");
+    const origin = await resolveOrigin();
     const errorUrl = `${origin}/sign-in?error=oauth_failed&message=${encodeURIComponent(
       error instanceof Error ? error.message : "Falha desconhecida"
     )}`;
