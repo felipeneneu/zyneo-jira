@@ -1,6 +1,5 @@
 "use client";
 import { FcGoogle } from "react-icons/fc";
-import { OAuthButtons } from "./OAuthButtons";
 import { FaGithub } from "react-icons/fa";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -96,7 +95,29 @@ export const SignInCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className="p-7 flex flex-col gap-y-4">
-          <OAuthButtons />
+          <form action={signUpWithGoogle}>
+            <Button
+              disabled={isPending}
+              variant={"secondary"}
+              size="lg"
+              className="w-full"
+            >
+              <FcGoogle className="mr-2 size-5" />
+              Login com Google
+            </Button>
+          </form>
+          <form action={signUpWithGithub}>
+            <Button
+              disabled={isPending}
+              variant={"secondary"}
+              size="lg"
+              className="w-full"
+            >
+              <FaGithub className="mr-2 size-5" />
+              Login com Github
+            </Button>
+          </form>
+          
         </CardContent>
         <div className="px-7">
           <DottedSeparator />
@@ -113,6 +134,7 @@ export const SignInCard = () => {
     </div>
   );
 };
+
 
 
 
