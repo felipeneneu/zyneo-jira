@@ -28,14 +28,33 @@ const resolveOrigin = async () => {
 };
 
 export async function signUpWithGoogle(formData: FormData) {
-  const origin = await resolveOrigin();
+  try {
+    // REMOVIDO: await forceCleanup() - causava erro com cookies() no Next.js 16
+    // A limpeza de sessão será feita no callback OAuth
 
-  const successUrl = `${origin}/oauth`;
-  const failureUrl = `${origin}/sign-in?error=oauth_failed`;
+    const { account } = await createAdminClient();
+    const origin = await resolveOrigin();
 
-  const url = `https://nyc.cloud.appwrite.io/v1/account/sessions/oauth2/google?success=${encodeURIComponent(successUrl)}&failure=${encodeURIComponent(failureUrl)}&project=693f71e20030f45a228c`;
+    const successUrl = `${origin}/oauth`;
+    const failureUrl = `${origin}/sign-in?error=oauth_failed`;
 
-  redirect(url);
+    const redirectUrl = await account.createOAuth2Token(
+      OAuthProvider.Google,
+      successUrl,
+      failureUrl
+    );
+
+    return redirect(redirectUrl);
+  } catch (error) {
+    console.error("[signUpWithGoogle] Erro:", error);
+
+    const origin = await resolveOrigin();
+    const errorUrl = `${origin}/sign-in?error=oauth_failed&message=${encodeURIComponent(
+      error instanceof Error ? error.message : "Falha desconhecida"
+    )}`;
+
+    return redirect(errorUrl);
+  }
 }
 
 export async function signUpWithGithub() {
