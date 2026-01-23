@@ -1,5 +1,6 @@
 "use client";
 import { FcGoogle } from "react-icons/fc";
+import { OAuthButtons } from "./OAuthButtons";
 import { FaGithub } from "react-icons/fa";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -95,36 +96,7 @@ export const SignInCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className="p-7 flex flex-col gap-y-4">
-          
-<Button
-  disabled={isPending}
-  variant="secondary"
-  size="lg"
-  className="w-full"
-  onClick={async () => {
-    try {
-      await signUpWithGoogle(); // sem argumentos!
-    } catch (err) {
-      console.error("Falha ao iniciar Google login:", err);
-      // opcional: toast.error("Erro ao conectar com Google")
-    }
-  }}
->
-  <FcGoogle className="mr-2 size-5" />
-  Login com Google
-</Button>
-         
-          <form action={signUpWithGithub}>
-            <Button
-              disabled={isPending}
-              variant={"secondary"}
-              size="lg"
-              className="w-full"
-            >
-              <FaGithub className="mr-2 size-5" />
-              Login com Github
-            </Button>
-          </form>
+          <OAuthButtons />
         </CardContent>
         <div className="px-7">
           <DottedSeparator />
@@ -141,6 +113,7 @@ export const SignInCard = () => {
     </div>
   );
 };
+
 
 
 
