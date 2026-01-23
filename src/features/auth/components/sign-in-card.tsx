@@ -100,7 +100,7 @@ export const SignInCard = () => {
             variant={"secondary"}
             size="lg"
             className="w-full"
-            onClick={() => signUpWithGoogle()}
+             onClick={() => signUpWithGoogle(new FormData())}
           >
             <FcGoogle className="mr-2 size-5" />
             Login with Google
@@ -131,6 +131,7 @@ export const SignInCard = () => {
     </div>
   );
 };
+
 
 
 
