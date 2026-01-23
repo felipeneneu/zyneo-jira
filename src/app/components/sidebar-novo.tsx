@@ -36,6 +36,8 @@ import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id
 import { useGetWorkspace } from "@/src/features/workspaces/api/use-get-workspace-id";
 import { ProjectAvatar } from "@/src/features/projects/components/project-avatar";
 import { useCreateProjectModal } from "@/src/features/projects/hooks/use-create-project-modal";
+import { getWorkspacePreset } from "@/src/features/workspaces/domain/workspace-presets";
+import { DottedSeparator } from "@/src/ui/dotted-separator";
 
 
 

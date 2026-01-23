@@ -51,14 +51,25 @@ export const EditTaskForm = ({
 }: EditTaskFormProps) => {
   const { mutate, isPending } = useUpdateTask();
 
+  const defaultValues: EditTaskFormValues = {
+    name: initialValues.name,
+    status: initialValues.status,
+    assigneeId: initialValues.assigneeId,
+    projectId: initialValues.projectId,
+    dueDate: initialValues.dueDate
+      ? new Date(initialValues.dueDate)
+      : new Date(),
+    documentation: initialValues.documentation ?? undefined,
+    diagramUrl: initialValues.diagramUrl ?? undefined,
+    githubPrs: initialValues.githubPrs ?? undefined,
+    completedAt: initialValues.completedAt
+      ? new Date(initialValues.completedAt)
+      : undefined,
+  };
+
   const form = useForm<EditTaskFormValues>({
     resolver: zodResolver(editTaskFormSchema),
-    defaultValues: {
-      ...initialValues,
-      dueDate: initialValues.dueDate
-        ? new Date(initialValues.dueDate)
-        : undefined,
-    },
+    defaultValues,
   });
   const onSubmit = (values: EditTaskFormValues) => {
     mutate(

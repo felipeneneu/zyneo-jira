@@ -252,7 +252,7 @@ const app = new Hono()
         } catch {}
 
         try {
-          createdTask = await databases.createDocument(
+          createdTask = await databases.createDocument<Task>(
             DATABASE_ID,
             TASKS_ID,
             ID.unique(),
