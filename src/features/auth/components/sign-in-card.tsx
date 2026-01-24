@@ -18,7 +18,6 @@ import {
 import Link from "next/link";
 import { loginSchema } from "../schemas";
 import { useLogin } from "../api/use-login";
-import { signUpWithGoogle, signUpWithGithub } from "@/src/lib/oauth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -95,28 +94,18 @@ export const SignInCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className="p-7 flex flex-col gap-y-4">
-          <form action={signUpWithGoogle}>
-            <Button
-              disabled={isPending}
-              variant={"secondary"}
-              size="lg"
-              className="w-full"
-            >
+          <Button asChild variant={"secondary"} size="lg" className="w-full">
+            <Link href="/api/oauth/login?provider=google">
               <FcGoogle className="mr-2 size-5" />
               Login com Google
-            </Button>
-          </form>
-          <form action={signUpWithGithub}>
-            <Button
-              disabled={isPending}
-              variant={"secondary"}
-              size="lg"
-              className="w-full"
-            >
+            </Link>
+          </Button>
+          <Button asChild variant={"secondary"} size="lg" className="w-full">
+            <Link href="/api/oauth/login?provider=github">
               <FaGithub className="mr-2 size-5" />
               Login com Github
-            </Button>
-          </form>
+            </Link>
+          </Button>
         </CardContent>
         <div className="px-7">
           <DottedSeparator />
