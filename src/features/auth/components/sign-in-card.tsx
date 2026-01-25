@@ -36,6 +36,7 @@ export const SignInCard = () => {
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     mutate({ json: values });
   };
+
   return (
     <div>
       <Card className="w-full h-full md:w-[487px] border-none shadow-none">
@@ -122,6 +123,3 @@ export const SignInCard = () => {
     </div>
   );
 };
-
-
-

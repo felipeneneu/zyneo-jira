@@ -37,9 +37,12 @@ export const SignUpCard = () => {
       name: "",
     },
   });
+
   const onSubmit = (values: z.infer<typeof registerSchema>) => {
     mutate({ json: values });
   };
+
+
   return (
     <div>
       <Card className="w-full h-full md:w-[487px] border-none shadow-none">
@@ -123,23 +126,17 @@ export const SignUpCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className="p-7 flex flex-col gap-y-4">
-          <Button
-            disabled={isPending}
-            variant={"secondary"}
-            size="lg"
-            className="w-full"
-          >
-            <FcGoogle className="mr-2 size-5" />
-            Login com Google
+          <Button asChild variant={"secondary"} size="lg" className="w-full">
+            <Link href="/api/oauth/login?provider=google">
+              <FcGoogle className="mr-2 size-5" />
+              Login com Google
+            </Link>
           </Button>
-          <Button
-            disabled={isPending}
-            variant={"secondary"}
-            size="lg"
-            className="w-full"
-          >
-            <FaGithub className="mr-2 size-5" />
-            Login com Github
+          <Button asChild variant={"secondary"} size="lg" className="w-full">
+            <Link href="/api/oauth/login?provider=github">
+              <FaGithub className="mr-2 size-5" />
+              Login com Github
+            </Link>
           </Button>
         </CardContent>
         <div className="px-7">
