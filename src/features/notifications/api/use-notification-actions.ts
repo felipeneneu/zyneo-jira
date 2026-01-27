@@ -72,3 +72,26 @@ export const useArchiveNotification = () => {
 
   return mutation;
 };
+
+export const useRemoveNotification = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const response = await client.api.notifications[":notificationId"].remove.$post({
+        param: { notificationId },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to remove notification");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  return mutation;
+};

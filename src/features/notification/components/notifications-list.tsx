@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search,
   Bell,
@@ -22,6 +22,7 @@ import { useGetNotifications } from "@/src/features/notifications/api/use-get-no
 import {
   useToggleNotificationStar,
   useArchiveNotification,
+  useRemoveNotification,
 } from "@/src/features/notifications/api/use-notification-actions";
 import type { Notification } from "@/src/features/notifications/types";
 
@@ -67,17 +68,32 @@ const getSeverityBadge = (severity: Notification["severity"]) => {
   );
 };
 
+const REMOVE_ON_ARCHIVE_KEY = "notifications:remove-on-archive";
+
 export function NotificationsList() {
   const [selectedNotification, setSelectedNotification] =
     useState<Notification | null>(null);
   const [filter, setFilter] = useState<NotificationFilter>("all");
+  const [removeOnArchive, setRemoveOnArchive] = useState(false);
 
   const { data, isLoading } = useGetNotifications({ filter });
   const toggleStar = useToggleNotificationStar();
   const archive = useArchiveNotification();
+  const remove = useRemoveNotification();
 
   const notifications = data?.documents ?? [];
   const unreadCount = notifications.filter((n) => !n.readAt).length;
+
+  useEffect(() => {
+    const stored = localStorage.getItem(REMOVE_ON_ARCHIVE_KEY);
+    if (stored === "true") {
+      setRemoveOnArchive(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(REMOVE_ON_ARCHIVE_KEY, String(removeOnArchive));
+  }, [removeOnArchive]);
 
   const handleNotificationClick = (notification: Notification) => {
     setSelectedNotification(notification);
@@ -90,6 +106,10 @@ export function NotificationsList() {
 
   const handleArchive = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (removeOnArchive) {
+      remove.mutate(id);
+      return;
+    }
     archive.mutate(id);
   };
 
@@ -118,43 +138,54 @@ export function NotificationsList() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 border-b border-gray-200 bg-white px-6 py-3">
-        <Button
-          onClick={() => setFilter("all")}
-          variant="ghost"
-          className={cn(
-            "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-            filter === "all"
-              ? "bg-black text-white hover:bg-gray-800"
-              : "text-gray-500 hover:bg-gray-100"
-          )}
-        >
-          Todas
-        </Button>
-        <Button
-          onClick={() => setFilter("unread")}
-          variant="ghost"
-          className={cn(
-            "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-            filter === "unread"
-              ? "bg-black text-white hover:bg-gray-800"
-              : "text-gray-500 hover:bg-gray-100"
-          )}
-        >
-          Não lidas
-        </Button>
-        <Button
-          onClick={() => setFilter("starred")}
-          variant="ghost"
-          className={cn(
-            "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-            filter === "starred"
-              ? "bg-black text-white hover:bg-gray-800"
-              : "text-gray-500 hover:bg-gray-100"
-          )}
-        >
-          Favoritas
-        </Button>
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setFilter("all")}
+            variant="ghost"
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+              filter === "all"
+                ? "bg-black text-white hover:bg-gray-800"
+                : "text-gray-500 hover:bg-gray-100"
+            )}
+          >
+            Todas
+          </Button>
+          <Button
+            onClick={() => setFilter("unread")}
+            variant="ghost"
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+              filter === "unread"
+                ? "bg-black text-white hover:bg-gray-800"
+                : "text-gray-500 hover:bg-gray-100"
+            )}
+          >
+            Não lidas
+          </Button>
+          <Button
+            onClick={() => setFilter("starred")}
+            variant="ghost"
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+              filter === "starred"
+                ? "bg-black text-white hover:bg-gray-800"
+                : "text-gray-500 hover:bg-gray-100"
+            )}
+          >
+            Favoritas
+          </Button>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-gray-500">
+          <input
+            type="checkbox"
+            className="size-4 rounded border-gray-300 text-black focus:ring-1 focus:ring-black"
+            checked={removeOnArchive}
+            onChange={(e) => setRemoveOnArchive(e.target.checked)}
+          />
+          Remover ao invés de arquivar
+        </label>
       </div>
 
       {/* Notifications List */}
@@ -258,7 +289,7 @@ export function NotificationsList() {
                   <button
                     onClick={(e) => handleArchive(e, notification.$id)}
                     className="rounded p-1.5 hover:bg-gray-100"
-                    title="Arquivar"
+                    title={removeOnArchive ? "Remover" : "Arquivar"}
                   >
                     <MoreHorizontal className="h-4 w-4 text-gray-400" />
                   </button>

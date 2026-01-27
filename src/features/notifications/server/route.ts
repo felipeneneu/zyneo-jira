@@ -558,6 +558,35 @@ const app = new Hono()
 
       return c.json({ data: updated });
     }
+  )
+  // POST /api/notifications/:notificationId/remove
+  .post(
+    "/:notificationId/remove",
+    sessionMiddleware,
+    zValidator("param", z.object({ notificationId: z.string().min(1) })),
+    async (c) => {
+      const databases = c.get("databases");
+      const user = c.get("user");
+      const { notificationId } = c.req.valid("param");
+
+      const notification = await databases.getDocument<Notification>(
+        DATABASE_ID,
+        NOTIFICATIONS_ID,
+        notificationId
+      );
+
+      if (notification.userId !== user.$id) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      await databases.deleteDocument(
+        DATABASE_ID,
+        NOTIFICATIONS_ID,
+        notificationId
+      );
+
+      return c.json({ data: { success: true } });
+    }
   );
 
 export default app;

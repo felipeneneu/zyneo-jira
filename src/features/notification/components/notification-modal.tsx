@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   X,
@@ -80,15 +80,33 @@ export function NotificationModal({
   const router = useRouter();
   const [replyContent, setReplyContent] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const lastAutoReadIdRef = useRef<string | null>(null);
+  const hasAutoMarkedRef = useRef(false);
 
   const markRead = useMarkNotificationRead();
   const toggleStar = useToggleNotificationStar();
   const createComment = useCreateComment();
 
-  const handleMarkReadAndClose = () => {
-    if (!notification.readAt) {
-      markRead.mutate(notification.$id);
+  const markReadIfNeeded = useCallback(() => {
+    if (lastAutoReadIdRef.current !== notification.$id) {
+      lastAutoReadIdRef.current = notification.$id;
+      hasAutoMarkedRef.current = false;
     }
+
+    if (notification.readAt || hasAutoMarkedRef.current) {
+      return;
+    }
+
+    hasAutoMarkedRef.current = true;
+    markRead.mutate(notification.$id);
+  }, [markRead, notification.$id, notification.readAt]);
+
+  useEffect(() => {
+    markReadIfNeeded();
+  }, [markReadIfNeeded]);
+
+  const handleMarkReadAndClose = () => {
+    markReadIfNeeded();
     onClose();
   };
 
