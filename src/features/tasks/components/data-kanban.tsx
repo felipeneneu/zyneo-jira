@@ -11,13 +11,12 @@ import { KanbanCard } from "./kanban-card";
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/src/ui/drawer";
 import { Button } from "@/src/ui/button";
 import { Checkbox } from "@/src/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/ui/select";
 import { Badge } from "@/src/ui/badge";
 import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
 import { useGetMembers } from "../../members/api/use-get-members";
 import { useCurrent } from "../../auth/api/use-current";
 import { useUpdateTask } from "../api/use-update-task";
-import { getPriority, type TaskPriority } from "../utils/task-flags";
+import { getPriority } from "../utils/task-flags";
 import { cn } from "@/src/lib/utils";
 
 const defaultBoards: TaskStatus[] = [
@@ -99,9 +98,6 @@ export const DataKanban = ({
     DEFAULT_COPILOT_ENABLED
   );
   const [autoAssignEnabled, setAutoAssignEnabled] = useState(true);
-  const [prioritySelection, setPrioritySelection] = useState<TaskPriority | "">(
-    ""
-  );
   const tasks = useMemo(() => {
     if (override?.key === dataKey) {
       return override.tasks;
@@ -129,20 +125,44 @@ export const DataKanban = ({
     localStorage.setItem(COPILOT_STORAGE_KEY, String(copilotEnabled));
   }, [copilotEnabled]);
 
-  useEffect(() => {
-    if (!pendingMove) return;
-    const priority = getPriority(pendingMove.movedTask.flags);
-    if (!priority && pendingMove.destStatus === TaskStatus.READY) {
-      setPrioritySelection("P2");
-    } else {
-      setPrioritySelection("");
-    }
-    const hasAssignee = Boolean(pendingMove.movedTask.assigneeId);
-    setAutoAssignEnabled(!hasAssignee && copilotEnabled);
-  }, [pendingMove, copilotEnabled]);
-
   const wipCount = tasks[TaskStatus.IN_PROGRESS]?.length ?? 0;
   const wipOverLimit = wipCount >= 5;
+
+  const applyAutoUpdates = useCallback(
+    async (task: Task, destStatus: TaskStatus) => {
+      if (!copilotEnabled) return;
+
+      const needsAssignee = !task.assigneeId;
+      const needsPriority =
+        destStatus === TaskStatus.READY && !getPriority(task.flags);
+
+      const shouldAssign = needsAssignee && Boolean(currentMemberId);
+      const shouldSetPriority = needsPriority;
+
+      if (!shouldAssign && !shouldSetPriority) return;
+
+      await updateTask.mutateAsync({
+        param: { taskId: task.$id },
+        json: {
+          ...(shouldAssign ? { assigneeId: currentMemberId ?? undefined } : {}),
+          ...(shouldSetPriority ? { priority: "P2" } : {}),
+        },
+      });
+    },
+    [copilotEnabled, currentMemberId, updateTask]
+  );
+
+  const applyMoveNow = useCallback(
+    async (move: PendingMove) => {
+      try {
+        await applyAutoUpdates(move.movedTask, move.destStatus);
+        onChange(move.updatesPayload);
+      } catch {
+        setOverride(null);
+      }
+    },
+    [applyAutoUpdates, onChange]
+  );
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -227,16 +247,29 @@ export const DataKanban = ({
       }
 
       setOverride({ key: dataKey, tasks: newTasks });
-      setPendingMove({
+
+      if (destStatus === TaskStatus.DONE) {
+        setAutoAssignEnabled(copilotEnabled && !movedTask.assigneeId);
+        setPendingMove({
+          movedTask,
+          sourceStatus,
+          destStatus,
+          updatesPayload,
+          nextTasks: newTasks,
+        });
+        setIsConfirmOpen(true);
+        return;
+      }
+
+      void applyMoveNow({
         movedTask,
         sourceStatus,
         destStatus,
         updatesPayload,
         nextTasks: newTasks,
       });
-      setIsConfirmOpen(true);
     },
-    [dataKey, onChange, tasks]
+    [applyMoveNow, copilotEnabled, dataKey, tasks]
   );
 
   const handleCancelMove = () => {
@@ -249,8 +282,6 @@ export const DataKanban = ({
     if (!pendingMove) return;
 
     const { movedTask, destStatus, updatesPayload } = pendingMove;
-    const needsPriority =
-      destStatus === TaskStatus.READY && !getPriority(movedTask.flags);
     const needsAssignee = !movedTask.assigneeId;
     const shouldAssign =
       copilotEnabled &&
@@ -258,16 +289,11 @@ export const DataKanban = ({
       needsAssignee &&
       Boolean(currentMemberId);
 
-    if (needsPriority && !prioritySelection) {
-      return;
-    }
-
     try {
-      if (needsPriority || shouldAssign) {
+      if (shouldAssign) {
         await updateTask.mutateAsync({
           param: { taskId: movedTask.$id },
           json: {
-            ...(needsPriority ? { priority: prioritySelection } : {}),
             ...(shouldAssign ? { assigneeId: currentMemberId ?? undefined } : {}),
           },
         });
@@ -371,31 +397,6 @@ export const DataKanban = ({
               </p>
             </div>
 
-            {pendingMove &&
-            pendingMove.destStatus === TaskStatus.READY &&
-            !getPriority(pendingMove.movedTask.flags) ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Definir prioridade para entrar em Ready
-                </label>
-                <Select
-                  value={prioritySelection}
-                  onValueChange={(value) =>
-                    setPrioritySelection(value as TaskPriority)
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione a prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="P1">P1 - Alta</SelectItem>
-                    <SelectItem value="P2">P2 - Média</SelectItem>
-                    <SelectItem value="P3">P3 - Baixa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : null}
-
             {pendingMove && !pendingMove.movedTask.assigneeId ? (
               <div
                 className={cn(
@@ -422,12 +423,7 @@ export const DataKanban = ({
           <DrawerFooter>
             <Button
               onClick={handleConfirmMove}
-              disabled={
-                !pendingMove ||
-                (pendingMove.destStatus === TaskStatus.READY &&
-                  !getPriority(pendingMove.movedTask.flags) &&
-                  !prioritySelection)
-              }
+              disabled={!pendingMove}
             >
               Confirmar movimento
             </Button>
