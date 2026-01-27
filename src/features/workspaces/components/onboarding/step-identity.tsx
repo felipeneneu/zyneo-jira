@@ -4,10 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useWizard } from "./store";
 import { WizardStepLayout } from "./wizard-step-layout";
 import { step2Schema } from "./schemas";
+
+import workspaceOptions from "./workspace-options.json";
 import { Label } from "@/src/ui/label";
 import { Input } from "@/src/ui/input";
-import { Textarea } from "@/src/ui/textarea";
 import { Button } from "@/src/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/ui/select";
 import { FaImage, FaXmark } from "react-icons/fa6";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/ui/avatar";
 
@@ -16,8 +24,14 @@ type Step4FormData = {
   description?: string;
 };
 
-export function StepIdentity() {
+  export function StepIdentity() {
   const { state, dispatch } = useWizard();
+  
+  // Dynamic Options
+  const descriptionOptions = state.type 
+    ? workspaceOptions[state.type as keyof typeof workspaceOptions] || [] 
+    : [];
+
   const [imagePreview, setImagePreview] = useState<string | null>(
     typeof state.image === 'string' ? state.image : (state.image ? URL.createObjectURL(state.image) : null)
   );
@@ -113,25 +127,36 @@ export function StepIdentity() {
 
         <div className="space-y-3 text-left">
           <Label htmlFor="workspace-description" className="text-gray-300">
-            Descricao curta
+            Descricao pre-definida
           </Label>
-          <Textarea
-            id="workspace-description"
-            placeholder="Ex: Projetos de front-end e entregas semanais"
-            rows={3}
-            {...register("description", {
-              onChange: (e) =>
+            <Select
+              onValueChange={(value) =>
                 dispatch({
                   type: "SET_IDENTITY",
                   payload: {
                     name: state.name,
-                    description: e.target.value,
+                    description: value,
                     image: state.image,
                   },
-                }),
-            })}
-            className="border-gray-700 bg-gray-900/50 text-white placeholder:text-gray-500 focus-visible:ring-purple-500/50"
-          />
+                })
+              }
+              value={state.description}
+            >
+              <SelectTrigger className="w-full h-12 bg-zinc-900/50 border-zinc-800 text-zinc-100 focus:ring-purple-500/50 focus:border-purple-500/50">
+                <SelectValue placeholder="Selecione uma opção" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+                {descriptionOptions.map((desc) => (
+                  <SelectItem
+                    key={desc}
+                    value={desc}
+                    className="focus:bg-zinc-800 focus:text-zinc-100 cursor-pointer"
+                  >
+                    {desc}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
         </div>
       </div>
     </WizardStepLayout>

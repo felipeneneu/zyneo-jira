@@ -1,4 +1,4 @@
-import { ID, Query, type Databases } from "node-appwrite";
+import { ID, Query, type Databases, type Models } from "node-appwrite";
 
 import {
   DATABASE_ID,
@@ -28,6 +28,8 @@ const buildProjectKeyBase = (name: string) => {
 
 const buildThreadKey = (type: string, workspaceId: string, entityId: string) =>
   `${type}:${workspaceId}:task:${entityId}`;
+
+type TaskCreatePayload = Omit<Task, keyof Models.Document>;
 
 export const setupDevGuidedWorkspace = async ({
   databases,
@@ -111,7 +113,7 @@ export const setupDevGuidedWorkspace = async ({
     );
 
     // Payload de tarefas de exemplo
-    const tasksPayload: Array<Record<string, unknown>> = [
+    const tasksPayload: TaskCreatePayload[] = [
       {
         name: DEV_GUIDED_TUTORIAL_TASKS.overdue,
         status: TaskStatus.IN_PROGRESS,

@@ -47,6 +47,16 @@ export const WORKSPACE_STATUSES = [
 ] as const;
 export type WorkspaceStatus = (typeof WORKSPACE_STATUSES)[number];
 
+export const WORKSPACE_DESCRIPTIONS = [
+  "Software Development",
+  "Marketing",
+  "Sales",
+  "Personal",
+  "Education",
+  "Other",
+] as const;
+export type WorkspaceDescription = (typeof WORKSPACE_DESCRIPTIONS)[number];
+
 export type WorkspaceOnboardingDraft = {
   name: string;
   slug?: string;

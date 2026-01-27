@@ -9,7 +9,7 @@ import { useCreateWorkspace } from "../api/use-create-workspace";
 export const CreateWorkspaceModal = () => {
   const { isOpen, setIsOpen, close } = useWorkspaceModal();
   const router = useRouter();
-  const { mutate } = useCreateWorkspace();
+  const { mutate, isPending } = useCreateWorkspace();
 
   const handleComplete = (data: WorkspaceOnboardingState) => {
     const form: Record<string, unknown> = {
@@ -43,6 +43,7 @@ export const CreateWorkspaceModal = () => {
       open={isOpen}
       onOpenChange={setIsOpen}
       onComplete={handleComplete}
+      isPending={isPending}
     />
   );
 };

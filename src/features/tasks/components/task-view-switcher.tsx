@@ -100,7 +100,10 @@ export const TaskViewSwitcher = ({
           </Button>
         </div>
         <DottedSeparator className="my-4" />
-        <DataFilters hideProjectFilters={hideProjectFilters} statuses={statuses} />
+        <DataFilters
+          hideProjectFilters={hideProjectFilters}
+          statuses={[...statuses]}
+        />
         <DottedSeparator className="my-4" />
         <DevGuidedTutorial
           workspaceId={workspaceId}
@@ -120,7 +123,7 @@ export const TaskViewSwitcher = ({
               <DataKanban
                 onChange={onKanbanChange}
                 data={tasks?.documents ?? []}
-                boards={statuses as TaskStatus[]}
+                boards={[...statuses]}
               />
             </TabsContent>
             <TabsContent value="calendar" className="mt-0">

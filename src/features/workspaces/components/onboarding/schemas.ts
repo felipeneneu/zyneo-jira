@@ -23,7 +23,7 @@ export const step2Schema = z.object({
     .trim()
     .min(3, "Workspace name must be at least 3 characters")
     .max(50, "Name too long"),
-  description: z.string().trim().max(200, "Descricao muito longa").optional(),
+  description: z.string().optional(),
   image: z
     .union([
       z.instanceof(File),

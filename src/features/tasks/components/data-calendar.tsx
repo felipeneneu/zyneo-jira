@@ -166,25 +166,27 @@ export const DataCalendar = ({ data }: DataCalendarProps) => {
     }
   }, [projectId, projectOptions]);
 
-  const events = useMemo<CalendarEvent[]>(() => {
-    return data
-      .map((task) => {
-        if (!task.dueDate) return null;
+  const events = useMemo<CalendarEvent[]>(
+    () =>
+      data.flatMap((task) => {
+        if (!task.dueDate) return [];
         const dueDate = new Date(task.dueDate);
-        if (!isValidDate(dueDate)) return null;
-        return {
-          start: dueDate,
-          end: dueDate,
-          title: task.name,
-          project: task.project,
-          assignee: task.assignee,
-          status: task.status,
-          id: task.$id,
-          taskKey: task.taskKey,
-        };
-      })
-      .filter((event): event is CalendarEvent => event !== null);
-  }, [data]);
+        if (!isValidDate(dueDate)) return [];
+        return [
+          {
+            start: dueDate,
+            end: dueDate,
+            title: task.name,
+            project: task.project,
+            assignee: task.assignee,
+            status: task.status,
+            id: task.$id,
+            taskKey: task.taskKey,
+          },
+        ];
+      }),
+    [data]
+  );
 
   const suggestions = useMemo<DueDateSuggestion[]>(() => {
     if (!autoSuggestEnabled) return [];

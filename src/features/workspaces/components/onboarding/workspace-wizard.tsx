@@ -18,12 +18,15 @@ interface WorkspaceWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete: (data: WorkspaceOnboardingState) => void;
+  isPending?: boolean;
 }
 
 function WizardContent({
   onComplete,
+  isPending,
 }: {
   onComplete: (data: WorkspaceOnboardingState) => void;
+  isPending?: boolean;
 }) {
   const { state, dispatch } = useWizard();
 
@@ -97,7 +100,7 @@ function WizardContent({
         <div className="grid grid-cols-2 gap-4 px-2 justify-center w-full">
           <Button
             onClick={handleBack}
-            disabled={state.step === 1}
+            disabled={state.step === 1 || isPending}
             variant="ghost"
             size="lg"
             className="gap-2 text-zinc-400 hover:text-white hover:bg-white/5 w-full sm:w-auto"
@@ -107,12 +110,22 @@ function WizardContent({
           </Button>
           <Button
             onClick={handleNext}
-            disabled={isNextDisabled}
+            disabled={isNextDisabled || isPending}
             size="lg"
             className="gap-2 bg-white text-black hover:bg-zinc-200 font-medium px-8 rounded-full shadow-lg shadow-purple-500/10"
           >
-            {state.step === state.totalSteps ? "Concluir" : "Proximo"}
-            <FaChevronRight className="h-3 w-3" />
+            {/* Show Loading Spinner or Text */}
+            {isPending ? (
+               <span className="flex items-center gap-2">
+                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                 Criando...
+               </span>
+            ) : (
+               <>
+                 {state.step === state.totalSteps ? "Concluir" : "Proximo"}
+                 <FaChevronRight className="h-3 w-3" />
+               </>
+            )}
           </Button>
           <div className="w-full grid justify-center col-span-2">
             <div className="flex gap-1 mr-0  sm:mr-4 items-center">
@@ -139,6 +152,7 @@ export function WorkspaceWizard({
   open,
   onOpenChange,
   onComplete,
+  isPending,
 }: WorkspaceWizardProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,7 +162,7 @@ export function WorkspaceWizard({
       >
         <DialogTitle className="sr-only">Workspace Wizard</DialogTitle>
         <WizardProvider>
-          <WizardContent onComplete={onComplete} />
+          <WizardContent onComplete={onComplete} isPending={isPending} />
         </WizardProvider>
       </DialogContent>
     </Dialog>

@@ -370,7 +370,8 @@ const app = new Hono()
           existingTask.status === TaskStatus.TODO
             ? TaskStatus.BACKLOG
             : existingTask.status;
-        const allowed = DEV_GUIDED_V1.allowedTransitions[fromStatus] ?? [];
+        const allowed =
+          DEV_GUIDED_V1.allowedTransitions[fromStatus] as readonly TaskStatus[];
         if (!allowed.includes(status)) {
           return c.json({ error: "Status transition not allowed" }, 400);
         }
@@ -650,7 +651,8 @@ Prazo: ${task.dueDate ?? "-"}
               existing.status === TaskStatus.TODO
                 ? TaskStatus.BACKLOG
                 : existing.status;
-            const allowed = DEV_GUIDED_V1.allowedTransitions[fromStatus] ?? [];
+            const allowed =
+              DEV_GUIDED_V1.allowedTransitions[fromStatus] as readonly TaskStatus[];
             if (!allowed.includes(task.status)) {
               return c.json(
                 { error: "Status transition not allowed" },

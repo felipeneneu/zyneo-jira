@@ -34,8 +34,10 @@ export function StepType() {
           title="Design / Criativo"
           description="Gestao de ativos e feedback."
           icon={<FaPalette />}
-          selected={state.type === "design"}
-          onClick={() => handleSelect("design")}
+          selected={false}
+          onClick={() => {}}
+          disabled
+          disabledHint="Em breve"
           iconColor="text-purple-500"
         />
         <OptionCard

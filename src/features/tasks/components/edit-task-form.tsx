@@ -67,7 +67,7 @@ export const EditTaskForm = ({
     dueDate: initialValues.dueDate
       ? new Date(initialValues.dueDate)
       : new Date(),
-    priority: getPriority(initialValues.flags),
+    priority: getPriority(initialValues.flags) ?? undefined,
     documentation: initialValues.documentation ?? undefined,
     diagramUrl: initialValues.diagramUrl ?? undefined,
     githubPrs: initialValues.githubPrs ?? undefined,

@@ -1,0 +1,38 @@
+{
+  "software_dev": [
+    "Desenvolvimento de produto SaaS",
+    "Projeto Open Source",
+    "Ferramentas/CLI Internas",
+    "App Mobile (iOS/Android)",
+    "Serviço de Backend API",
+    "Desenvolvimento de Jogos",
+    "Aplicação Full-stack"
+  ],
+  "design": [
+    "Sistema de Design UI/UX",
+    "Ativos de Marketing & Marca",
+    "Produção de Vídeo",
+    "Modelagem 3D & Animação",
+    "Estúdio de Design Gráfico",
+    "Design de Produto (Industrial)",
+    "Ilustração & Arte"
+  ],
+  "operations": [
+    "RH & Recrutamento",
+    "Gestão de Escritório",
+    "Planejamento de Eventos",
+    "Jurídico & Compliance",
+    "Finanças & Contabilidade",
+    "Gestão da Cadeia de Suprimentos",
+    "Suporte de TI & Instalações"
+  ],
+  "sales_crm": [
+    "Geração & Rastreamento de Leads",
+    "Pipeline de Negócios Corporativos",
+    "Suporte ao Cliente (CS)",
+    "Gestão de Contas",
+    "Parcerias & Alianças",
+    "Capacitação de Vendas",
+    "Operações de Receita"
+  ]
+}
