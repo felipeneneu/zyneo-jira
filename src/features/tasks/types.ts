@@ -4,6 +4,7 @@ import { MemberRole } from "../members/types";
 
 export enum TaskStatus {
   BACKLOG = "BACKLOG",
+  READY = "READY",
   TODO = "TODO",
   IN_PROGRESS = "IN_PROGRESS",
   IN_REVIEW = "IN_REVIEW",

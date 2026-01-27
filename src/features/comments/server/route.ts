@@ -16,6 +16,7 @@ import { createCommentSchema, listCommentsQuerySchema } from "../schemas";
 import type { TaskComment } from "../types";
 import type { Task } from "@/src/features/tasks/types";
 import { upsertNotification } from "@/src/features/notifications/utils/upsert-notification";
+import { normalizeFlags, setFlagValue } from "@/src/features/tasks/utils/task-flags";
 
 /**
  * Parse @mentions from content and return array of member IDs.
@@ -143,17 +144,20 @@ const app = new Hono()
     };
 
     // Handle flags based on comment type
-    const currentFlags = (task.flags as string[] | undefined) ?? [];
+    const currentFlags = normalizeFlags(task.flags as string[] | undefined);
     let newFlags = [...currentFlags];
 
     if (type === "blocked") {
       // Add blocked flag if not present
-      if (!newFlags.includes("blocked")) {
-        newFlags.push("blocked");
-      }
+      newFlags = setFlagValue(newFlags, "blocked", true);
+      newFlags = setFlagValue(
+        newFlags,
+        "blockedAt",
+        new Date().toISOString()
+      );
     } else if (type === "progress") {
       // Remove stale flag if user is working on it
-      newFlags = newFlags.filter((f) => f !== "stale");
+      newFlags = setFlagValue(newFlags, "stale", false);
     }
 
     // Only update flags if changed

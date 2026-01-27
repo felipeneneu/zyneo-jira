@@ -25,9 +25,14 @@ import {
   SelectValue,
 } from "@/src/ui/select";
 import { MembersAvatar } from "../../members/components/members-avatar";
-import { Task, TaskStatus } from "../types";
+import { Task } from "../types";
 import { ProjectAvatar } from "../../projects/components/project-avatar";
 import { useUpdateTask } from "../api/use-update-task";
+import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
+import { useGetWorkspace } from "../../workspaces/api/use-get-workspace-id";
+import { getWorkspaceStatuses } from "../utils/task-statuses";
+import { TASK_STATUS_LABELS } from "../utils/task-status-labels";
+import { getPriority } from "../utils/task-flags";
 
 interface EditTaskFormProps {
   onCancel?: () => void;
@@ -50,6 +55,9 @@ export const EditTaskForm = ({
   initialValues,
 }: EditTaskFormProps) => {
   const { mutate, isPending } = useUpdateTask();
+  const workspaceId = useWorkspaceId();
+  const { data: workspace } = useGetWorkspace({ workspaceId });
+  const statuses = getWorkspaceStatuses(workspace?.workspaceType);
 
   const defaultValues: EditTaskFormValues = {
     name: initialValues.name,
@@ -59,6 +67,7 @@ export const EditTaskForm = ({
     dueDate: initialValues.dueDate
       ? new Date(initialValues.dueDate)
       : new Date(),
+    priority: getPriority(initialValues.flags),
     documentation: initialValues.documentation ?? undefined,
     diagramUrl: initialValues.diagramUrl ?? undefined,
     githubPrs: initialValues.githubPrs ?? undefined,
@@ -165,6 +174,37 @@ export const EditTaskForm = ({
 
               <FormField
                 control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <Select
+                      defaultValue={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <FormMessage />
+                      <SelectContent
+                        side="bottom"
+                        align="start"
+                        sideOffset={2}
+                        position="popper"
+                      >
+                        <SelectItem value="P1">P1 - High</SelectItem>
+                        <SelectItem value="P2">P2 - Medium</SelectItem>
+                        <SelectItem value="P3">P3 - Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="status"
                 render={({ field }) => (
                   <FormItem>
@@ -185,21 +225,11 @@ export const EditTaskForm = ({
                         sideOffset={2}
                         position="popper"
                       >
-                        <SelectItem value={TaskStatus.BACKLOG}>
-                          Backlog
-                        </SelectItem>
-
-                        <SelectItem value={TaskStatus.IN_PROGRESS}>
-                          In Progress
-                        </SelectItem>
-
-                        <SelectItem value={TaskStatus.IN_REVIEW}>
-                          In Review
-                        </SelectItem>
-
-                        <SelectItem value={TaskStatus.TODO}>Todo</SelectItem>
-
-                        <SelectItem value={TaskStatus.DONE}>Done</SelectItem>
+                        {statuses.map((statusValue) => (
+                          <SelectItem key={statusValue} value={statusValue}>
+                            {TASK_STATUS_LABELS[statusValue]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>

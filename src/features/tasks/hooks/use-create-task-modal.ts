@@ -3,6 +3,7 @@ import { TaskStatus } from "../types";
 
 const statusParser = parseAsStringLiteral([
   TaskStatus.BACKLOG,
+  TaskStatus.READY,
   TaskStatus.TODO,
   TaskStatus.IN_PROGRESS,
   TaskStatus.IN_REVIEW,

@@ -21,6 +21,7 @@ import { resolveWorkspaceConfig } from "./use-cases/resolve-workspace-config";
 import { resolveAgentProfileId } from "./use-cases/resolve-agent-profile-id";
 import { slugify } from "@/src/lib/utils";
 import { resolveWorkspaceId } from "../utils";
+import { setupDevGuidedWorkspace } from "./use-cases/setup-dev-guided-workspace";
 
 const generateUniqueWorkspaceSlug = async (
   databases: Databases,
@@ -232,6 +233,14 @@ const app = new Hono()
         workspaceId: workspace.$id,
         role: MemberRole.ADMIN,
       });
+
+      if (workspace.workspaceType === "software_dev") {
+        await setupDevGuidedWorkspace({
+          databases,
+          workspaceId: workspace.$id,
+          userId: user.$id,
+        });
+      }
 
       return c.json({ data: workspace });
     }

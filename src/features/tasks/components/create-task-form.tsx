@@ -29,12 +29,16 @@ import {
 import { MembersAvatar } from "../../members/components/members-avatar";
 import { TaskStatus } from "../types";
 import { ProjectAvatar } from "../../projects/components/project-avatar";
+import { TASK_STATUS_LABELS } from "../utils/task-status-labels";
+import { getWorkspaceStatuses } from "../utils/task-statuses";
+import { useGetWorkspace } from "../../workspaces/api/use-get-workspace-id";
 
 interface CreateTaskFormProps {
   onCancel?: () => void;
   projectOptions: { id: string; name: string; imageUrl: string }[];
   memberOptions: { id: string; name: string; avatarUrl?: string | null }[];
   status?: TaskStatus;
+  defaultAssigneeId?: string;
 }
 
 const createTaskFormSchema = createTaskSchema.omit({ workspaceId: true });
@@ -46,14 +50,18 @@ export const CreateTaskForm = ({
   projectOptions,
   memberOptions,
   status,
+  defaultAssigneeId,
 }: CreateTaskFormProps) => {
   const workspaceId = useWorkspaceId();
   const { mutate, isPending } = useCreateTask();
+  const { data: workspace } = useGetWorkspace({ workspaceId });
+  const statuses = getWorkspaceStatuses(workspace?.workspaceType);
 
   const form = useForm<CreateTaskFormValues>({
     resolver: zodResolver(createTaskFormSchema),
     defaultValues: {
       status,
+      assigneeId: defaultAssigneeId,
     },
   });
   const onSubmit = (values: CreateTaskFormValues) => {
@@ -152,6 +160,37 @@ export const CreateTaskForm = ({
 
               <FormField
                 control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prioridade</FormLabel>
+                    <Select
+                      defaultValue={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione a prioridade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <FormMessage />
+                      <SelectContent
+                        side="bottom"
+                        align="start"
+                        sideOffset={2}
+                        position="popper"
+                      >
+                        <SelectItem value="P1">P1 - Alta</SelectItem>
+                        <SelectItem value="P2">P2 - Média</SelectItem>
+                        <SelectItem value="P3">P3 - Baixa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="status"
                 render={({ field }) => (
                   <FormItem>
@@ -172,22 +211,11 @@ export const CreateTaskForm = ({
                         sideOffset={2}
                         position="popper"
                       >
-                        <SelectItem value={TaskStatus.BACKLOG}>
-                          Backlog
-                        </SelectItem>
-                        <SelectItem value={TaskStatus.TODO}>A fazer</SelectItem>
-
-                        <SelectItem value={TaskStatus.IN_PROGRESS}>
-                          Em progresso
-                        </SelectItem>
-
-                        <SelectItem value={TaskStatus.IN_REVIEW}>
-                          Em revisão
-                        </SelectItem>
-
-                        <SelectItem value={TaskStatus.DONE}>
-                          Concluído
-                        </SelectItem>
+                        {statuses.map((statusValue) => (
+                          <SelectItem key={statusValue} value={statusValue}>
+                            {TASK_STATUS_LABELS[statusValue]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>

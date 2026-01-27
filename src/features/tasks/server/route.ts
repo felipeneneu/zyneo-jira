@@ -7,7 +7,7 @@ import z from "zod";
 import { getMember } from "../../members/utils";
 import { Project } from "../../projects/types";
 
-import { DATABASE_ID, MEMBERS_ID, PROJECTS_ID, TASKS_ID } from "@/src/config";
+import { DATABASE_ID, MEMBERS_ID, PROJECTS_ID, TASKS_ID, WORKSPACE_ID } from "@/src/config";
 import { createAdminClient } from "@/src/lib/appwrite";
 import { sessionMiddleware } from "@/src/lib/session-middleware";
 import { resolveWorkspaceId } from "../../workspaces/utils";
@@ -15,6 +15,13 @@ import { resolveWorkspaceId } from "../../workspaces/utils";
 import { Task, TaskStatus } from "../types";
 import { createTaskSchema } from "../schemas";
 import { checkRulesForWorkspace } from "../utils/check-rules";
+import type { Workspace } from "../../workspaces/types";
+import { DEV_GUIDED_V1 } from "../../workspaces/presets/dev-guided-v1";
+import {
+  getPriority,
+  normalizeFlags,
+  setFlagValue,
+} from "../utils/task-flags";
 
 const buildProjectKeyBase = (name: string) => {
   const letters = name.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -191,6 +198,8 @@ const app = new Hono()
         projectId,
         dueDate,
         assigneeId,
+        priority,
+        flags,
         description,
         documentation,
         diagramUrl,
@@ -213,6 +222,8 @@ const app = new Hono()
         return c.json({ error: "Unauthorized" }, 401);
       }
 
+      const resolvedAssigneeId = assigneeId ?? member.$id;
+
       const highestPositionTask = await databases.listDocuments(
         DATABASE_ID,
         TASKS_ID,
@@ -227,6 +238,11 @@ const app = new Hono()
         highestPositionTask.documents.length > 0
           ? highestPositionTask.documents[0].position + 1000
           : 1000;
+
+      const baseFlags = normalizeFlags(flags);
+      const flagsWithPriority = priority
+        ? setFlagValue(baseFlags, "priority", priority)
+        : baseFlags;
 
       let createdTask: Task | null = null;
       let attempts = 0;
@@ -263,13 +279,15 @@ const app = new Hono()
               projectId,
               dueDate:
                 dueDate instanceof Date ? dueDate.toISOString() : dueDate,
-              assigneeId,
+              assigneeId: resolvedAssigneeId,
               position: newPosition,
               description,
               documentation,
               diagramUrl,
               githubPrs,
               taskKey,
+              flags: flagsWithPriority.length > 0 ? flagsWithPriority : undefined,
+              lastActivityAt: new Date().toISOString(),
               completedAt:
                 status === TaskStatus.DONE
                   ? completedAt instanceof Date
@@ -306,6 +324,8 @@ const app = new Hono()
         projectId,
         dueDate,
         assigneeId,
+        priority,
+        flags,
         documentation,
         diagramUrl,
         githubPrs,
@@ -330,27 +350,96 @@ const app = new Hono()
         return c.json({ error: "Unauthorized" }, 401);
       }
 
+      const workspace = await databases.getDocument<Workspace>(
+        DATABASE_ID,
+        WORKSPACE_ID,
+        existingTask.workspaceId
+      );
+
+      const isDevGuided = workspace.workspaceType === "software_dev";
+      const nextStatus = status ?? existingTask.status;
+      const nextAssigneeId = assigneeId ?? existingTask.assigneeId;
+      const baseFlags = normalizeFlags(flags ?? existingTask.flags);
+      const nextFlags = priority
+        ? setFlagValue(baseFlags, "priority", priority)
+        : baseFlags;
+      const nextPriority = getPriority(nextFlags);
+
+      if (isDevGuided && status && status !== existingTask.status) {
+        const fromStatus =
+          existingTask.status === TaskStatus.TODO
+            ? TaskStatus.BACKLOG
+            : existingTask.status;
+        const allowed = DEV_GUIDED_V1.allowedTransitions[fromStatus] ?? [];
+        if (!allowed.includes(status)) {
+          return c.json({ error: "Status transition not allowed" }, 400);
+        }
+
+        if (status === TaskStatus.READY) {
+          if (!nextAssigneeId || !nextPriority) {
+            return c.json(
+              {
+                error: "Task must have assignee and priority before entering Ready.",
+              },
+              400
+            );
+          }
+        }
+
+        if (status === TaskStatus.DONE) {
+          if (!nextAssigneeId) {
+            return c.json({ error: "Task must have assignee to finish." }, 400);
+          }
+        }
+      }
+
+      const hasMeaningfulChange =
+        (typeof status !== "undefined" && status !== existingTask.status) ||
+        (typeof assigneeId !== "undefined" &&
+          assigneeId !== existingTask.assigneeId) ||
+        (typeof description !== "undefined" &&
+          description !== existingTask.description) ||
+        (typeof documentation !== "undefined" &&
+          documentation !== existingTask.documentation) ||
+        (typeof diagramUrl !== "undefined" &&
+          diagramUrl !== existingTask.diagramUrl) ||
+        (typeof dueDate !== "undefined" &&
+          (dueDate instanceof Date ? dueDate.toISOString() : dueDate) !==
+            existingTask.dueDate) ||
+        (typeof priority !== "undefined" &&
+          getPriority(existingTask.flags) !== priority) ||
+        (typeof flags !== "undefined" &&
+          JSON.stringify(normalizeFlags(existingTask.flags)) !==
+            JSON.stringify(normalizeFlags(flags)));
+
+      const payload: Record<string, unknown> = {
+        name,
+        status: nextStatus,
+        projectId,
+        dueDate: dueDate instanceof Date ? dueDate.toISOString() : dueDate,
+        assigneeId: nextAssigneeId,
+        description,
+        documentation,
+        diagramUrl,
+        githubPrs,
+        flags: nextFlags.length > 0 ? nextFlags : undefined,
+        completedAt:
+          nextStatus === TaskStatus.DONE
+            ? completedAt instanceof Date
+              ? completedAt.toISOString()
+              : completedAt ?? new Date().toISOString()
+            : undefined,
+      };
+
+      if (hasMeaningfulChange) {
+        payload.lastActivityAt = new Date().toISOString();
+      }
+
       const task = await databases.updateDocument<Task>(
         DATABASE_ID,
         TASKS_ID,
         taskId,
-        {
-          name,
-          status,
-          projectId,
-          dueDate: dueDate instanceof Date ? dueDate.toISOString() : dueDate,
-          assigneeId,
-          description,
-          documentation,
-          diagramUrl,
-          githubPrs,
-          completedAt:
-            status === TaskStatus.DONE
-              ? completedAt instanceof Date
-                ? completedAt.toISOString()
-                : completedAt ?? new Date().toISOString()
-              : undefined,
-        }
+        payload
       );
 
       return c.json({ data: task });
@@ -542,13 +631,68 @@ Prazo: ${task.dueDate ?? "-"}
         return c.json({ error: "Unauthorized" }, 401);
       }
 
+      const workspace = await databases.getDocument<Workspace>(
+        DATABASE_ID,
+        WORKSPACE_ID,
+        workspaceId
+      );
+      const isDevGuided = workspace.workspaceType === "software_dev";
+
+      if (isDevGuided) {
+        for (const task of tasks) {
+          const existing = tasksToUpdate.documents.find(
+            (doc) => doc.$id === task.$id
+          );
+          if (!existing) continue;
+
+          if (task.status !== existing.status) {
+            const fromStatus =
+              existing.status === TaskStatus.TODO
+                ? TaskStatus.BACKLOG
+                : existing.status;
+            const allowed = DEV_GUIDED_V1.allowedTransitions[fromStatus] ?? [];
+            if (!allowed.includes(task.status)) {
+              return c.json(
+                { error: "Status transition not allowed" },
+                400
+              );
+            }
+
+            if (task.status === TaskStatus.READY) {
+              const priority = getPriority(existing.flags);
+              if (!existing.assigneeId || !priority) {
+                return c.json(
+                  {
+                    error:
+                      "Task must have assignee and priority before entering Ready.",
+                  },
+                  400
+                );
+              }
+            }
+
+            if (task.status === TaskStatus.DONE && !existing.assigneeId) {
+              return c.json(
+                { error: "Task must have assignee to finish." },
+                400
+              );
+            }
+          }
+        }
+      }
+
       const updatedTasks = await Promise.all(
         tasks.map(async (task) => {
           const { $id, status, position } = task;
-          return databases.updateDocument<Task>(DATABASE_ID, TASKS_ID, $id, {
-            status,
-            position,
-          });
+          const existing = tasksToUpdate.documents.find(
+            (doc) => doc.$id === $id
+          );
+          const statusChanged = existing && existing.status !== status;
+          const payload: Record<string, unknown> = { status, position };
+          if (statusChanged) {
+            payload.lastActivityAt = new Date().toISOString();
+          }
+          return databases.updateDocument<Task>(DATABASE_ID, TASKS_ID, $id, payload);
         })
       );
 

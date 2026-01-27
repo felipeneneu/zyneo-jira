@@ -1,10 +1,12 @@
 import { Query, type Databases } from "node-appwrite";
-import { DATABASE_ID, TASKS_ID, MEMBERS_ID } from "@/src/config";
+import { DATABASE_ID, TASKS_ID, MEMBERS_ID, WORKSPACE_ID } from "@/src/config";
 import type { Task, TaskStatus } from "../types";
+import type { Workspace } from "@/src/features/workspaces/types";
 import {
   upsertNotification,
   archiveNotificationByThreadKey,
 } from "@/src/features/notifications/utils/upsert-notification";
+import { normalizeFlags, setFlagValue, hasFlag } from "./task-flags";
 
 const STALE_THRESHOLD_MS = 48 * 60 * 60 * 1000; // 48 hours
 const STALE_CRITICAL_THRESHOLD_MS = 96 * 60 * 60 * 1000; // 96 hours (4 days)
@@ -33,6 +35,16 @@ export async function checkRulesForWorkspace(
     flagsUpdated: 0,
   };
 
+  const workspace = await databases.getDocument<Workspace>(
+    DATABASE_ID,
+    WORKSPACE_ID,
+    workspaceId
+  );
+
+  if (workspace.workspaceType === "software_dev") {
+    return result;
+  }
+
   // Fetch tasks that are not done (limit to 200 for performance)
   const tasks = await databases.listDocuments<Task>(DATABASE_ID, TASKS_ID, [
     Query.equal("workspaceId", workspaceId),
@@ -45,7 +57,7 @@ export async function checkRulesForWorkspace(
   todayStart.setHours(0, 0, 0, 0);
 
   for (const task of tasks.documents) {
-    const currentFlags = task.flags ?? [];
+    const currentFlags = normalizeFlags(task.flags);
     let newFlags = [...currentFlags];
     let flagsChanged = false;
 
@@ -76,8 +88,8 @@ export async function checkRulesForWorkspace(
 
       if (timeSinceActivity >= STALE_THRESHOLD_MS) {
         // Task is stale
-        if (!newFlags.includes("stale")) {
-          newFlags.push("stale");
+        if (!hasFlag(newFlags, "stale")) {
+          newFlags = setFlagValue(newFlags, "stale", true);
           flagsChanged = true;
         }
         result.staleFound++;
@@ -107,8 +119,8 @@ export async function checkRulesForWorkspace(
         }
       } else {
         // No longer stale - remove flag and archive notification
-        if (newFlags.includes("stale")) {
-          newFlags = newFlags.filter((f) => f !== "stale");
+        if (hasFlag(newFlags, "stale")) {
+          newFlags = setFlagValue(newFlags, "stale", false);
           flagsChanged = true;
 
           if (assigneeUserId) {
@@ -121,9 +133,9 @@ export async function checkRulesForWorkspace(
           }
         }
       }
-    } else if (!isStaleEligible && newFlags.includes("stale")) {
+    } else if (!isStaleEligible && hasFlag(newFlags, "stale")) {
       // Task status changed to non-eligible - clear stale
-      newFlags = newFlags.filter((f) => f !== "stale");
+      newFlags = setFlagValue(newFlags, "stale", false);
       flagsChanged = true;
 
       if (assigneeUserId) {
@@ -144,8 +156,8 @@ export async function checkRulesForWorkspace(
 
       if (dueDate < todayStart) {
         // Task is overdue
-        if (!newFlags.includes("overdue")) {
-          newFlags.push("overdue");
+        if (!hasFlag(newFlags, "overdue")) {
+          newFlags = setFlagValue(newFlags, "overdue", true);
           flagsChanged = true;
         }
         result.overdueFound++;
@@ -173,8 +185,8 @@ export async function checkRulesForWorkspace(
         }
       } else {
         // Not overdue anymore - remove flag and archive notification
-        if (newFlags.includes("overdue")) {
-          newFlags = newFlags.filter((f) => f !== "overdue");
+        if (hasFlag(newFlags, "overdue")) {
+          newFlags = setFlagValue(newFlags, "overdue", false);
           flagsChanged = true;
 
           if (assigneeUserId) {

@@ -30,10 +30,14 @@ interface NotificationModalProps {
 
 const getReasonText = (type: Notification["type"]) => {
   switch (type) {
+    case "task.stale":
     case "system.stale":
       return "Esta tarefa está sem atividade há mais de 48 horas e está marcada como em progresso ou revisão.";
+    case "task.overdue":
     case "system.overdue":
       return "Esta tarefa passou da data de entrega prevista e ainda não foi concluída.";
+    case "task.blocked":
+      return "Esta tarefa está bloqueada há tempo suficiente para exigir escalonamento.";
     case "system.daily_focus":
       return "Resumo diario gerado automaticamente com base nas suas tarefas atribuídas.";
     case "human.mention":
@@ -45,10 +49,14 @@ const getReasonText = (type: Notification["type"]) => {
 
 const getSuggestionText = (type: Notification["type"]) => {
   switch (type) {
+    case "task.stale":
     case "system.stale":
       return "Considere adicionar uma atualização de progresso ou marcar como bloqueada se estiver aguardando algo.";
+    case "task.overdue":
     case "system.overdue":
       return "Revise a prioridade desta tarefa ou ajuste a data de entrega se necessário.";
+    case "task.blocked":
+      return "Verifique o impedimento e acione quem pode desbloquear a tarefa.";
     case "system.daily_focus":
       return "Use este resumo para escolher 1-3 tarefas de maior impacto e evitar dispersão.";
     case "human.mention":
@@ -60,9 +68,13 @@ const getSuggestionText = (type: Notification["type"]) => {
 
 const getIcon = (type: Notification["type"]) => {
   switch (type) {
+    case "task.stale":
     case "system.stale":
       return <Clock className="size-5 text-amber-500" />;
+    case "task.overdue":
     case "system.overdue":
+      return <AlertTriangle className="size-5 text-red-500" />;
+    case "task.blocked":
       return <AlertTriangle className="size-5 text-red-500" />;
     case "system.daily_focus":
       return <Sparkles className="size-5 text-amber-500" />;
@@ -325,7 +337,8 @@ export function NotificationModal({
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 px-6 py-4">
-          {notification.type === "system.stale" && (
+          {(notification.type === "system.stale" ||
+            notification.type === "task.stale") && (
             <>
               <Button
                 onClick={handleWorkingOnIt}
@@ -345,7 +358,8 @@ export function NotificationModal({
             </>
           )}
 
-          {notification.type === "system.overdue" && (
+          {(notification.type === "system.overdue" ||
+            notification.type === "task.overdue") && (
             <>
               <Button onClick={handleReplanDate} className="gap-2">
                 <Calendar className="size-4" />

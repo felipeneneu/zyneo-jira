@@ -30,9 +30,13 @@ type NotificationFilter = "all" | "unread" | "starred";
 
 const getNotificationIcon = (type: Notification["type"]) => {
   switch (type) {
+    case "task.stale":
     case "system.stale":
       return <Clock className="size-4 text-amber-500" />;
+    case "task.overdue":
     case "system.overdue":
+      return <AlertTriangle className="size-4 text-red-500" />;
+    case "task.blocked":
       return <AlertTriangle className="size-4 text-red-500" />;
     case "system.daily_focus":
       return <Sparkles className="size-4 text-amber-500" />;

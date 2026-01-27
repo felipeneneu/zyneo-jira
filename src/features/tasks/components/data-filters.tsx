@@ -13,12 +13,14 @@ import { FolderIcon, ListCheckIcon, UserIcon } from "lucide-react";
 import { TaskStatus } from "../types";
 import { useTaskFilters } from "../hooks/use-task-filters";
 import { DatePicker } from "@/src/ui/date-picker";
+import { TASK_STATUS_LABELS } from "../utils/task-status-labels";
 
 interface DataFiltersProps {
   hideProjectFilters?: boolean;
+  statuses?: TaskStatus[];
 }
 
-export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
+export const DataFilters = ({ hideProjectFilters, statuses }: DataFiltersProps) => {
   const workspaceId = useWorkspaceId();
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects({
     workspaceId,
@@ -78,11 +80,11 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
         >
           <SelectItem value="all">Todos os status</SelectItem>
           <SelectSeparator />
-          <SelectItem value={TaskStatus.BACKLOG}>Backlog</SelectItem>
-          <SelectItem value={TaskStatus.TODO}>A fazer</SelectItem>
-          <SelectItem value={TaskStatus.IN_PROGRESS}>Em andamento</SelectItem>
-          <SelectItem value={TaskStatus.IN_REVIEW}>Em revisão</SelectItem>
-          <SelectItem value={TaskStatus.DONE}>Concluído</SelectItem>
+          {(statuses ?? Object.values(TaskStatus)).map((statusValue) => (
+            <SelectItem key={statusValue} value={statusValue}>
+              {TASK_STATUS_LABELS[statusValue]}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 

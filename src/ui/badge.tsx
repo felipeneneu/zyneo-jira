@@ -19,6 +19,8 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        [TaskStatus.READY]:
+          "border-transparent bg-emerald-300 text-primary hover:bg-emerald-300/80",
         [TaskStatus.TODO]:
           "border-transparent bg-red-400 text-primary hover:bg-red-400/80",
         [TaskStatus.IN_PROGRESS]:

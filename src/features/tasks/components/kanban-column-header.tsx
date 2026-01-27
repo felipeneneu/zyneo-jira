@@ -21,6 +21,7 @@ const statusIconMap: Record<TaskStatus, React.ReactNode> = {
   [TaskStatus.BACKLOG]: (
     <CircleQuestionMark className="size-4.5 text-pink-400" />
   ),
+  [TaskStatus.READY]: <CircleIcon className="size-4.5 text-emerald-500" />,
   [TaskStatus.TODO]: <CircleIcon className="size-4.5 text-red-400" />,
   [TaskStatus.IN_PROGRESS]: <Timer className="size-4.5 text-yellow-400" />,
   [TaskStatus.IN_REVIEW]: <CircleDotIcon className="size-4.5 text-blue-400" />,

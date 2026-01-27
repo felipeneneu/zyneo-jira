@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Task, TaskStatus } from "../types";
 import {
   DragDropContext,
@@ -8,8 +8,19 @@ import {
 } from "@hello-pangea/dnd";
 import { KanbanColumnHeader } from "./kanban-column-header";
 import { KanbanCard } from "./kanban-card";
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/src/ui/drawer";
+import { Button } from "@/src/ui/button";
+import { Checkbox } from "@/src/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/ui/select";
+import { Badge } from "@/src/ui/badge";
+import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
+import { useGetMembers } from "../../members/api/use-get-members";
+import { useCurrent } from "../../auth/api/use-current";
+import { useUpdateTask } from "../api/use-update-task";
+import { getPriority, type TaskPriority } from "../utils/task-flags";
+import { cn } from "@/src/lib/utils";
 
-const boards: TaskStatus[] = [
+const defaultBoards: TaskStatus[] = [
   TaskStatus.BACKLOG,
   TaskStatus.TODO,
   TaskStatus.IN_PROGRESS,
@@ -21,9 +32,21 @@ type TasksState = {
   [key in TaskStatus]: Task[];
 };
 
+interface PendingMove {
+  movedTask: Task;
+  sourceStatus: TaskStatus;
+  destStatus: TaskStatus;
+  updatesPayload: { $id: string; status: TaskStatus; position: number }[];
+  nextTasks: TasksState;
+}
+
+const COPILOT_STORAGE_KEY = "kanban:copilot:auto-assign";
+const DEFAULT_COPILOT_ENABLED = true;
+
 const buildTasksState = (data: Task[]): TasksState => {
   const tasksState: TasksState = {
     [TaskStatus.BACKLOG]: [],
+    [TaskStatus.READY]: [],
     [TaskStatus.TODO]: [],
     [TaskStatus.IN_PROGRESS]: [],
     [TaskStatus.IN_REVIEW]: [],
@@ -43,12 +66,22 @@ const buildTasksState = (data: Task[]): TasksState => {
 
 interface DataKanbanProps {
   data: Task[];
+  boards?: TaskStatus[];
   onChange: (
     tasks: { $id: string; status: TaskStatus; position: number }[]
   ) => void;
 }
 
-export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
+export const DataKanban = ({
+  data,
+  onChange,
+  boards = defaultBoards,
+}: DataKanbanProps) => {
+  const workspaceId = useWorkspaceId();
+  const { data: members } = useGetMembers({ workspaceId });
+  const { data: currentUser } = useCurrent();
+  const updateTask = useUpdateTask();
+
   const dataKey = useMemo(
     () =>
       data
@@ -60,6 +93,15 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
     key: string;
     tasks: TasksState;
   } | null>(null);
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [copilotEnabled, setCopilotEnabled] = useState(
+    DEFAULT_COPILOT_ENABLED
+  );
+  const [autoAssignEnabled, setAutoAssignEnabled] = useState(true);
+  const [prioritySelection, setPrioritySelection] = useState<TaskPriority | "">(
+    ""
+  );
   const tasks = useMemo(() => {
     if (override?.key === dataKey) {
       return override.tasks;
@@ -67,6 +109,40 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
 
     return buildTasksState(data);
   }, [data, dataKey, override]);
+
+  const currentMemberId = useMemo(() => {
+    if (!currentUser?.$id) return null;
+    return (
+      members?.documents.find((member) => member.userId === currentUser.$id)
+        ?.$id ?? null
+    );
+  }, [currentUser?.$id, members?.documents]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(COPILOT_STORAGE_KEY);
+    if (stored === "true" || stored === "false") {
+      setCopilotEnabled(stored === "true");
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(COPILOT_STORAGE_KEY, String(copilotEnabled));
+  }, [copilotEnabled]);
+
+  useEffect(() => {
+    if (!pendingMove) return;
+    const priority = getPriority(pendingMove.movedTask.flags);
+    if (!priority && pendingMove.destStatus === TaskStatus.READY) {
+      setPrioritySelection("P2");
+    } else {
+      setPrioritySelection("");
+    }
+    const hasAssignee = Boolean(pendingMove.movedTask.assigneeId);
+    setAutoAssignEnabled(!hasAssignee && copilotEnabled);
+  }, [pendingMove, copilotEnabled]);
+
+  const wipCount = tasks[TaskStatus.IN_PROGRESS]?.length ?? 0;
+  const wipOverLimit = wipCount >= 5;
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -90,7 +166,6 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
       // if there`s no moved task (shouldn`t happen, but just in case)
 
       if (!movedTask) {
-        console.error("No task found at the source index");
         return;
       }
 
@@ -152,56 +227,216 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
       }
 
       setOverride({ key: dataKey, tasks: newTasks });
-      onChange(updatesPayload);
+      setPendingMove({
+        movedTask,
+        sourceStatus,
+        destStatus,
+        updatesPayload,
+        nextTasks: newTasks,
+      });
+      setIsConfirmOpen(true);
     },
     [dataKey, onChange, tasks]
   );
 
+  const handleCancelMove = () => {
+    setOverride(null);
+    setPendingMove(null);
+    setIsConfirmOpen(false);
+  };
+
+  const handleConfirmMove = async () => {
+    if (!pendingMove) return;
+
+    const { movedTask, destStatus, updatesPayload } = pendingMove;
+    const needsPriority =
+      destStatus === TaskStatus.READY && !getPriority(movedTask.flags);
+    const needsAssignee = !movedTask.assigneeId;
+    const shouldAssign =
+      copilotEnabled &&
+      autoAssignEnabled &&
+      needsAssignee &&
+      Boolean(currentMemberId);
+
+    if (needsPriority && !prioritySelection) {
+      return;
+    }
+
+    try {
+      if (needsPriority || shouldAssign) {
+        await updateTask.mutateAsync({
+          param: { taskId: movedTask.$id },
+          json: {
+            ...(needsPriority ? { priority: prioritySelection } : {}),
+            ...(shouldAssign ? { assigneeId: currentMemberId ?? undefined } : {}),
+          },
+        });
+      }
+
+      onChange(updatesPayload);
+      setPendingMove(null);
+      setIsConfirmOpen(false);
+    } catch {
+      handleCancelMove();
+    }
+  };
+
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex overflow-x-auto">
-        {boards.map((board) => {
-          return (
-            <div
-              key={board}
-              className="flex-1 mx-2 bg-muted p-1.5 rounded-md min-w-50"
-            >
-              <KanbanColumnHeader
-                board={board}
-                taskCount={tasks[board].length}
-              />
-              <Droppable droppableId={board}>
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="min-h-50 py-1.5"
-                  >
-                    {tasks[board].map((task, index) => (
-                      <Draggable
-                        key={task.$id}
-                        draggableId={task.$id}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <KanbanCard task={task} />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          );
-        })}
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <span>WIP atual: {wipCount}</span>
+          {wipOverLimit ? (
+            <Badge className="bg-amber-100 text-amber-700">WIP alto</Badge>
+          ) : null}
+        </div>
+        <label className="flex items-center gap-2">
+          <Checkbox
+            checked={copilotEnabled}
+            onCheckedChange={(value) => setCopilotEnabled(value === true)}
+          />
+          Copiloto ativo
+        </label>
       </div>
-    </DragDropContext>
+
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex overflow-x-auto">
+          {boards.map((board) => {
+            return (
+              <div
+                key={board}
+                className="flex-1 mx-2 bg-muted p-1.5 rounded-md min-w-50"
+              >
+                <KanbanColumnHeader
+                  board={board}
+                  taskCount={tasks[board].length}
+                />
+                <Droppable droppableId={board}>
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="min-h-50 py-1.5"
+                    >
+                      {tasks[board].map((task, index) => (
+                        <Draggable
+                          key={task.$id}
+                          draggableId={task.$id}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <KanbanCard task={task} />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
+        </div>
+      </DragDropContext>
+
+      <Drawer
+        open={isConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancelMove();
+          }
+        }}
+        direction="right"
+      >
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Confirmar movimento</DrawerTitle>
+            <DrawerDescription>
+              Ajuste as automações antes de aplicar.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 space-y-4">
+            <div className="rounded-md border border-muted/40 p-3 text-sm">
+              <p className="font-medium">
+                {pendingMove?.movedTask.name ?? "Tarefa"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {pendingMove?.sourceStatus} → {pendingMove?.destStatus}
+              </p>
+            </div>
+
+            {pendingMove &&
+            pendingMove.destStatus === TaskStatus.READY &&
+            !getPriority(pendingMove.movedTask.flags) ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Definir prioridade para entrar em Ready
+                </label>
+                <Select
+                  value={prioritySelection}
+                  onValueChange={(value) =>
+                    setPrioritySelection(value as TaskPriority)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione a prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="P1">P1 - Alta</SelectItem>
+                    <SelectItem value="P2">P2 - Média</SelectItem>
+                    <SelectItem value="P3">P3 - Baixa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+
+            {pendingMove && !pendingMove.movedTask.assigneeId ? (
+              <div
+                className={cn(
+                  "flex items-start gap-2 rounded-md border border-muted/40 p-3 text-sm",
+                  !currentMemberId && "opacity-60"
+                )}
+              >
+                <Checkbox
+                  checked={autoAssignEnabled && copilotEnabled}
+                  onCheckedChange={(value) =>
+                    setAutoAssignEnabled(value === true)
+                  }
+                  disabled={!currentMemberId || !copilotEnabled}
+                />
+                <div>
+                  <p className="font-medium">Assumir tarefa automaticamente</p>
+                  <p className="text-xs text-muted-foreground">
+                    Define você como responsável ao mover.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <DrawerFooter>
+            <Button
+              onClick={handleConfirmMove}
+              disabled={
+                !pendingMove ||
+                (pendingMove.destStatus === TaskStatus.READY &&
+                  !getPriority(pendingMove.movedTask.flags) &&
+                  !prioritySelection)
+              }
+            >
+              Confirmar movimento
+            </Button>
+            <Button variant="outline" onClick={handleCancelMove}>
+              Cancelar
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
   );
 };

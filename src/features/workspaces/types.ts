@@ -61,6 +61,7 @@ export type WorkspaceOnboardingDraft = {
   capabilities?: string[];
   tools?: string[];
   agentProfileId?: string;
+  workflowPreset?: string;
 };
 
 export type Workspace = Models.Document & {
@@ -80,4 +81,5 @@ export type Workspace = Models.Document & {
   capabilities?: string[];
   tools?: string[];
   agentProfileId?: string;
+  workflowPreset?: string;
 };

@@ -19,6 +19,7 @@ import type { Project } from "@/src/features/projects/types";
 
 import { listNotificationsQuerySchema } from "../schemas";
 import type { Notification } from "../types";
+import { runDevGuidedRules } from "./rules/dev-guided-rules";
 
 const getDateKey = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -221,6 +222,10 @@ const app = new Hono()
       if (!member) {
         return c.json({ error: "Unauthorized" }, 401);
       }
+
+      try {
+        await runDevGuidedRules({ databases, workspaceId: resolvedWorkspaceId });
+      } catch {}
 
       const dateKey = getDateKey(new Date());
       const threadKey = `daily-focus:${resolvedWorkspaceId}:${dateKey}`;

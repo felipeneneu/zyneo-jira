@@ -6,6 +6,7 @@ import { useGetProjects } from "../../projects/api/use-get-projects";
 import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
 import { CreateTaskForm } from "./create-task-form";
 import { useCreateTaskModal } from "../hooks/use-create-task-modal";
+import { useCurrent } from "../../auth/api/use-current";
 
 interface CreateTaskFormWrapperProps {
   onCancel: () => void;
@@ -16,6 +17,7 @@ export const CreateTaskFormWrapper = ({
 }: CreateTaskFormWrapperProps) => {
   const workspaceId = useWorkspaceId();
   const { status } = useCreateTaskModal();
+  const { data: currentUser } = useCurrent();
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects({
     workspaceId,
   });
@@ -35,6 +37,10 @@ export const CreateTaskFormWrapper = ({
     avatarUrl: member.avatarUrl,
   }));
 
+  const defaultAssigneeId = members?.documents.find(
+    (member) => member.userId === currentUser?.$id
+  )?.$id;
+
   const isLoading = isLoadingProjects || isLoadingMembers;
 
   if (isLoading) {
@@ -53,6 +59,7 @@ export const CreateTaskFormWrapper = ({
       projectOptions={projectOptions ?? []}
       memberOptions={memberOptions ?? []}
       status={status ?? []}
+      defaultAssigneeId={defaultAssigneeId}
     />
   );
 };

@@ -8,6 +8,7 @@ import { TaskDate } from "./task-date";
 import { Badge } from "@/src/ui/badge";
 import { snakeCaseToTitleCase, cn } from "@/src/lib/utils";
 import { useEditTaskModal } from "../hooks/use-edit-task-modal";
+import { hasFlag, normalizeFlags } from "../utils/task-flags";
 
 const flagConfig = {
   stale: {
@@ -32,7 +33,10 @@ interface TaskOverviewProps {
 }
 export const TaskOverview = ({ task }: TaskOverviewProps) => {
   const { open } = useEditTaskModal();
-  const flags = (task.flags as string[] | undefined) ?? [];
+  const flags = normalizeFlags(task.flags as string[] | undefined);
+  const displayFlags = ["stale", "overdue", "blocked"].filter((flag) =>
+    hasFlag(flags, flag)
+  );
 
   return (
     <div className="flex flex-col gap-y-4 col-span-1">
@@ -40,7 +44,7 @@ export const TaskOverview = ({ task }: TaskOverviewProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold">Visão geral</p>
-            {flags.map((flag) => {
+            {displayFlags.map((flag) => {
               const config = flagConfig[flag as keyof typeof flagConfig];
               if (!config) return null;
               const Icon = config.icon;

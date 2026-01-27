@@ -10,7 +10,7 @@ interface AuthLayoutProps {
 const AuthLayout = ({ children }: AuthLayoutProps) => {
   const pathname = usePathname();
   return (
-    <main className="bg-neutral-100 min-h-screen">
+    <main className="bg-neutral-100 min-h-screen w-full">
       <div className="mx-auto max-w-screen-2xl p-4">
         <nav className="flex justify-between items-center">
           <Image src="/logo.svg" alt="logo" height={56} width={152} />
@@ -21,7 +21,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
           </Button>
         </nav>
 
-        <div className="flex flex-col items-center justify-center pt-4 md:pt-14">
+        <div className="flex flex-col md:items-center md:justify-center pt-8 md:pt-14 w-full">
           {children}
         </div>
       </div>

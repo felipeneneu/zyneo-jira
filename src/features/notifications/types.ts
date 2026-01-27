@@ -1,6 +1,9 @@
 import { Models } from "node-appwrite";
 
 export type NotificationType =
+  | "task.overdue"
+  | "task.stale"
+  | "task.blocked"
   | "system.stale"
   | "system.overdue"
   | "system.daily_focus"

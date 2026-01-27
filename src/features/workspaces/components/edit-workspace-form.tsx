@@ -46,16 +46,17 @@ export const EditWorkspaceForm = ({
   const { mutate: resetInviteCode, isPending: isResettingInviteCode } =
     useResetInviteCode();
 
+  // Configuração dos diálogos de confirmação
   const [DeleteDialog, confirmDelete] = useConfirm(
-    "Delete Workspace",
-    "Are you sure you want to delete this workspace? This action cannot be undone.",
-    "destructive"
+    "Excluir Espaço de Trabalho",
+    "Tem certeza que deseja excluir este espaço de trabalho? Esta ação não pode ser desfeita.",
+    "destructive",
   );
 
   const [ResetDialog, confirmReset] = useConfirm(
-    "Reset invite link",
-    "This will invalidate the current invite link. Are you sure you want to reset the invite link?",
-    "destructive"
+    "Redefinir link de convite",
+    "Isso invalidará o link de convite atual. Tem certeza que deseja redefinir?",
+    "destructive",
   );
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +81,7 @@ export const EditWorkspaceForm = ({
         onSuccess: () => {
           window.location.href = "/";
         },
-      }
+      },
     );
   };
 
@@ -113,13 +114,17 @@ export const EditWorkspaceForm = ({
   const handleCopyInviteLink = () => {
     navigator.clipboard
       .writeText(fullInviteLink)
-      .then(() => toast.success("Invite link copied to clipboard"));
+      .then(() =>
+        toast.success("Link de convite copiado para a área de transferência"),
+      );
   };
 
   return (
     <div className="flex flex-col gap-y-4">
       <DeleteDialog />
       <ResetDialog />
+
+      {/* Formulário de Edição Principal */}
       <Card className="w-full h-full border-none shadow-none">
         <CardHeader className="flex flex-row items-center gap-x-4 p-7 space-y-0">
           <Button
@@ -133,7 +138,7 @@ export const EditWorkspaceForm = ({
             className="cursor-pointer"
           >
             <ArrowLeftIcon className="size-4 mr-2" />
-            Back
+            Voltar
           </Button>
           <CardTitle className="text-xl font-bold">
             {initialValues.name}
@@ -151,9 +156,12 @@ export const EditWorkspaceForm = ({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Workspace Name</FormLabel>
+                      <FormLabel>Nome do Espaço de Trabalho</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Enter workspace name" />
+                        <Input
+                          {...field}
+                          placeholder="Insira o nome do workspace"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -164,11 +172,11 @@ export const EditWorkspaceForm = ({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Short Description</FormLabel>
+                      <FormLabel>Descrição Curta</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="Short context for this workspace"
+                          placeholder="Um breve contexto sobre este workspace"
                         />
                       </FormControl>
                       <FormMessage />
@@ -190,10 +198,10 @@ export const EditWorkspaceForm = ({
                                 field.value instanceof File
                                   ? URL.createObjectURL(field.value)
                                   : field.value
-                                  ? getAppwriteFileViewUrl(field.value) // 👈 adapta aqui
-                                  : ""
+                                    ? getAppwriteFileViewUrl(field.value)
+                                    : ""
                               }
-                              alt="Workspace Avatar"
+                              alt="Avatar do Workspace"
                             />
                           </div>
                         ) : (
@@ -204,9 +212,9 @@ export const EditWorkspaceForm = ({
                           </Avatar>
                         )}
                         <div className="flex flex-col">
-                          <p className="text-sm">Workspace Icon</p>
+                          <p className="text-sm">Ícone do Espaço de Trabalho</p>
                           <p className="text-sm text-muted-foreground">
-                            JPG, PNG, SVG or JPEG, max 1mb
+                            JPG, PNG, SVG ou JPEG, máx 1MB
                           </p>
                           <input
                             className="hidden"
@@ -231,7 +239,7 @@ export const EditWorkspaceForm = ({
                                 }
                               }}
                             >
-                              Remove Image
+                              Remover Imagem
                             </Button>
                           ) : (
                             <Button
@@ -242,7 +250,7 @@ export const EditWorkspaceForm = ({
                               className="w-fit mt-2 cursor-pointer"
                               onClick={() => inputRef.current?.click()}
                             >
-                              Upload Image
+                              Upload de Imagem
                             </Button>
                           )}
                         </div>
@@ -261,10 +269,10 @@ export const EditWorkspaceForm = ({
                   disabled={isPending}
                   className={cn(!onCancel && "invisible")}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button type="submit" size={"lg"} disabled={isPending}>
-                  Save Changes
+                  Salvar Alterações
                 </Button>
               </div>
             </form>
@@ -272,12 +280,14 @@ export const EditWorkspaceForm = ({
         </CardContent>
       </Card>
 
+      {/* Seção de Convites */}
       <Card className="w-full h-full border-none shadow-none">
         <CardContent className="p-7">
           <div className="flex flex-col">
-            <h3 className="font-bold">Invite Members</h3>
+            <h3 className="font-bold">Convidar Membros</h3>
             <p className="text-sm text-muted-foreground">
-              Use the invite link to add members to your workspace.
+              Use o link de convite para adicionar membros ao seu espaço de
+              trabalho.
             </p>
             <div className="mt-4">
               <div className="flex items-center justify-center gap-x-2">
@@ -300,19 +310,20 @@ export const EditWorkspaceForm = ({
               disabled={isPending || isResettingInviteCode}
               onClick={handleResetInviteCode}
             >
-              Reset invite link
+              Redefinir link de convite
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Zona de Perigo */}
       <Card className="w-full h-full border-none shadow-none">
         <CardContent className="p-7">
           <div className="flex flex-col">
-            <h3 className="font-bold">Danger Zone</h3>
+            <h3 className="font-bold">Zona de Perigo</h3>
             <p className="text-sm text-muted-foreground">
-              Deleting a workspace is a irreversible and will remove all
-              associated data.
+              Excluir um espaço de trabalho é irreversível e removerá todos os
+              dados associados.
             </p>
             <DottedSeparator className="py-7" />
             <Button
@@ -323,7 +334,7 @@ export const EditWorkspaceForm = ({
               disabled={isPending || isDeletingWorkspace}
               onClick={handleDelete}
             >
-              Delete Workspace
+              Excluir Espaço de Trabalho
             </Button>
           </div>
         </CardContent>

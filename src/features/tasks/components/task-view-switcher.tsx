@@ -18,7 +18,11 @@ import { useCallback } from "react";
 import { TaskStatus } from "../types";
 import { useBulkUpdateTask } from "../api/use-bulk-update-task";
 import { DataCalendar } from "./data-calendar";
+import { BacklogView } from "./backlog-view";
 import { useProjectId } from "../../projects/hooks/use-project-id";
+import { useGetWorkspace } from "../../workspaces/api/use-get-workspace-id";
+import { getWorkspaceStatuses } from "../utils/task-statuses";
+import { DevGuidedTutorial } from "../../tutorial/dev-guided-tutorial";
 
 interface TaskViewSwitcherProps {
   hideProjectFilters?: boolean;
@@ -36,6 +40,8 @@ export const TaskViewSwitcher = ({
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
   const { open } = useCreateTaskModal();
+  const { data: workspace } = useGetWorkspace({ workspaceId });
+  const statuses = getWorkspaceStatuses(workspace?.workspaceType);
 
   const { mutate: bulkUpdate } = useBulkUpdateTask();
 
@@ -94,8 +100,13 @@ export const TaskViewSwitcher = ({
           </Button>
         </div>
         <DottedSeparator className="my-4" />
-        <DataFilters hideProjectFilters={hideProjectFilters} />
+        <DataFilters hideProjectFilters={hideProjectFilters} statuses={statuses} />
         <DottedSeparator className="my-4" />
+        <DevGuidedTutorial
+          workspaceId={workspaceId}
+          workspaceType={workspace?.workspaceType}
+          tasks={tasks?.documents ?? []}
+        />
         {isLoadingTasks ? (
           <div className="w-full border rounded-lg h-50 flex flex-col items-center justify-center">
             <Loader className="size-5 animate-spin text-muted-foreground" />
@@ -109,6 +120,7 @@ export const TaskViewSwitcher = ({
               <DataKanban
                 onChange={onKanbanChange}
                 data={tasks?.documents ?? []}
+                boards={statuses as TaskStatus[]}
               />
             </TabsContent>
             <TabsContent value="calendar" className="mt-0">
@@ -116,7 +128,7 @@ export const TaskViewSwitcher = ({
             </TabsContent>
 
             <TabsContent value="backlog" className="mt-0">
-              <DataTable columns={columns} data={tasks?.documents ?? []} />
+              <BacklogView tasks={tasks?.documents ?? []} />
             </TabsContent>
           </>
         )}
