@@ -105,11 +105,11 @@ export const TaskViewSwitcher = ({
           statuses={[...statuses]}
         />
         <DottedSeparator className="my-4" />
-        <DevGuidedTutorial
+        {/* <DevGuidedTutorial
           workspaceId={workspaceId}
           workspaceType={workspace?.workspaceType}
           tasks={tasks?.documents ?? []}
-        />
+        /> */}
         {isLoadingTasks ? (
           <div className="w-full border rounded-lg h-50 flex flex-col items-center justify-center">
             <Loader className="size-5 animate-spin text-muted-foreground" />

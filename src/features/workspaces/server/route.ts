@@ -128,6 +128,7 @@ const app = new Hono()
       const databases = c.get("databases");
       const storage = c.get("storage");
       const user = c.get("user");
+      const account = c.get("account");
 
       const {
         name,
@@ -142,6 +143,16 @@ const app = new Hono()
         capabilities,
         tools,
       } = c.req.valid("form");
+
+      const existingMemberships = await databases.listDocuments(
+        DATABASE_ID,
+        MEMBERS_ID,
+        [Query.equal("userId", user.$id), Query.limit(1)]
+      );
+      const prefs = (user.prefs as Record<string, unknown>) ?? {};
+      const prefsHasCreatedWorkspace = prefs.hasCreatedWorkspace === true;
+      const hasCreatedWorkspace =
+        prefsHasCreatedWorkspace || existingMemberships.total > 0;
 
       let uploadedImageUrl: string | undefined;
 
@@ -234,12 +245,19 @@ const app = new Hono()
         role: MemberRole.ADMIN,
       });
 
-      if (workspace.workspaceType === "software_dev") {
+      if (workspace.workspaceType === "software_dev" && !hasCreatedWorkspace) {
         await setupDevGuidedWorkspace({
           databases,
           workspaceId: workspace.$id,
           userId: user.$id,
         });
+      }
+
+      if (!prefsHasCreatedWorkspace) {
+        const nextPrefs = { ...prefs, hasCreatedWorkspace: true };
+        try {
+          await account.updatePrefs(nextPrefs);
+        } catch {}
       }
 
       return c.json({ data: workspace });

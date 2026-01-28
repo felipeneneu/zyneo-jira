@@ -7,6 +7,8 @@ import type { Task } from "@/src/features/tasks/types";
 import { TaskStatus } from "@/src/features/tasks/types";
 import { Button } from "@/src/ui/button";
 import { Card, CardContent } from "@/src/ui/card";
+import { ScrollArea } from "@/src/ui/scroll-area";
+import { Kbd, KbdGroup } from "@/src/ui/kbd";
 import { DEV_GUIDED_TUTORIAL_TASKS } from "./dev-guided-tutorial-config";
 
 interface DevGuidedTutorialProps {
@@ -56,6 +58,13 @@ export const DevGuidedTutorial = ({
     [tasks]
   );
 
+  const resolvedStep2Done = step2Done || step > 2;
+  const completedSteps =
+    (step1Complete ? 1 : 0) +
+    (resolvedStep2Done ? 1 : 0) +
+    (step3Complete ? 1 : 0);
+  const progressValue = Math.round((completedSteps / 3) * 100);
+
   useEffect(() => {
     if (!isDevGuided || isDone) return;
     if (step === 1 && step1Complete) {
@@ -71,72 +80,124 @@ export const DevGuidedTutorial = ({
 
   return (
     <Card className="border border-amber-200 bg-amber-50/60">
-      <CardContent className="space-y-3 p-4 text-sm text-amber-900">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs uppercase text-amber-700">Guided Dev</p>
-          <p className="font-semibold">Setup rapido (3 passos)</p>
-        </div>
+      <CardContent className="p-4">
+        <ScrollArea className="max-h-[280px] pr-2">
+          <div className="space-y-3 text-sm text-amber-900">
+            <div className="flex flex-col gap-1">
+              <p className="text-xs uppercase text-amber-700">Guided Dev</p>
+              <p className="font-semibold">Setup rapido (3 passos)</p>
+              <div className="space-y-1 pt-2">
+                <div className="flex items-center justify-between text-xs text-amber-700">
+                  <span>Progresso</span>
+                  <span>
+                    {completedSteps}/3
+                  </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-amber-100">
+                  <div
+                    className="h-full rounded-full bg-amber-400 transition-all"
+                    style={{ width: `${progressValue}%` }}
+                  />
+                </div>
+              </div>
+            </div>
 
-        {step === 1 && (
-          <div className="space-y-2">
-            <p className="font-medium">Passo 1: mova uma tarefa tutorial para Ready.</p>
-            <p>
-              Ready exige responsável e prioridade. Ajuste a tarefa e mova para
-              Ready no Kanban.
-            </p>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setStep(2)}
-              disabled={!step1Complete}
-            >
-              {step1Complete ? "Continuar" : "Aguardando tarefa em Ready"}
-            </Button>
-          </div>
-        )}
+            <div className="rounded-md border border-amber-200 bg-amber-100/70 p-3 text-xs">
+              <p className="font-medium text-amber-900">Comandos rapidos</p>
+              <div className="mt-2 space-y-2 text-amber-800">
+                <div className="flex items-center justify-between gap-2">
+                  <span>Criar tarefa</span>
+                  <KbdGroup>
+                    <Kbd>Ctrl</Kbd>
+                    <Kbd>Shift</Kbd>
+                    <Kbd>T</Kbd>
+                  </KbdGroup>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span>Criar projeto</span>
+                  <KbdGroup>
+                    <Kbd>Ctrl</Kbd>
+                    <Kbd>Shift</Kbd>
+                    <Kbd>P</Kbd>
+                  </KbdGroup>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span>Criar workspace</span>
+                  <KbdGroup>
+                    <Kbd>Ctrl</Kbd>
+                    <Kbd>Shift</Kbd>
+                    <Kbd>W</Kbd>
+                  </KbdGroup>
+                </div>
+              </div>
+            </div>
 
-        {step === 2 && (
-          <div className="space-y-2">
-            <p className="font-medium">Passo 2: abra suas notificações.</p>
-            <p>Veja alertas de atraso, tarefas paradas e bloqueios.</p>
-            <Button
-              asChild
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                setStep2Done(true);
-                setStep(3);
-              }}
-            >
-              <Link href="/notifications">Abrir notificações</Link>
-            </Button>
-            {step2Done && (
-              <p className="text-xs text-amber-700">
-                Notificações abertas. Vamos para o passo final.
-              </p>
+            {step === 1 && (
+              <div className="space-y-2">
+                <p className="font-medium">
+                  Passo 1: mova uma tarefa tutorial para Ready.
+                </p>
+                <p>
+                  Ready exige responsável e prioridade. Ajuste a tarefa e mova
+                  para Ready no Kanban.
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setStep(2)}
+                  disabled={!step1Complete}
+                >
+                  {step1Complete ? "Continuar" : "Aguardando tarefa em Ready"}
+                </Button>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-2">
+                <p className="font-medium">Passo 2: abra suas notificações.</p>
+                <p>Veja alertas de atraso, tarefas paradas e bloqueios.</p>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setStep2Done(true);
+                    setStep(3);
+                  }}
+                >
+                  <Link href="/notifications">Abrir notificações</Link>
+                </Button>
+                {resolvedStep2Done && (
+                  <p className="text-xs text-amber-700">
+                    Notificações abertas. Vamos para o passo final.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-2">
+                <p className="font-medium">
+                  Passo 3: conclua a tarefa em Review.
+                </p>
+                <p>Mova a tarefa tutorial em Review para Done.</p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    if (step3Complete) {
+                      localStorage.setItem(getStorageKey(workspaceId), "done");
+                      setIsDone(true);
+                    }
+                  }}
+                  disabled={!step3Complete}
+                >
+                  {step3Complete ? "Finalizar" : "Aguardando tarefa em Done"}
+                </Button>
+              </div>
             )}
           </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-2">
-            <p className="font-medium">Passo 3: conclua a tarefa em Review.</p>
-            <p>Mova a tarefa tutorial em Review para Done.</p>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                if (step3Complete) {
-                  localStorage.setItem(getStorageKey(workspaceId), "done");
-                  setIsDone(true);
-                }
-              }}
-              disabled={!step3Complete}
-            >
-              {step3Complete ? "Finalizar" : "Aguardando tarefa em Done"}
-            </Button>
-          </div>
-        )}
+        </ScrollArea>
       </CardContent>
     </Card>
   );
