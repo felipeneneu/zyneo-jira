@@ -2,6 +2,7 @@ import { CreateWorkspaceModal } from "@/src/features/workspaces/components/creat
 import { CreateProjectModal } from "@/src/features/projects/components/create-project-modal";
 import { CreateTaskModal } from "@/src/features/tasks/components/create-task-modal";
 import { ChatRealtimeNotifier } from "@/src/features/chat/components/chat-realtime-notifier";
+import { NotificationsRealtimeNotifier } from "@/src/features/notifications/components/notifications-realtime-notifier";
 
 import { Navbar } from "../components/navbar";
 import { Sidebar } from "../components/sidebar";
@@ -22,6 +23,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <CreateTaskModal />
       <EditTaskModal />
       <ChatRealtimeNotifier />
+      <NotificationsRealtimeNotifier />
       <div className="flex w-full h-full">
         <div className="fixed left-0 top-0 hidden lg:block lg:w-66 h-full overflow-y-auto">
           <SidebarNovo />

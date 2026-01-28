@@ -9,15 +9,18 @@ type NotificationFilter = "all" | "unread" | "starred";
 interface UseGetNotificationsParams {
   filter?: NotificationFilter;
   enabled?: boolean;
+  refetchInterval?: number;
 }
 
 export const useGetNotifications = ({
   filter = "all",
   enabled = true,
+  refetchInterval = 15000,
 }: UseGetNotificationsParams = {}) => {
   const query = useQuery({
     queryKey: ["notifications", filter],
     enabled,
+    refetchInterval,
     queryFn: async () => {
       const response = await client.api.notifications.$get({
         query: { filter },
