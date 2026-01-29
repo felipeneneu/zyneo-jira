@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, ListChecks, Sparkles } from "lucide-react";
+import { Calendar, ListChecks, Loader2, Sparkles, Trash2 } from "lucide-react";
 
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
@@ -17,8 +17,12 @@ import { useWorkspaceId } from "../../workspaces/hooks/use-workspace-id";
 import { useGetProjects } from "../../projects/api/use-get-projects";
 import { useBulkCreateTasks } from "../api/use-bulk-create-tasks";
 import { useBulkSetPriority } from "../api/use-bulk-set-priority";
+import { useBulkDeleteTasks } from "../api/use-bulk-delete-tasks";
 import { TaskStatus, type Task } from "../types";
 import { getPriority, type TaskPriority } from "../utils/task-flags";
+import { Label } from "@/src/ui/label";
+import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
+import { useConfirm } from "@/src/hooks/use-confirm";
 
 interface BacklogViewProps {
   tasks: Task[];
@@ -113,6 +117,7 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
   const workspaceId = useWorkspaceId();
   const { data: projects } = useGetProjects({ workspaceId });
   const bulkCreate = useBulkCreateTasks();
+  const bulkDelete = useBulkDeleteTasks();
   const bulkSetPriority = useBulkSetPriority();
 
   const [autoPriorityEnabled, setAutoPriorityEnabled] = useState(
@@ -124,8 +129,15 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
   const [bulkProjectId, setBulkProjectId] = useState<string | undefined>();
   const [bulkStatus, setBulkStatus] = useState<TaskStatus>(TaskStatus.BACKLOG);
   const [bulkDueDate, setBulkDueDate] = useState<Date>(new Date());
+  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const [selectionResetKey, setSelectionResetKey] = useState(0);
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(
     new Set()
+  );
+  const [DeleteConfirmDialog, confirmDelete] = useConfirm(
+    "Excluir tarefas",
+    "Tem certeza que deseja excluir as tarefas selecionadas? Essa ação não pode ser desfeita.",
+    "destructive"
   );
 
   const projectOptions = useMemo(
@@ -199,7 +211,9 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
       dueDate: bulkDueDate,
     }));
 
-    const result = await bulkCreate.mutateAsync({ tasks: tasksToCreate });
+    const result = await bulkCreate.mutateAsync({
+      json: { tasks: tasksToCreate },
+    });
     if (result.successCount > 0) {
       setBulkText("");
       setIsCreateOpen(false);
@@ -245,7 +259,25 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
     setSelectedSuggestions(new Set(suggestions.map((item) => item.taskId)));
   };
 
-  const selectedCount = selectedSuggestions.size;
+  const selectedSuggestionsCount = selectedSuggestions.size;
+  const selectedTaskIds = selectedTasks.map((task) => task.$id);
+  const hasSelectedTasks = selectedTaskIds.length > 0;
+
+  const handleBulkDelete = async () => {
+    if (!hasSelectedTasks) {
+      return;
+    }
+    const ok = await confirmDelete();
+    if (!ok) {
+      return;
+    }
+    const result = await bulkDelete.mutateAsync({
+      json: { taskIds: selectedTaskIds },
+    });
+    if (result.successCount > 0) {
+      setSelectionResetKey((value) => value + 1);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -273,6 +305,25 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
               <Badge className="ml-2">{pendingSuggestionsCount}</Badge>
             ) : null}
           </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            className="gap-2"
+            onClick={handleBulkDelete}
+            disabled={!hasSelectedTasks || bulkDelete.isPending}
+          >
+            {bulkDelete.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Trash2 className="size-4" />
+            )}
+            Excluir selecionadas
+            {hasSelectedTasks ? (
+              <Badge className="ml-2" variant="secondary">
+                {selectedTaskIds.length}
+              </Badge>
+            ) : null}
+          </Button>
           <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground">
             <Checkbox
               checked={autoPriorityEnabled}
@@ -289,14 +340,22 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
         </span>
       </div>
 
-      <DataTable columns={columns} data={tasks} />
+      <DeleteConfirmDialog />
+
+      <DataTable
+        columns={columns}
+        data={tasks}
+        enableRowSelection
+        onSelectionChange={setSelectedTasks}
+        resetSelectionKey={selectionResetKey}
+      />
 
       <Drawer
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         direction="right"
       >
-        <DrawerContent>
+        <DrawerContent className="p-4 lg:min-w-2xl h-screen">
           <DrawerHeader>
             <DrawerTitle>Criar tarefas em lote</DrawerTitle>
             <DrawerDescription>
@@ -304,68 +363,76 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
               workspace).
             </DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Projeto</label>
-              <Select
-                value={bulkProjectId}
-                onValueChange={setBulkProjectId}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o projeto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projectOptions.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status inicial</label>
-                <Select
-                  value={bulkStatus}
-                  onValueChange={(value) =>
-                    setBulkStatus(value as TaskStatus)
-                  }
-                >
+          <div className="px-4 space-y-2 ">
+            <ScrollArea className="h-[60vh] overflow-auto">
+              <div className="space-y-2 mb-2">
+                <Label className="text-sm font-medium">Projeto</Label>
+                <Select value={bulkProjectId} onValueChange={setBulkProjectId}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder="Selecione o projeto" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={TaskStatus.BACKLOG}>Backlog</SelectItem>
-                    <SelectItem value={TaskStatus.TODO}>A fazer</SelectItem>
-                    <SelectItem value={TaskStatus.READY}>Pronto</SelectItem>
+                    {projectOptions.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Data de vencimento</label>
-                <DatePicker
-                  value={bulkDueDate}
-                  onChange={setBulkDueDate}
-                  placeholder="Selecionar data"
-                  className="h-10"
-                />
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tarefas</label>
-              <Textarea
-                value={bulkText}
-                onChange={(event) => setBulkText(event.target.value)}
-                placeholder={"Ex:\n- Revisar backlog\n- Definir escopo\n- Ajustar prioridades"}
-                className="min-h-[180px]"
-              />
-              <p className="text-xs text-muted-foreground">
-                {bulkLines.length} tarefa(s) pronta(s) para criar
-              </p>
-            </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Status inicial</Label>
+                  <Select
+                    value={bulkStatus}
+                    onValueChange={(value) =>
+                      setBulkStatus(value as TaskStatus)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value={TaskStatus.BACKLOG}>
+                        Backlog
+                      </SelectItem>
+                      <SelectItem value={TaskStatus.TODO}>A fazer</SelectItem>
+                      <SelectItem value={TaskStatus.READY}>Pronto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <Label className="text-sm font-medium">
+                    Data de vencimento
+                  </Label>
+                  <DatePicker
+                    value={bulkDueDate}
+                    onChange={setBulkDueDate}
+                    placeholder="Selecionar data"
+                    className="h-12"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-2">
+                <Label className="text-sm font-medium">Tarefas</Label>
+                <Textarea
+                  value={bulkText}
+                  onChange={(event) => setBulkText(event.target.value)}
+                  placeholder={
+                    "Ex:\n- Revisar backlog\n- Definir escopo\n- Ajustar prioridades"
+                  }
+                  className="min-h-[180px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {bulkLines.length} tarefa(s) pronta(s) para criar
+                </p>
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
           <DrawerFooter>
             <Button
@@ -373,13 +440,14 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
               disabled={!canCreate || bulkCreate.isPending}
               className="gap-2"
             >
-              <Calendar className="size-4" />
-              Criar tarefas
+              {bulkCreate.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Calendar className="size-4" />
+              )}
+              {bulkCreate.isPending ? "Criando..." : "Criar tarefas"}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsCreateOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Cancelar
             </Button>
           </DrawerFooter>
@@ -402,7 +470,7 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <label className="flex items-center gap-2">
                 <Checkbox
-                  checked={selectedCount === pendingSuggestionsCount}
+                  checked={selectedSuggestionsCount === pendingSuggestionsCount}
                   onCheckedChange={(value) =>
                     toggleAllSuggestions(value === true)
                   }
@@ -410,7 +478,7 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
                 Selecionar tudo
               </label>
               <span>
-                {selectedCount} de {pendingSuggestionsCount} selecionadas
+                {selectedSuggestionsCount} de {pendingSuggestionsCount} selecionadas
               </span>
             </div>
 
@@ -425,7 +493,7 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
                     key={item.taskId}
                     className={cn(
                       "flex items-start gap-3 border-b border-muted/30 p-3 last:border-b-0",
-                      selectedSuggestions.has(item.taskId) && "bg-muted/40"
+                      selectedSuggestions.has(item.taskId) && "bg-muted/40",
                     )}
                   >
                     <Checkbox
@@ -447,14 +515,13 @@ export const BacklogView = ({ tasks }: BacklogViewProps) => {
           <DrawerFooter>
             <Button
               onClick={handleApplySuggestions}
-              disabled={selectedCount === 0 || bulkSetPriority.isPending}
+              disabled={
+                selectedSuggestionsCount === 0 || bulkSetPriority.isPending
+              }
             >
               Aplicar prioridades
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsSuggestOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsSuggestOpen(false)}>
               Cancelar
             </Button>
           </DrawerFooter>

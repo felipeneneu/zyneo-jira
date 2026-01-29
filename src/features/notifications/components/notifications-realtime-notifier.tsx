@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useGetNotifications } from "@/src/features/notifications/api/use-get-notifications";
 import type { Notification } from "@/src/features/notifications/types";
@@ -24,7 +25,11 @@ const getNotificationDescription = (notification: Notification) => {
 };
 
 export const NotificationsRealtimeNotifier = () => {
-  const { data } = useGetNotifications({ filter: "unread" });
+  const queryClient = useQueryClient();
+  const { data } = useGetNotifications({
+    filter: "unread",
+    refetchInterval: 5000,
+  });
   const lastCreatedAtRef = useRef<string | null>(null);
   const hydratedRef = useRef(false);
 
@@ -53,6 +58,9 @@ export const NotificationsRealtimeNotifier = () => {
     if (newNotifications.length === 0) return;
 
     lastCreatedAtRef.current = newestCreatedAt;
+
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications", "infinite"] });
 
     newNotifications
       .slice(0, MAX_TOASTS)

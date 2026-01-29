@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ID, Query } from "node-appwrite";
 import { zValidator } from "@hono/zod-validator";
-import z from "zod";
+import z from "zod/v3";
+import { randomUUID } from "crypto";
 
 import { getMember } from "../../members/utils";
 import { Project } from "../../projects/types";
@@ -185,6 +186,246 @@ const app = new Hono()
     }
   )
   .post(
+    "/bulk-delete",
+    sessionMiddleware,
+    zValidator(
+      "json",
+      z.object({
+        taskIds: z.array(z.string().trim().min(1)).min(1),
+      })
+    ),
+    async (c) => {
+      const databases = c.get("databases");
+      const user = c.get("user");
+      const { taskIds } = c.req.valid("json");
+
+      const tasksToDelete = await databases.listDocuments<Task>(
+        DATABASE_ID,
+        TASKS_ID,
+        [Query.contains("$id", taskIds)]
+      );
+
+      const workspaceIds = new Set(
+        tasksToDelete.documents.map((task) => task.workspaceId)
+      );
+
+      if (workspaceIds.size !== 1) {
+        return c.json({ error: "All tasks must belong to the same workspace" }, 400);
+      }
+
+      const workspaceId = workspaceIds.values().next().value;
+
+      if (!workspaceId) {
+        return c.json({ error: "Workspace not found" }, 400);
+      }
+
+      const member = await getMember({
+        databases,
+        workspaceId,
+        userId: user.$id,
+      });
+
+      if (!member) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      let successCount = 0;
+      let failureCount = Math.max(0, taskIds.length - tasksToDelete.documents.length);
+
+      for (const task of tasksToDelete.documents) {
+        try {
+          await databases.deleteDocument(DATABASE_ID, TASKS_ID, task.$id);
+          successCount += 1;
+        } catch {
+          failureCount += 1;
+        }
+      }
+
+      return c.json({ data: { successCount, failureCount } });
+    }
+  )
+  .post(
+    "/bulk-create",
+    sessionMiddleware,
+    zValidator(
+      "json",
+      z.object({
+        tasks: z.array(createTaskSchema),
+      })
+    ),
+    async (c) => {
+      const user = await c.get("user");
+      const databases = await c.get("databases");
+      const { tasks } = c.req.valid("json");
+
+      if (tasks.length === 0) {
+        return c.json({ error: "No tasks provided" }, 400);
+      }
+
+      const workspaceIds = new Set(tasks.map((task) => task.workspaceId));
+      if (workspaceIds.size !== 1) {
+        return c.json({ error: "All tasks must belong to the same workspace" }, 400);
+      }
+
+      const workspaceId = workspaceIds.values().next().value;
+
+      if (!workspaceId) {
+        return c.json({ error: "Workspace not found" }, 400);
+      }
+
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+
+      const member = await getMember({
+        databases,
+        workspaceId: resolvedWorkspaceId,
+        userId: user.$id,
+      });
+
+      if (!member) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const projectIds = Array.from(
+        new Set(tasks.map((task) => task.projectId))
+      );
+      const projects = await databases.listDocuments<Project>(
+        DATABASE_ID,
+        PROJECTS_ID,
+        projectIds.length > 0 ? [Query.contains("$id", projectIds)] : []
+      );
+
+      const projectById = new Map(
+        projects.documents.map((project) => [project.$id, project])
+      );
+
+      const statuses = Array.from(new Set(tasks.map((task) => task.status)));
+      const positionByStatus = new Map<TaskStatus, number>();
+
+      for (const status of statuses) {
+        const highestPositionTask = await databases.listDocuments(
+          DATABASE_ID,
+          TASKS_ID,
+          [
+            Query.equal("status", status),
+            Query.equal("workspaceId", resolvedWorkspaceId),
+            Query.orderDesc("position"),
+            Query.limit(1),
+          ]
+        );
+        const position =
+          highestPositionTask.documents.length > 0
+            ? highestPositionTask.documents[0].position
+            : 0;
+        positionByStatus.set(status, position);
+      }
+
+      let successCount = 0;
+      let failureCount = 0;
+
+      const projectSeqById = new Map<string, number>();
+      const projectKeyById = new Map<string, string>();
+
+      for (const task of tasks) {
+        const project = projectById.get(task.projectId);
+        if (!project) {
+          failureCount += 1;
+          continue;
+        }
+
+        if (!projectSeqById.has(project.$id)) {
+          projectSeqById.set(project.$id, project.taskSeq ?? 0);
+          const projectKey =
+            project.projectKey ?? buildProjectKeyBase(project.name);
+          projectKeyById.set(project.$id, projectKey);
+        }
+
+        const baseFlags = normalizeFlags(task.flags);
+        const flagsWithPriority = task.priority
+          ? setFlagValue(baseFlags, "priority", task.priority)
+          : baseFlags;
+
+        const resolvedAssigneeId = task.assigneeId ?? member.$id;
+        const currentPosition = positionByStatus.get(task.status) ?? 0;
+        const nextPosition = currentPosition + 1000;
+        positionByStatus.set(task.status, nextPosition);
+
+        let created = false;
+        let attempts = 0;
+        let nextSeq = projectSeqById.get(project.$id) ?? 0;
+
+        while (!created && attempts < 3) {
+          attempts += 1;
+          nextSeq += 1;
+
+          const projectKey = projectKeyById.get(project.$id)!;
+          const taskKey = `${projectKey}-${nextSeq}`;
+
+          try {
+            await databases.createDocument<Task>(
+              DATABASE_ID,
+              TASKS_ID,
+              ID.custom(randomUUID()),
+              {
+                name: task.name,
+                status: task.status,
+                workspaceId: resolvedWorkspaceId,
+                projectId: task.projectId,
+                dueDate:
+                  task.dueDate instanceof Date
+                    ? task.dueDate.toISOString()
+                    : task.dueDate,
+                assigneeId: resolvedAssigneeId,
+                position: nextPosition,
+                description: task.description,
+                documentation: task.documentation,
+                diagramUrl: task.diagramUrl,
+                githubPrs: task.githubPrs,
+                taskKey,
+                flags: flagsWithPriority.length > 0 ? flagsWithPriority : undefined,
+                lastActivityAt: new Date().toISOString(),
+                completedAt:
+                  task.status === TaskStatus.DONE
+                    ? task.completedAt instanceof Date
+                      ? task.completedAt.toISOString()
+                      : task.completedAt ?? new Date().toISOString()
+                    : undefined,
+              }
+            );
+
+            created = true;
+            successCount += 1;
+            projectSeqById.set(project.$id, nextSeq);
+          } catch (error: any) {
+            if (error?.code === 409 || error?.type === "document_already_exists") {
+              continue;
+            }
+            failureCount += 1;
+            created = true;
+          }
+        }
+
+        if (!created) {
+          failureCount += 1;
+        }
+      }
+
+      for (const [projectId, nextSeq] of projectSeqById.entries()) {
+        const projectKey = projectKeyById.get(projectId);
+        try {
+          await databases.updateDocument(DATABASE_ID, PROJECTS_ID, projectId, {
+            taskSeq: nextSeq,
+            ...(projectKey ? { projectKey } : {}),
+          });
+        } catch {}
+      }
+
+      return c.json({ data: { successCount, failureCount } });
+    }
+  )
+  .post(
     "/",
     sessionMiddleware,
     zValidator("json", createTaskSchema),
@@ -271,7 +512,7 @@ const app = new Hono()
           createdTask = await databases.createDocument<Task>(
             DATABASE_ID,
             TASKS_ID,
-            ID.unique(),
+            ID.custom(randomUUID()),
             {
               name,
               status,
@@ -586,7 +827,7 @@ Prazo: ${task.dueDate ?? "-"}
         tasks: z.array(
           z.object({
             $id: z.string(),
-            status: z.enum(TaskStatus),
+            status: z.nativeEnum(TaskStatus),
             position: z.number().int().positive().min(1000).max(1_000_000),
           })
         ),

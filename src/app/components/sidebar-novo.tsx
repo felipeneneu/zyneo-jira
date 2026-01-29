@@ -32,12 +32,13 @@ import {
 import { cn } from "@/src/lib/utils";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { useGetProjects } from "@/src/features/projects/api/use-get-projects";
-import { useWorkspaceId } from "@/src/features/workspaces/hooks/use-workspace-id";
+import { useResolvedWorkspaceId } from "@/src/features/workspaces/hooks/use-resolved-workspace-id";
 import { useGetWorkspace } from "@/src/features/workspaces/api/use-get-workspace-id";
 import { ProjectAvatar } from "@/src/features/projects/components/project-avatar";
 import { useCreateProjectModal } from "@/src/features/projects/hooks/use-create-project-modal";
 import { getWorkspacePreset } from "@/src/features/workspaces/domain/workspace-presets";
 import { DottedSeparator } from "@/src/ui/dotted-separator";
+import { useGetNotifications } from "@/src/features/notifications/api/use-get-notifications";
 
 
 
@@ -227,10 +228,21 @@ const NAVIGATION_ROUTES = [
 
 export function SidebarNovo() {
   const pathname = usePathname();
-  const workspaceId = useWorkspaceId();
+  const workspaceId = useResolvedWorkspaceId();
 
-  const { data: workspace } = useGetWorkspace({ workspaceId });
-  const { data: projectsData } = useGetProjects({ workspaceId });
+  const { data: workspace } = useGetWorkspace({
+    workspaceId: workspaceId ?? "",
+    enabled: !!workspaceId,
+  });
+  const { data: projectsData } = useGetProjects({
+    workspaceId: workspaceId ?? "",
+    enabled: !!workspaceId,
+  });
+  const { data: unreadData } = useGetNotifications({
+    filter: "unread",
+    refetchInterval: 5000,
+  });
+  const unreadCount = unreadData?.total ?? 0;
   const { open: openCreateProject } = useCreateProjectModal();
   
   const preset = getWorkspacePreset(workspace?.workspaceType);
@@ -269,30 +281,32 @@ export function SidebarNovo() {
         active: isActive,
         href: fullHref,
         icon: isActive ? route.activeIcon : route.icon,
+        count: route.label === "Notificações" && unreadCount > 0 ? unreadCount : undefined,
       };
     })
     .filter(Boolean) as FolderItem[];
 
-  const projectItems: FolderItem[] =
-    projectsData?.documents.map((project) => {
-      const href = `/workspaces/${workspaceId}/projects/${project.$id}`;
-      const isActive = pathname === href;
-      return {
-        id: `proj-${project.$id}`,
-        name: project.name,
-        type: "file",
-        href,
-        active: isActive,
-        icon: (
-          <ProjectAvatar
-            image={project.imageUrl}
-            name={project.name}
-            className="size-4 rounded-sm"
-            fallbackClassName="text-[8px]"
-          />
-        ),
-      };
-    }) || [];
+  const projectItems: FolderItem[] = workspaceId
+    ? projectsData?.documents.map((project) => {
+        const href = `/workspaces/${workspaceId}/projects/${project.$id}`;
+        const isActive = pathname === href;
+        return {
+          id: `proj-${project.$id}`,
+          name: project.name,
+          type: "file",
+          href,
+          active: isActive,
+          icon: (
+            <ProjectAvatar
+              image={project.imageUrl}
+              name={project.name}
+              className="size-4 rounded-sm"
+              fallbackClassName="text-[8px]"
+            />
+          ),
+        };
+      }) || []
+    : [];
 
   return (
     <aside className="flex h-full w-full flex-col bg-white text-black border-r border-gray-200">

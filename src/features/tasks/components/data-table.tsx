@@ -22,36 +22,91 @@ import {
   TableRow,
 } from "@/src/components/ui/table";
 import { Button } from "@/src/ui/button";
+import { Checkbox } from "@/src/ui/checkbox";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  enableRowSelection?: boolean;
+  onSelectionChange?: (rows: TData[]) => void;
+  resetSelectionKey?: number;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  enableRowSelection = false,
+  onSelectionChange,
+  resetSelectionKey,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+  const [rowSelection, setRowSelection] = React.useState({});
+
+  const selectionColumn = React.useMemo<ColumnDef<TData, TValue>>(
+    () => ({
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) =>
+            table.toggleAllPageRowsSelected(Boolean(value))
+          }
+          aria-label="Selecionar tudo"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          aria-label="Selecionar linha"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }),
+    []
+  );
+
+  const columnsWithSelection = React.useMemo(
+    () => (enableRowSelection ? [selectionColumn, ...columns] : columns),
+    [columns, enableRowSelection, selectionColumn]
+  );
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
-    columns,
+    columns: columnsWithSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    enableRowSelection,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
   });
+
+  React.useEffect(() => {
+    if (!enableRowSelection) return;
+    onSelectionChange?.(table.getSelectedRowModel().rows.map((row) => row.original));
+  }, [enableRowSelection, onSelectionChange, table, rowSelection]);
+
+  React.useEffect(() => {
+    if (!enableRowSelection) return;
+    if (typeof resetSelectionKey === "undefined") return;
+    setRowSelection({});
+  }, [enableRowSelection, resetSelectionKey]);
 
   return (
     <div>

@@ -83,15 +83,16 @@ export const runDevGuidedRules = async ({
 
     // 1. Notificação de Atraso
     if (isOverdue) {
+      const taskLabel = task.taskKey ? `${task.taskKey} - ${task.name}` : task.name;
       await upsertNotification({
         databases,
         userId: member.userId,
         workspaceId,
         type: "task.overdue",
         severity: "critical",
-        title: "Tarefa atrasada",
+        title: taskLabel,
         snippet:
-          "Esta tarefa passou da data de entrega. Replaneje ou atualize-a.",
+          "Tarefa atrasada. Esta tarefa passou da data de entrega. Replaneje ou atualize-a.",
         entityType: "task",
         entityId: task.$id,
         threadKey: buildThreadKey("task.overdue", workspaceId, task.$id),
@@ -100,14 +101,15 @@ export const runDevGuidedRules = async ({
 
     // 2. Notificação de Inatividade (Stale)
     if (isStale) {
+      const taskLabel = task.taskKey ? `${task.taskKey} - ${task.name}` : task.name;
       await upsertNotification({
         databases,
         userId: member.userId,
         workspaceId,
         type: "task.stale",
         severity: "warn",
-        title: "Tarefa estagnada",
-        snippet: `Sem atividade há ${DEV_GUIDED_V1.aging.staleDays} dias. Considere atualizar o status.`,
+        title: taskLabel,
+        snippet: `Tarefa estagnada. Sem atividade há ${DEV_GUIDED_V1.aging.staleDays} dias. Considere atualizar o status.`,
         entityType: "task",
         entityId: task.$id,
         threadKey: buildThreadKey("task.stale", workspaceId, task.$id),
@@ -116,14 +118,15 @@ export const runDevGuidedRules = async ({
 
     // 3. Notificação de Bloqueio Prolongado
     if (isBlocked) {
+      const taskLabel = task.taskKey ? `${task.taskKey} - ${task.name}` : task.name;
       await upsertNotification({
         databases,
         userId: member.userId,
         workspaceId,
         type: "task.blocked",
         severity: "critical",
-        title: "Tarefa bloqueada",
-        snippet: `Tarefa bloqueada há ${DEV_GUIDED_V1.aging.blockedDays} dias. Escale o problema ou desbloqueie.`,
+        title: taskLabel,
+        snippet: `Tarefa bloqueada. Bloqueada há ${DEV_GUIDED_V1.aging.blockedDays} dias. Escale o problema ou desbloqueie.`,
         entityType: "task",
         entityId: task.$id,
         threadKey: buildThreadKey("task.blocked", workspaceId, task.$id),

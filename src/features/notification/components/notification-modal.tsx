@@ -22,6 +22,7 @@ import { useMarkNotificationRead, useToggleNotificationStar } from "@/src/featur
 import { useCreateComment } from "@/src/features/comments/api/use-create-comment";
 import type { Notification } from "@/src/features/notifications/types";
 import ReactMarkdown from "react-markdown";
+import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
 
 interface NotificationModalProps {
   notification: Notification;
@@ -175,11 +176,11 @@ export function NotificationModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-xl bg-white shadow-xl"
+        className="flex w-full max-w-lg flex-col overflow-hidden rounded-xl bg-white shadow-xl sm:max-h-[85vh] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             {notification.type === "human.mention" ? (
               <MembersAvatar
@@ -220,7 +221,8 @@ export function NotificationModal({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-4">
+        <ScrollArea className="flex-1">
+          <div className="px-6 py-4 space-y-4">
           {/* Snippet */}
           {notification.type === "system.daily_focus" ? (
             <div className="text-sm text-gray-700">
@@ -333,10 +335,12 @@ export function NotificationModal({
               </div>
             </div>
           )}
-        </div>
+          </div>
+          <ScrollBar orientation="vertical" />
+        </ScrollArea>
 
         {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 px-6 py-4">
+        <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 px-4 py-4 sm:px-6">
           {(notification.type === "system.stale" ||
             notification.type === "task.stale") && (
             <>

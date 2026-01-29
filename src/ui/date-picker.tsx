@@ -10,6 +10,7 @@ import { Button } from "./button";
 import { Calendar } from "./calendar";
 
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { ptBR } from "date-fns/locale";
 
 interface DatePickerProps {
   value: Date | undefined;
@@ -33,11 +34,15 @@ export const DatePicker = ({
           className={cn(
             "w-full justify-start text-left font-normal px-3",
             !value && "text-muted-foreground",
-            className
+            className,
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "PPP") : <span>{placeholder}</span>}
+          {value ? (
+            format(value, "PP", { locale: ptBR })
+          ) : (
+            <span>{placeholder}</span>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
@@ -46,7 +51,7 @@ export const DatePicker = ({
           selected={value}
           onSelect={(date) => onChange(date as Date)}
           initialFocus
-          // locale={ptBR}
+          locale={ptBR}
         />
       </PopoverContent>
     </Popover>

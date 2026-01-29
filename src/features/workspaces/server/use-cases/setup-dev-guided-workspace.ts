@@ -196,6 +196,15 @@ export const setupDevGuidedWorkspace = async ({
     });
 
     const [overdueTask, staleTask, blockedTask] = createdTasks;
+    const overdueLabel = overdueTask.taskKey
+      ? `${overdueTask.taskKey} - ${overdueTask.name}`
+      : overdueTask.name;
+    const staleLabel = staleTask.taskKey
+      ? `${staleTask.taskKey} - ${staleTask.name}`
+      : staleTask.name;
+    const blockedLabel = blockedTask.taskKey
+      ? `${blockedTask.taskKey} - ${blockedTask.name}`
+      : blockedTask.name;
 
     // Cria as notificações iniciais traduzidas
     await databases.createDocument(DATABASE_ID, NOTIFICATIONS_ID, ID.unique(), {
@@ -203,8 +212,8 @@ export const setupDevGuidedWorkspace = async ({
       workspaceId,
       type: "task.overdue",
       severity: "critical",
-      title: "Tarefa atrasada",
-      snippet: "Esta tarefa passou do prazo. Replaneje ou atualize.",
+      title: overdueLabel,
+      snippet: "Tarefa atrasada. Esta tarefa passou do prazo. Replaneje ou atualize.",
       entityType: "task",
       entityId: overdueTask.$id,
       threadKey: buildThreadKey("task.overdue", workspaceId, overdueTask.$id),
@@ -215,8 +224,8 @@ export const setupDevGuidedWorkspace = async ({
       workspaceId,
       type: "task.stale",
       severity: "warn",
-      title: "Tarefa estagnada",
-      snippet: `Sem atividade há ${DEV_GUIDED_V1.aging.staleDays} dias. Considere atualizar.`,
+      title: staleLabel,
+      snippet: `Tarefa estagnada. Sem atividade há ${DEV_GUIDED_V1.aging.staleDays} dias. Considere atualizar.`,
       entityType: "task",
       entityId: staleTask.$id,
       threadKey: buildThreadKey("task.stale", workspaceId, staleTask.$id),
@@ -227,8 +236,8 @@ export const setupDevGuidedWorkspace = async ({
       workspaceId,
       type: "task.blocked",
       severity: "critical",
-      title: "Tarefa bloqueada",
-      snippet: `Tarefa bloqueada há ${DEV_GUIDED_V1.aging.blockedDays} dias. Escale ou desbloqueie.`,
+      title: blockedLabel,
+      snippet: `Tarefa bloqueada. Bloqueada há ${DEV_GUIDED_V1.aging.blockedDays} dias. Escale ou desbloqueie.`,
       entityType: "task",
       entityId: blockedTask.$id,
       threadKey: buildThreadKey("task.blocked", workspaceId, blockedTask.$id),

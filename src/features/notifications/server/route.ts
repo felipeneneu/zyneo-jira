@@ -164,14 +164,43 @@ const app = new Hono()
     async (c) => {
       const databases = c.get("databases");
       const user = c.get("user");
-      const { filter } = c.req.valid("query");
+      const { filter, cursor, limit } = c.req.valid("query");
+
+      const cleanupCutoff = new Date();
+      cleanupCutoff.setDate(cleanupCutoff.getDate() - 30);
+      try {
+        const archived = await databases.listDocuments<Notification>(
+          DATABASE_ID,
+          NOTIFICATIONS_ID,
+          [
+            Query.equal("userId", user.$id),
+            Query.isNotNull("archivedAt"),
+            Query.lessThan("archivedAt", cleanupCutoff.toISOString()),
+            Query.limit(100),
+          ]
+        );
+
+        await Promise.all(
+          archived.documents.map((notification) =>
+            databases.deleteDocument(
+              DATABASE_ID,
+              NOTIFICATIONS_ID,
+              notification.$id
+            )
+          )
+        );
+      } catch {}
 
       const query = [
         Query.equal("userId", user.$id),
         Query.isNull("archivedAt"),
         Query.orderDesc("$createdAt"),
-        Query.limit(50),
+        Query.limit(limit ?? 20),
       ];
+
+      if (cursor) {
+        query.push(Query.cursorAfter(cursor));
+      }
 
       if (filter === "unread") {
         query.push(Query.isNull("readAt"));
@@ -185,10 +214,17 @@ const app = new Hono()
         query
       );
 
+      const pageSize = limit ?? 20;
+      const nextCursor =
+        notifications.documents.length >= pageSize
+          ? notifications.documents.at(-1)?.$id ?? null
+          : null;
+
       return c.json({
         data: {
           documents: notifications.documents,
           total: notifications.total,
+          nextCursor,
         },
       });
     }
