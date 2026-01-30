@@ -33,6 +33,115 @@ const buildProjectKeyBase = (name: string) => {
   return (base + "XXX").slice(0, 3);
 };
 
+const buildPerformanceOverviewPrompt = (params: {
+  dateKey: string;
+  total: number;
+  statusCounts: Record<string, number>;
+  completionRate: number;
+  wipRate: number;
+  overdueCount: number;
+  dueSoonCount: number;
+  dueTodayCount: number;
+  noDueDateCount: number;
+  blockedCount: number;
+  staleCount: number;
+  tasksSample: string[];
+}) => {
+  const {
+    dateKey,
+    total,
+    statusCounts,
+    completionRate,
+    wipRate,
+    overdueCount,
+    dueSoonCount,
+    dueTodayCount,
+    noDueDateCount,
+    blockedCount,
+    staleCount,
+    tasksSample,
+  } = params;
+
+  return `
+Voce e o Echo AI, um copiloto de performance.
+Responda em pt-BR.
+CRITICO: A resposta DEVE ser um JSON valido (sem markdown), com strings curtas e objetivas.
+
+Schema do JSON:
+{
+  "overview": "Resumo do desempenho em 1 paragrafo curto.",
+  "strengths": ["Forca 1", "Forca 2"], // max 3
+  "improvements": ["Melhoria 1", "Melhoria 2"], // max 4
+  "attention": ["Atencao 1", "Atencao 2"], // max 3
+  "actions": ["Acao 1", "Acao 2"] // max 4
+}
+
+Dados (${dateKey}):
+- Total: ${total}
+- Status: BACKLOG ${statusCounts.BACKLOG ?? 0}, TODO ${statusCounts.TODO ?? 0}, READY ${statusCounts.READY ?? 0}, IN_PROGRESS ${statusCounts.IN_PROGRESS ?? 0}, IN_REVIEW ${statusCounts.IN_REVIEW ?? 0}, DONE ${statusCounts.DONE ?? 0}
+- Taxa de conclusao: ${(completionRate * 100).toFixed(1)}%
+- Taxa de WIP: ${(wipRate * 100).toFixed(1)}%
+- Atrasadas: ${overdueCount}
+- Vencem hoje: ${dueTodayCount}
+- Vencem em 3 dias: ${dueSoonCount}
+- Sem prazo: ${noDueDateCount}
+- Bloqueadas: ${blockedCount}
+- Stale: ${staleCount}
+
+Tarefas (amostra):
+${tasksSample.length > 0 ? tasksSample.join("\n") : "- Nenhuma"}
+`;
+};
+
+const buildFallbackPerformanceJson = (params: {
+  total: number;
+  completionRate: number;
+  wipRate: number;
+  overdueCount: number;
+  dueTodayCount: number;
+  dueSoonCount: number;
+  blockedCount: number;
+  staleCount: number;
+}) => {
+  const {
+    total,
+    completionRate,
+    wipRate,
+    overdueCount,
+    dueTodayCount,
+    dueSoonCount,
+    blockedCount,
+    staleCount,
+  } = params;
+
+  const strengths: string[] = [];
+  if (completionRate >= 0.35) strengths.push("Boa taxa de conclusao.");
+  if (wipRate <= 0.45) strengths.push("WIP sob controle.");
+
+  const improvements: string[] = [];
+  if (wipRate > 0.5) improvements.push("Reduzir WIP para evitar gargalos.");
+  if (dueSoonCount > 0) improvements.push("Antecipar tarefas com vencimento proximo.");
+  if (dueTodayCount > 0) improvements.push("Priorizar o que vence hoje.");
+
+  const attention: string[] = [];
+  if (overdueCount > 0) attention.push("Tarefas atrasadas exigem acao imediata.");
+  if (blockedCount > 0) attention.push("Desbloquear impedimentos pendentes.");
+  if (staleCount > 0) attention.push("Atualizar tarefas paradas.");
+
+  const actions: string[] = [
+    "Revisar prioridades com o time.",
+    "Quebrar tarefas grandes em entregas menores.",
+  ];
+
+  return {
+    overview: `Você tem ${total} tarefa(s). Conclusão em ${(completionRate * 100).toFixed(1)}% e WIP em ${(wipRate * 100).toFixed(1)}%.`,
+    strengths: strengths.slice(0, 3),
+    improvements: improvements.slice(0, 4),
+    attention: attention.slice(0, 3),
+    actions: actions.slice(0, 4),
+  };
+};
+
 const app = new Hono()
   .delete("/:taskId", sessionMiddleware, async (c) => {
     const user = c.get("user");
@@ -818,6 +927,208 @@ Prazo: ${task.dueDate ?? "-"}
       },
     });
   })
+  .post(
+    "/report-overview",
+    sessionMiddleware,
+    zValidator(
+      "json",
+      z.object({
+        workspaceId: z.string().min(1),
+        taskIds: z.array(z.string().min(1)).min(1),
+      })
+    ),
+    async (c) => {
+      const databases = c.get("databases");
+      const user = c.get("user");
+      const { workspaceId, taskIds } = c.req.valid("json");
+
+      const today = new Date();
+      if (today.getDay() !== 5) {
+        return c.json(
+          { error: "Relatório disponível apenas às sextas-feiras." },
+          403
+        );
+      }
+
+      const resolvedWorkspaceId = await resolveWorkspaceId(
+        databases,
+        workspaceId
+      );
+      const member = await getMember({
+        databases,
+        workspaceId: resolvedWorkspaceId,
+        userId: user.$id,
+      });
+      if (!member) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const chunkSize = 100;
+      const chunks: string[][] = [];
+      for (let i = 0; i < taskIds.length; i += chunkSize) {
+        chunks.push(taskIds.slice(i, i + chunkSize));
+      }
+
+      const fetchedTasks: Task[] = [];
+      for (const chunk of chunks) {
+        const page = await databases.listDocuments<Task>(DATABASE_ID, TASKS_ID, [
+          Query.contains("$id", chunk),
+          Query.equal("workspaceId", resolvedWorkspaceId),
+          Query.limit(chunkSize),
+        ]);
+        fetchedTasks.push(...page.documents);
+      }
+
+      if (fetchedTasks.length === 0) {
+        return c.json({ error: "Nenhuma tarefa encontrada." }, 404);
+      }
+
+      const statusCounts: Record<string, number> = {};
+      let overdueCount = 0;
+      let dueTodayCount = 0;
+      let dueSoonCount = 0;
+      let noDueDateCount = 0;
+      let blockedCount = 0;
+      let staleCount = 0;
+      let doneCount = 0;
+
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const dueSoonLimit = new Date(todayStart);
+      dueSoonLimit.setDate(todayStart.getDate() + 3);
+
+      for (const task of fetchedTasks) {
+        statusCounts[task.status] = (statusCounts[task.status] ?? 0) + 1;
+        if (task.status === TaskStatus.DONE) doneCount += 1;
+
+        const flags = task.flags ?? [];
+        if (flags.includes("blocked")) blockedCount += 1;
+        if (flags.includes("stale")) staleCount += 1;
+
+        if (task.status === TaskStatus.DONE) continue;
+        if (!task.dueDate) {
+          noDueDateCount += 1;
+          continue;
+        }
+
+        const dueDate = new Date(task.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+
+        if (dueDate < todayStart) {
+          overdueCount += 1;
+        } else if (dueDate.getTime() === todayStart.getTime()) {
+          dueTodayCount += 1;
+        } else if (dueDate <= dueSoonLimit) {
+          dueSoonCount += 1;
+        }
+      }
+
+      const total = fetchedTasks.length;
+      const wipCount =
+        (statusCounts.IN_PROGRESS ?? 0) + (statusCounts.IN_REVIEW ?? 0);
+      const completionRate = total > 0 ? doneCount / total : 0;
+      const wipRate = total > 0 ? wipCount / total : 0;
+
+      const tasksSample = fetchedTasks
+        .slice(0, 30)
+        .map((task) => {
+          const due = task.dueDate ? task.dueDate.slice(0, 10) : "Sem prazo";
+          const label = task.taskKey
+            ? `${task.taskKey} - ${task.name}`
+            : task.name;
+          return `- ${label} | ${task.status} | prazo: ${due}`;
+        });
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return c.json({ error: "AI not configured" }, 500);
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+      });
+
+      const prompt = buildPerformanceOverviewPrompt({
+        dateKey: today.toISOString().slice(0, 10),
+        total,
+        statusCounts,
+        completionRate,
+        wipRate,
+        overdueCount,
+        dueSoonCount,
+        dueTodayCount,
+        noDueDateCount,
+        blockedCount,
+        staleCount,
+        tasksSample,
+      });
+
+      let rawText = "";
+      try {
+        const result = await model.generateContent({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+          },
+        });
+        rawText = result.response.text().trim();
+      } catch {
+        rawText = JSON.stringify(
+          buildFallbackPerformanceJson({
+            total,
+            completionRate,
+            wipRate,
+            overdueCount,
+            dueTodayCount,
+            dueSoonCount,
+            blockedCount,
+            staleCount,
+          })
+        );
+      }
+
+      let insights: {
+        overview: string;
+        strengths: string[];
+        improvements: string[];
+        attention: string[];
+        actions: string[];
+      };
+      try {
+        const parsed = JSON.parse(rawText);
+        insights = {
+          overview: String(parsed.overview ?? ""),
+          strengths: Array.isArray(parsed.strengths)
+            ? parsed.strengths.slice(0, 3)
+            : [],
+          improvements: Array.isArray(parsed.improvements)
+            ? parsed.improvements.slice(0, 4)
+            : [],
+          attention: Array.isArray(parsed.attention)
+            ? parsed.attention.slice(0, 3)
+            : [],
+          actions: Array.isArray(parsed.actions)
+            ? parsed.actions.slice(0, 4)
+            : [],
+        };
+      } catch {
+        insights = buildFallbackPerformanceJson({
+          total,
+          completionRate,
+          wipRate,
+          overdueCount,
+          dueTodayCount,
+          dueSoonCount,
+          blockedCount,
+          staleCount,
+        });
+      }
+
+      return c.json({ data: { insights } });
+    }
+  )
   .post(
     "/bulk-update",
     sessionMiddleware,

@@ -1,5 +1,5 @@
 "use client";
-import { Loader, PlusIcon } from "lucide-react";
+import { Loader, PlusIcon, FileText, FileDown } from "lucide-react";
 
 import { Button } from "@/src/ui/button";
 import { DottedSeparator } from "@/src/ui/dotted-separator";
@@ -14,7 +14,7 @@ import { useTaskFilters } from "../hooks/use-task-filters";
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
 import { DataKanban } from "./data-kanban";
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TaskStatus } from "../types";
 import { useBulkUpdateTask } from "../api/use-bulk-update-task";
 import { DataCalendar } from "./data-calendar";
@@ -23,6 +23,12 @@ import { useProjectId } from "../../projects/hooks/use-project-id";
 import { useGetWorkspace } from "../../workspaces/api/use-get-workspace-id";
 import { getWorkspaceStatuses } from "../utils/task-statuses";
 import { DevGuidedTutorial } from "../../tutorial/dev-guided-tutorial";
+import { useGetProjects } from "../../projects/api/use-get-projects";
+import { CsvImporter } from "./csv-importer";
+import { generateTasksReport } from "../utils/generate-tasks-report";
+import { useGenerateTasksReport } from "../api/use-generate-tasks-report";
+import { generateTasksCsv } from "../utils/generate-tasks-csv";
+import { toast } from "sonner";
 
 interface TaskViewSwitcherProps {
   hideProjectFilters?: boolean;
@@ -34,6 +40,10 @@ export const TaskViewSwitcher = ({
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
   });
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const reportInsights = useGenerateTasksReport();
+  const isFriday = new Date().getDay() === 5;
 
   const [{ status, assigneeId, projectId, dueDate }] = useTaskFilters();
 
@@ -41,6 +51,10 @@ export const TaskViewSwitcher = ({
   const paramProjectId = useProjectId();
   const { open } = useCreateTaskModal();
   const { data: workspace } = useGetWorkspace({ workspaceId });
+  const { data: projects } = useGetProjects({
+    workspaceId,
+    enabled: !!workspaceId,
+  });
   const statuses = getWorkspaceStatuses(workspace?.workspaceType);
 
   const { mutate: bulkUpdate } = useBulkUpdateTask();
@@ -52,6 +66,64 @@ export const TaskViewSwitcher = ({
     status,
     dueDate,
   });
+
+  const resolvedProjectId = useMemo(() => {
+    if (paramProjectId || projectId) {
+      return paramProjectId || projectId;
+    }
+    if (projects?.documents.length === 1) {
+      return projects.documents[0].$id;
+    }
+    return undefined;
+  }, [paramProjectId, projectId, projects?.documents]);
+
+  const handleGenerateReport = async () => {
+    const currentTasks = tasks?.documents ?? [];
+    if (currentTasks.length === 0) {
+      toast.error("Não há tarefas para gerar o relatório.");
+      return;
+    }
+    if (!workspaceId) {
+      toast.error("Workspace não encontrado.");
+      return;
+    }
+    if (!isFriday) {
+      toast.error("Relatório disponível apenas às sextas-feiras.");
+      return;
+    }
+    try {
+      setIsGeneratingReport(true);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const response = await reportInsights.mutateAsync({
+        json: {
+          workspaceId,
+          taskIds: currentTasks.map((task) => task.$id),
+        },
+      });
+      await generateTasksReport(currentTasks, response.data.insights);
+    } catch {
+      toast.error("Falha ao gerar relatório.");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    const currentTasks = tasks?.documents ?? [];
+    if (currentTasks.length === 0) {
+      toast.error("Não há tarefas para exportar.");
+      return;
+    }
+    try {
+      setIsExportingCsv(true);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      generateTasksCsv(currentTasks);
+    } catch {
+      toast.error("Falha ao exportar CSV.");
+    } finally {
+      setIsExportingCsv(false);
+    }
+  };
 
   const onKanbanChange = useCallback(
     (
@@ -76,7 +148,8 @@ export const TaskViewSwitcher = ({
     >
       <div className="h-full flex flex-col overflow-auto p-4">
         <div className="flex flex-col gap-y-2 lg:flex-row justify-between items-center">
-          <TabsList className="w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <TabsList className="w-full lg:w-auto">
             <TabsTrigger className="h-8 w-full lg:w-auto" value="table">
               Tabelas
             </TabsTrigger>
@@ -89,7 +162,42 @@ export const TaskViewSwitcher = ({
             <TabsTrigger className="h-8 w-full lg:w-auto" value="backlog">
               Backlog
             </TabsTrigger>
-          </TabsList>
+            </TabsList>
+            {view === "table" ? (
+              <>
+                <CsvImporter
+                  workspaceId={workspaceId}
+                  projectId={resolvedProjectId ?? undefined}
+                  defaultStatus={status ?? TaskStatus.BACKLOG}
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={handleGenerateReport}
+                  disabled={isGeneratingReport || !isFriday}
+                  title={
+                    isFriday
+                      ? "Gerar relatório com overview"
+                      : "Disponível apenas às sextas-feiras"
+                  }
+                >
+                  <FileText className="size-4" />
+                  {isGeneratingReport ? "Gerando..." : "Gerar Relatório"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={handleExportCsv}
+                  disabled={isExportingCsv}
+                >
+                  <FileDown className="size-4" />
+                  {isExportingCsv ? "Exportando..." : "Exportar CSV"}
+                </Button>
+              </>
+            ) : null}
+          </div>
           <Button
             size={"sm"}
             className="w-full lg:w-auto"
