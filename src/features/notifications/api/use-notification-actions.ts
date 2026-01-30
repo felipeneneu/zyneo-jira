@@ -95,3 +95,43 @@ export const useRemoveNotification = () => {
 
   return mutation;
 };
+
+export const useMarkAllNotificationsRead = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const response = await client.api.notifications["mark-all-read"].$post();
+      if (!response.ok) {
+        throw new Error("Failed to mark all notifications as read");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-focus"] });
+    },
+  });
+
+  return mutation;
+};
+
+export const useRemoveAllNotifications = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const response = await client.api.notifications["remove-all"].$post();
+      if (!response.ok) {
+        throw new Error("Failed to remove notifications");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-focus"] });
+    },
+  });
+
+  return mutation;
+};

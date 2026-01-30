@@ -17,6 +17,7 @@ import { DottedSeparator } from "@/src/ui/dotted-separator";
 import { Input } from "@/src/ui/input";
 import { Button } from "@/src/ui/button";
 import { Avatar, AvatarFallback } from "@/src/ui/avatar";
+import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -67,7 +68,7 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
   };
 
   return (
-    <Card className="w-full h-full border-none shadow-none">
+    <Card className="w-full max-h-[85vh] border-none shadow-none">
       <CardHeader className="flex p-7">
         <CardTitle className="text-xl font-bold">
           Criar um novo projeto
@@ -76,99 +77,105 @@ export const CreateProjectForm = ({ onCancel }: CreateProjectFormProps) => {
       <div className="px-7">
         <DottedSeparator />
       </div>
-      <CardContent className="p-7">
+      <CardContent className="p-7 flex flex-col min-h-0">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="flex flex-col gap-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Projeto</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Digite o nome do projeto"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <div className="flex flex-col gap-y-2">
-                    <div className="flex items-center gap-x-5">
-                      {field.value ? (
-                        <div className="size-18 relative rounded-md overflow-hidden">
-                          <Image
-                            fill
-                            className="object-cover"
-                            src={
-                              field.value instanceof File
-                                ? URL.createObjectURL(field.value)
-                                : field.value
-                            }
-                            alt="Avatar do Projeto"
-                          />
-                        </div>
-                      ) : (
-                        <Avatar className="size-18">
-                          <AvatarFallback>
-                            <ImageIcon className="size-9 text-neutral-400" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                      <div className="flex flex-col">
-                        <p className="text-sm">Logo do projeto</p>
-                        <p className="text-sm text-muted-foreground">
-                          JPG, PNG, SVG ou JPEG, max 1mb
-                        </p>
-                        <input
-                          className="hidden"
-                          type="file"
-                          ref={inputRef}
-                          accept=".jpg, .png, .jpeg, .svg"
-                          onChange={handleImageChange}
-                          disabled={isPending}
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-col"
+          >
+            <ScrollArea className="flex-1 min-h-0 pr-2">
+              <div className="flex flex-col gap-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Projeto</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Digite o nome do projeto"
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <div className="flex flex-col gap-y-2">
+                      <div className="flex items-center gap-x-5">
                         {field.value ? (
-                          <Button
-                            type="button"
-                            disabled={isPending}
-                            variant={"destructive"}
-                            size={"xs"}
-                            className="w-fit mt-2 cursor-pointer"
-                            onClick={() => {
-                              field.onChange(null);
-                              if (inputRef.current) {
-                                inputRef.current.value = "";
+                          <div className="size-18 relative rounded-md overflow-hidden">
+                            <Image
+                              fill
+                              className="object-cover"
+                              src={
+                                field.value instanceof File
+                                  ? URL.createObjectURL(field.value)
+                                  : field.value
                               }
-                            }}
-                          >
-                            Remover Imagem
-                          </Button>
+                              alt="Avatar do Projeto"
+                            />
+                          </div>
                         ) : (
-                          <Button
-                            type="button"
-                            disabled={isPending}
-                            variant={"teritary"}
-                            size={"xs"}
-                            className="w-fit mt-2 cursor-pointer"
-                            onClick={() => inputRef.current?.click()}
-                          >
-                            Upload Imagem
-                          </Button>
+                          <Avatar className="size-18">
+                            <AvatarFallback>
+                              <ImageIcon className="size-9 text-neutral-400" />
+                            </AvatarFallback>
+                          </Avatar>
                         )}
+                        <div className="flex flex-col">
+                          <p className="text-sm">Logo do projeto</p>
+                          <p className="text-sm text-muted-foreground">
+                            JPG, PNG, SVG ou JPEG, max 1mb
+                          </p>
+                          <input
+                            className="hidden"
+                            type="file"
+                            ref={inputRef}
+                            accept=".jpg, .png, .jpeg, .svg"
+                            onChange={handleImageChange}
+                            disabled={isPending}
+                          />
+                          {field.value ? (
+                            <Button
+                              type="button"
+                              disabled={isPending}
+                              variant={"destructive"}
+                              size={"xs"}
+                              className="w-fit mt-2 cursor-pointer"
+                              onClick={() => {
+                                field.onChange(null);
+                                if (inputRef.current) {
+                                  inputRef.current.value = "";
+                                }
+                              }}
+                            >
+                              Remover Imagem
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              disabled={isPending}
+                              variant={"teritary"}
+                              size={"xs"}
+                              className="w-fit mt-2 cursor-pointer"
+                              onClick={() => inputRef.current?.click()}
+                            >
+                              Upload Imagem
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              />
-            </div>
+                  )}
+                />
+              </div>
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
             <DottedSeparator className="py-7" />
             <div className="flex items-center justify-between">
               <Button

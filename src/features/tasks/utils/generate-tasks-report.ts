@@ -344,7 +344,10 @@ export const generateTasksReport = async (
     didDrawPage: (data) => {
       const pageHeight = doc.internal.pageSize.height || 842;
       const pageWidth = doc.internal.pageSize.width || 595;
-      const pageNumber = doc.internal.getNumberOfPages();
+      const pageNumber =
+        typeof doc.getNumberOfPages === "function"
+          ? doc.getNumberOfPages()
+          : doc.internal.pages.length - 1;
       doc.setFontSize(9);
       doc.setTextColor(muted[0], muted[1], muted[2]);
       doc.text(

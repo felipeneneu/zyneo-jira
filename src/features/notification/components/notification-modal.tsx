@@ -23,6 +23,7 @@ import { useCreateComment } from "@/src/features/comments/api/use-create-comment
 import type { Notification } from "@/src/features/notifications/types";
 import ReactMarkdown from "react-markdown";
 import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
+import { ResponsiveModal } from "@/src/app/components/responsive-modal";
 
 interface NotificationModalProps {
   notification: Notification;
@@ -129,7 +130,9 @@ export function NotificationModal({
       router.push(`/workspaces/${notification.entityId}`);
       return;
     }
-    router.push(`/workspaces/${notification.workspaceId}/tasks/${notification.entityId}`);
+    router.push(
+      `/workspaces/${notification.workspaceId}/tasks/${notification.entityId}`,
+    );
   };
 
   const handleWorkingOnIt = async () => {
@@ -168,19 +171,11 @@ export function NotificationModal({
     handleOpenEntity();
   };
 
-
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="flex w-full max-w-lg flex-col overflow-hidden rounded-xl bg-white shadow-xl sm:max-h-[85vh] max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ResponsiveModal open={true} onOpenChange={() => onClose()}>
+      <div className="flex min-h-0 flex-col max-h-[85vh] w-full bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4 sm:px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
             {notification.type === "human.mention" ? (
               <MembersAvatar
@@ -207,7 +202,7 @@ export function NotificationModal({
               <Star
                 className={cn(
                   "h-5 w-5",
-                  notification.starredAt && "fill-yellow-400 text-yellow-400"
+                  notification.starredAt && "fill-yellow-400 text-yellow-400",
                 )}
               />
             </button>
@@ -220,127 +215,144 @@ export function NotificationModal({
           </div>
         </div>
 
-        {/* Content */}
-        <ScrollArea className="flex-1">
-          <div className="px-6 py-4 space-y-4">
-          {/* Snippet */}
-          {notification.type === "system.daily_focus" ? (
-            <div className="text-sm text-gray-700">
-               {(() => {
-                 try {
-                   const data = JSON.parse(notification.snippet);
-                   if (!data.summary) throw new Error("Not our JSON");
-                   
-                   return (
-                     <div className="space-y-4">
-                       {/* Intro/Summary */}
-                       <div className="space-y-1">
-                         <div className="flex items-center gap-2">
-                           <Sparkles className="size-4 text-amber-500" />
-                           <span className="font-semibold text-gray-900">Overview</span>
-                         </div>
-                         <p className="text-gray-600 leading-relaxed">{data.summary}</p>
-                       </div>
+        <ScrollArea className="flex-1 min-h-0 px-6 py-4">
+          <div className="space-y-4 max-h-[40dvh] md:max-h-[60dvh]">
+            {/* Snippet */}
+            {notification.type === "system.daily_focus" ? (
+              <div className="text-sm text-gray-700">
+                {(() => {
+                  try {
+                    const data = JSON.parse(notification.snippet);
+                    if (!data.summary) throw new Error("Not our JSON");
 
-                       {/* Focus */}
-                       {data.todayFocus && (
-                         <div className="rounded-lg bg-amber-50 p-3 border border-amber-100">
-                           <p className="font-semibold text-amber-900 mb-1">Foco Principal: {data.todayFocus.title}</p>
-                           <p className="text-amber-800/80">{data.todayFocus.description}</p>
-                         </div>
-                       )}
-                       
-                       {/* Risks / Pending */}
-                       <div className="grid grid-cols-2 gap-4">
-                         {data.risks?.length > 0 && (
+                    return (
+                      <div className="space-y-4">
+                        {/* Intro/Summary */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="size-4 text-amber-500" />
+                            <span className="font-semibold text-gray-900">
+                              Overview
+                            </span>
+                          </div>
+                          <p className="text-gray-600 leading-relaxed">
+                            {data.summary}
+                          </p>
+                        </div>
+
+                        {/* Focus */}
+                        {data.todayFocus && (
+                          <div className="rounded-lg bg-amber-50 p-3 border border-amber-100">
+                            <p className="font-semibold text-amber-900 mb-1">
+                              Foco Principal: {data.todayFocus.title}
+                            </p>
+                            <p className="text-amber-800/80">
+                              {data.todayFocus.description}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Risks / Pending */}
+                        <div className="grid grid-cols-2 gap-4">
+                          {data.risks?.length > 0 && (
                             <div>
-                              <p className="font-semibold text-red-600 mb-1 flex items-center gap-1"><AlertTriangle className="size-3"/> Riscos</p>
+                              <p className="font-semibold text-red-600 mb-1 flex items-center gap-1">
+                                <AlertTriangle className="size-3" /> Riscos
+                              </p>
                               <ul className="list-disc list-inside text-red-700/80">
-                                {data.risks.map((r: string, i: number) => <li key={i}>{r}</li>)}
+                                {data.risks.map((r: string, i: number) => (
+                                  <li key={i}>{r}</li>
+                                ))}
                               </ul>
                             </div>
-                         )}
+                          )}
                           {data.pending?.length > 0 && (
                             <div>
-                              <p className="font-semibold text-orange-600 mb-1 flex items-center gap-1"><Clock className="size-3"/> Atenção</p>
+                              <p className="font-semibold text-orange-600 mb-1 flex items-center gap-1">
+                                <Clock className="size-3" /> Atenção
+                              </p>
                               <ul className="list-disc list-inside text-orange-700/80">
-                                {data.pending.map((p: string, i: number) => <li key={i}>{p}</li>)}
+                                {data.pending.map((p: string, i: number) => (
+                                  <li key={i}>{p}</li>
+                                ))}
                               </ul>
                             </div>
-                         )}
-                       </div>
-                       
-                       {data.trend && (
-                         <p className="text-xs text-center text-gray-400 italic border-t border-gray-100 pt-2">
-                           Tendência: {data.trend}
-                         </p>
-                       )}
-                     </div>
-                   );
-                 } catch {
-                   return (
+                          )}
+                        </div>
+
+                        {data.trend && (
+                          <p className="text-xs text-center text-gray-400 italic border-t border-gray-100 pt-2">
+                            Tendência: {data.trend}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  } catch {
+                    return (
                       <div className="prose prose-sm max-w-none text-gray-700">
                         <ReactMarkdown>{notification.snippet}</ReactMarkdown>
                       </div>
-                   );
-                 }
-               })()}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-700">{notification.snippet}</p>
-          )}
-          <div className="rounded-lg bg-gray-50 p-4">
-            <p className="text-xs font-medium text-gray-500 uppercase mb-1">
-              Por que você recebeu isso
-            </p>
-            <p className="text-sm text-gray-600">{getReasonText(notification.type)}</p>
-          </div>
-
-          {/* Copilot suggestion */}
-          {getSuggestionText(notification.type) && (
-            <div className="rounded-lg bg-blue-50 p-4 border border-blue-100">
-              <p className="text-xs font-medium text-blue-600 uppercase mb-1">
-                💡 Sugestão
-              </p>
-              <p className="text-sm text-blue-700">
-                {getSuggestionText(notification.type)}
-              </p>
-            </div>
-          )}
-
-          {/* Reply input for mentions */}
-          {showReplyInput && (
-            <div className="space-y-2">
-              <Textarea
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="Digite sua resposta..."
-                className="min-h-[80px]"
-              />
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowReplyInput(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleReply}
-                  disabled={!replyContent.trim() || createComment.isPending}
-                >
-                  Enviar
-                </Button>
+                    );
+                  }
+                })()}
               </div>
+            ) : (
+              <p className="text-sm text-gray-700">{notification.snippet}</p>
+            )}
+            <div className="rounded-lg bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500 uppercase mb-1">
+                Por que você recebeu isso
+              </p>
+              <p className="text-sm text-gray-600">
+                {getReasonText(notification.type)}
+              </p>
             </div>
-          )}
+
+            {/* Copilot suggestion */}
+            {getSuggestionText(notification.type) && (
+              <div className="rounded-lg bg-blue-50 p-4 border border-blue-100">
+                <p className="text-xs font-medium text-blue-600 uppercase mb-1">
+                  💡 Sugestão
+                </p>
+                <p className="text-sm text-blue-700">
+                  {getSuggestionText(notification.type)}
+                </p>
+              </div>
+            )}
+
+            {/* Reply input for mentions */}
+            {showReplyInput && (
+              <div className="space-y-2">
+                <Textarea
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  placeholder="Digite sua resposta..."
+                  className="min-h-[80px]"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowReplyInput(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleReply}
+                    disabled={!replyContent.trim() || createComment.isPending}
+                  >
+                    Enviar
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <ScrollBar orientation="vertical" />
         </ScrollArea>
 
         {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 px-4 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 px-4 py-4 sm:px-6 flex-shrink-0">
           {(notification.type === "system.stale" ||
             notification.type === "task.stale") && (
             <>
@@ -390,12 +402,18 @@ export function NotificationModal({
             </Button>
           )}
 
-          <Button variant="ghost" onClick={handleOpenEntity} className="gap-2 ml-auto">
+          <Button
+            variant="ghost"
+            onClick={handleOpenEntity}
+            className="gap-2 ml-auto"
+          >
             <ExternalLink className="size-4" />
-            {notification.entityType === "workspace" ? "Abrir dashboard" : "Abrir tarefa"}
+            {notification.entityType === "workspace"
+              ? "Abrir dashboard"
+              : "Abrir tarefa"}
           </Button>
         </div>
       </div>
-    </div>
+    </ResponsiveModal>
   );
 }

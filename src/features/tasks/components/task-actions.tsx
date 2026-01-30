@@ -29,10 +29,11 @@ export const TaskActions = ({
 
   const { open } = useEditTaskModal();
 
+  // Tradução das mensagens de confirmação
   const [ConfirmDialog, confirm] = useConfirm(
-    "Delete task",
-    "This action cannot be undone",
-    "destructive"
+    "Excluir tarefa",
+    "Esta ação não pode ser desfeita",
+    "destructive",
   );
 
   const { mutate, isPending } = useDeleteTask();
@@ -65,7 +66,7 @@ export const TaskActions = ({
             className="font-medium p-2.5"
           >
             <ExternalLinkIcon className="size-4 mr-2 stroke-2" />
-            Task Details
+            Detalhes da Tarefa
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -74,7 +75,7 @@ export const TaskActions = ({
             className="font-medium p-2.5"
           >
             <ExternalLinkIcon className="size-4 mr-2 stroke-2" />
-            Open Project
+            Abrir Projeto
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -83,7 +84,7 @@ export const TaskActions = ({
             className="font-medium p-2.5"
           >
             <PencilIcon className="size-4 mr-2 stroke-2" />
-            Edit Task
+            Editar Tarefa
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -92,7 +93,7 @@ export const TaskActions = ({
             className="font-medium p-2.5 text-amber-700 focus:text-amber-700"
           >
             <TrashIcon className="size-4 mr-2 stroke-2 text-amber-700" />
-            Delete Task
+            Excluir Tarefa
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

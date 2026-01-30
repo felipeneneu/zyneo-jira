@@ -943,7 +943,9 @@ Prazo: ${task.dueDate ?? "-"}
       const { workspaceId, taskIds } = c.req.valid("json");
 
       const today = new Date();
-      if (today.getDay() !== 5) {
+      const allowReport =
+        today.getDay() === 5 || process.env.NODE_ENV === "development";
+      if (!allowReport) {
         return c.json(
           { error: "Relatório disponível apenas às sextas-feiras." },
           403
@@ -1040,9 +1042,20 @@ Prazo: ${task.dueDate ?? "-"}
           return `- ${label} | ${task.status} | prazo: ${due}`;
         });
 
+      const fallbackInsights = buildFallbackPerformanceJson({
+        total,
+        completionRate,
+        wipRate,
+        overdueCount,
+        dueTodayCount,
+        dueSoonCount,
+        blockedCount,
+        staleCount,
+      });
+
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return c.json({ error: "AI not configured" }, 500);
+        return c.json({ data: { insights: fallbackInsights } });
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
@@ -1075,18 +1088,7 @@ Prazo: ${task.dueDate ?? "-"}
         });
         rawText = result.response.text().trim();
       } catch {
-        rawText = JSON.stringify(
-          buildFallbackPerformanceJson({
-            total,
-            completionRate,
-            wipRate,
-            overdueCount,
-            dueTodayCount,
-            dueSoonCount,
-            blockedCount,
-            staleCount,
-          })
-        );
+        rawText = JSON.stringify(fallbackInsights);
       }
 
       let insights: {
@@ -1114,16 +1116,7 @@ Prazo: ${task.dueDate ?? "-"}
             : [],
         };
       } catch {
-        insights = buildFallbackPerformanceJson({
-          total,
-          completionRate,
-          wipRate,
-          overdueCount,
-          dueTodayCount,
-          dueSoonCount,
-          blockedCount,
-          staleCount,
-        });
+        insights = fallbackInsights;
       }
 
       return c.json({ data: { insights } });

@@ -229,6 +229,93 @@ const app = new Hono()
       });
     }
   )
+  .post("/mark-all-read", sessionMiddleware, async (c) => {
+    const databases = c.get("databases");
+    const user = c.get("user");
+
+    const pageSize = 100;
+    let cursor: string | null = null;
+    let updatedCount = 0;
+
+    while (true) {
+      const query = [
+        Query.equal("userId", user.$id),
+        Query.isNull("archivedAt"),
+        Query.isNull("readAt"),
+        Query.limit(pageSize),
+      ];
+      if (cursor) query.push(Query.cursorAfter(cursor));
+
+      const page = await databases.listDocuments<Notification>(
+        DATABASE_ID,
+        NOTIFICATIONS_ID,
+        query
+      );
+
+      if (page.documents.length === 0) break;
+
+      await Promise.all(
+        page.documents.map((notification) =>
+          databases.updateDocument<Notification>(
+            DATABASE_ID,
+            NOTIFICATIONS_ID,
+            notification.$id,
+            {
+              readAt: new Date().toISOString(),
+            }
+          )
+        )
+      );
+
+      updatedCount += page.documents.length;
+      cursor = page.documents.at(-1)?.$id ?? null;
+
+      if (page.documents.length < pageSize) break;
+    }
+
+    return c.json({ data: { updatedCount } });
+  })
+  .post("/remove-all", sessionMiddleware, async (c) => {
+    const databases = c.get("databases");
+    const user = c.get("user");
+
+    const pageSize = 100;
+    let cursor: string | null = null;
+    let removedCount = 0;
+
+    while (true) {
+      const query = [
+        Query.equal("userId", user.$id),
+        Query.limit(pageSize),
+      ];
+      if (cursor) query.push(Query.cursorAfter(cursor));
+
+      const page = await databases.listDocuments<Notification>(
+        DATABASE_ID,
+        NOTIFICATIONS_ID,
+        query
+      );
+
+      if (page.documents.length === 0) break;
+
+      await Promise.all(
+        page.documents.map((notification) =>
+          databases.deleteDocument(
+            DATABASE_ID,
+            NOTIFICATIONS_ID,
+            notification.$id
+          )
+        )
+      );
+
+      removedCount += page.documents.length;
+      cursor = page.documents.at(-1)?.$id ?? null;
+
+      if (page.documents.length < pageSize) break;
+    }
+
+    return c.json({ data: { removedCount } });
+  })
   // POST /api/notifications/daily-focus
   .post(
     "/daily-focus",
@@ -377,9 +464,39 @@ const app = new Hono()
         .slice(0, 3)
         .map((task) => buildTaskLine(task, projectById.get(task.projectId)?.name));
 
+      const fallbackJson = buildFallbackFocusJson({
+        total: tasks.total,
+        wipCount,
+        overdueCount,
+        blockedCount,
+        staleCount,
+        dueTodayCount,
+        dueSoonCount,
+        noDueDateCount,
+        focusCandidates,
+      });
+
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return c.json({ error: "AI not configured" }, 500);
+        const snippet = JSON.stringify(fallbackJson);
+        const { ID } = await import("node-appwrite");
+        const notification = await databases.createDocument<Notification>(
+          DATABASE_ID,
+          NOTIFICATIONS_ID,
+          ID.unique(),
+          {
+            userId: user.$id,
+            workspaceId: resolvedWorkspaceId,
+            type: "system.daily_focus",
+            severity: "info",
+            title: `Overview diario - ${new Date().toLocaleDateString("pt-BR")}`,
+            snippet,
+            entityType: "workspace",
+            entityId: resolvedWorkspaceId,
+            threadKey,
+          }
+        );
+        return c.json({ data: { notification } });
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
@@ -412,19 +529,7 @@ const app = new Hono()
         });
         text = result.response.text().trim();
       } catch {
-        text = JSON.stringify(
-          buildFallbackFocusJson({
-            total: tasks.total,
-            wipCount,
-            overdueCount,
-            blockedCount,
-            staleCount,
-            dueTodayCount,
-            dueSoonCount,
-            noDueDateCount,
-            focusCandidates,
-          })
-        );
+        text = JSON.stringify(fallbackJson);
       }
       
       // Sanitization to ensure we store valid JSON string

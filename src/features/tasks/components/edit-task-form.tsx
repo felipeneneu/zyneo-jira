@@ -17,6 +17,7 @@ import { Input } from "@/src/ui/input";
 import { Button } from "@/src/ui/button";
 import { cn } from "@/src/lib/utils";
 import { DatePicker } from "@/src/ui/date-picker";
+import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -93,189 +94,195 @@ export const EditTaskForm = ({
   };
 
   return (
-    <Card className="w-full h-full border-none shadow-none">
+    <Card className="w-full max-h-[85vh] border-none shadow-none">
       <CardHeader className="flex p-7">
         <CardTitle className="text-xl font-bold">Edit a task</CardTitle>
       </CardHeader>
       <div className="px-7">
         <DottedSeparator />
       </div>
-      <CardContent className="p-7">
+      <CardContent className="p-7 flex flex-col min-h-0">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="flex flex-col gap-y-4 w-full">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Task Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Enter task name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Due Date</FormLabel>
-                    <FormControl>
-                      <DatePicker {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="assigneeId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assignee</FormLabel>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                    >
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-col"
+          >
+            <ScrollArea className="flex-1 min-h-0 pr-2">
+              <div className="flex flex-col gap-y-4 w-full">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Task Name</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select assignee" />
-                        </SelectTrigger>
+                        <Input {...field} placeholder="Enter task name" />
                       </FormControl>
                       <FormMessage />
-                      <SelectContent
-                        side="bottom"
-                        align="start"
-                        sideOffset={2}
-                        position="popper"
-                      >
-                        {memberOptions.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            <div className="flex items-center gap-x-2">
-                              <MembersAvatar
-                                className="size-6"
-                                name={member.name}
-                                avatarUrl={member.avatarUrl}
-                              />
-                              {member.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority</FormLabel>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                    >
+                <FormField
+                  control={form.control}
+                  name="dueDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due Date</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
+                        <DatePicker {...field} />
                       </FormControl>
                       <FormMessage />
-                      <SelectContent
-                        side="bottom"
-                        align="start"
-                        sideOffset={2}
-                        position="popper"
-                      >
-                        <SelectItem value="P1">P1 - High</SelectItem>
-                        <SelectItem value="P2">P2 - Medium</SelectItem>
-                        <SelectItem value="P3">P3 - Low</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <FormMessage />
-                      <SelectContent
-                        side="bottom"
-                        align="start"
-                        sideOffset={2}
-                        position="popper"
+                <FormField
+                  control={form.control}
+                  name="assigneeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assignee</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
                       >
-                        {statuses.map((statusValue) => (
-                          <SelectItem key={statusValue} value={statusValue}>
-                            {TASK_STATUS_LABELS[statusValue]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select assignee" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <FormMessage />
+                        <SelectContent
+                          side="bottom"
+                          align="start"
+                          sideOffset={2}
+                          position="popper"
+                        >
+                          {memberOptions.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              <div className="flex items-center gap-x-2">
+                                <MembersAvatar
+                                  className="size-6"
+                                  name={member.name}
+                                  avatarUrl={member.avatarUrl}
+                                />
+                                {member.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="projectId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project</FormLabel>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select project" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <FormMessage />
-                      <SelectContent
-                        side="bottom"
-                        align="start"
-                        sideOffset={2}
-                        position="popper"
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
                       >
-                        {projectOptions.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            <div className="flex items-center gap-x-2">
-                              <ProjectAvatar
-                                className="size-6"
-                                name={project.name}
-                                image={project.imageUrl}
-                              />
-                              {project.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-            </div>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <FormMessage />
+                        <SelectContent
+                          side="bottom"
+                          align="start"
+                          sideOffset={2}
+                          position="popper"
+                        >
+                          <SelectItem value="P1">P1 - High</SelectItem>
+                          <SelectItem value="P2">P2 - Medium</SelectItem>
+                          <SelectItem value="P3">P3 - Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <FormMessage />
+                        <SelectContent
+                          side="bottom"
+                          align="start"
+                          sideOffset={2}
+                          position="popper"
+                        >
+                          {statuses.map((statusValue) => (
+                            <SelectItem key={statusValue} value={statusValue}>
+                              {TASK_STATUS_LABELS[statusValue]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select project" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <FormMessage />
+                        <SelectContent
+                          side="bottom"
+                          align="start"
+                          sideOffset={2}
+                          position="popper"
+                        >
+                          {projectOptions.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              <div className="flex items-center gap-x-2">
+                                <ProjectAvatar
+                                  className="size-6"
+                                  name={project.name}
+                                  image={project.imageUrl}
+                                />
+                                {project.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
             <DottedSeparator className="py-7" />
             <div className="flex items-center justify-between">
               <Button

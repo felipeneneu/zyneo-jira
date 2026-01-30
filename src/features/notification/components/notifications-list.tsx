@@ -13,18 +13,23 @@ import {
   Clock,
   AtSign,
   Sparkles,
+  CheckCheck,
+  Trash,
 } from "lucide-react";
 import { cn, formatDate } from "@/src/lib/utils";
 import { NotificationModal } from "./notification-modal";
 import { Input } from "@/src/ui/input";
 import { Button } from "@/src/ui/button";
 import { MembersAvatar } from "@/src/features/members/components/members-avatar";
+import { useConfirm } from "@/src/hooks/use-confirm";
 import { useInfiniteNotifications } from "@/src/features/notifications/api/use-infinite-notifications";
 import { useGetNotifications } from "@/src/features/notifications/api/use-get-notifications";
 import {
   useToggleNotificationStar,
   useArchiveNotification,
   useRemoveNotification,
+  useMarkAllNotificationsRead,
+  useRemoveAllNotifications,
 } from "@/src/features/notifications/api/use-notification-actions";
 import type { Notification } from "@/src/features/notifications/types";
 import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
@@ -83,8 +88,15 @@ export function NotificationsList() {
   const toggleStar = useToggleNotificationStar();
   const archive = useArchiveNotification();
   const remove = useRemoveNotification();
+  const markAllRead = useMarkAllNotificationsRead();
+  const removeAll = useRemoveAllNotifications();
   const { data: unreadData } = useGetNotifications({ filter: "unread" });
   const unreadCount = unreadData?.total ?? 0;
+  const [RemoveAllDialog, confirmRemoveAll] = useConfirm(
+    "Remover todas as notificações",
+    "Tem certeza que deseja remover todas as notificações? Essa ação não poderá ser desfeita.",
+    "destructive"
+  );
 
   const handleNotificationClick = (notification: Notification) => {
     setSelectedNotification(notification);
@@ -105,8 +117,19 @@ export function NotificationsList() {
     remove.mutate(id);
   };
 
+  const handleMarkAllRead = () => {
+    markAllRead.mutate();
+  };
+
+  const handleRemoveAll = async () => {
+    const ok = await confirmRemoveAll();
+    if (!ok) return;
+    removeAll.mutate();
+  };
+
   return (
     <div className="flex flex-col h-full min-h-0">
+      <RemoveAllDialog />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-semibold text-black">Notificações</h1>
@@ -116,7 +139,29 @@ export function NotificationsList() {
             </span>
           )}
         </div>
-        <div className="flex w-full items-center gap-4 md:w-auto">
+        <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="gap-2"
+              onClick={handleMarkAllRead}
+              disabled={markAllRead.isPending || unreadCount === 0}
+            >
+              <CheckCheck className="size-4" />
+              Marcar todas como lidas
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="gap-2"
+              onClick={handleRemoveAll}
+              disabled={removeAll.isPending}
+            >
+              <Trash className="size-4" />
+              Remover todas
+            </Button>
+          </div>
           <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input

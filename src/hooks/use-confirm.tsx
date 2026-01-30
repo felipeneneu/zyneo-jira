@@ -1,6 +1,7 @@
 import { JSX, useState } from "react";
 
 import { Button, type ButtonProps } from "../ui/button";
+import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
 
 import { ResponsiveModal } from "@/src/app/components/responsive-modal";
 
@@ -43,12 +44,15 @@ export const useConfirm = (
 
   const ConfirmationDialog = () => (
     <ResponsiveModal open={promise !== null} onOpenChange={handleClose}>
-      <Card className="w-full h-full border-none shadow-none">
-        <CardContent className="pt-8">
-          <CardHeader className="">
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{message}</CardDescription>
-          </CardHeader>
+      <Card className="w-full max-h-[85vh] border-none shadow-none">
+        <CardContent className="pt-8 flex min-h-0 flex-col">
+          <ScrollArea className="flex-1 min-h-0 pr-2">
+            <CardHeader>
+              <CardTitle>{title}</CardTitle>
+              <CardDescription>{message}</CardDescription>
+            </CardHeader>
+            <ScrollBar orientation="vertical" />
+          </ScrollArea>
           <div className="pt-4 w-full flex flex-col gap-y-2 lg:flex-row gap-x-2 items-center justify-end">
             <Button
               onClick={handleCancel}

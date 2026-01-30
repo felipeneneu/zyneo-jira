@@ -56,6 +56,7 @@ O botão **Importar CSV** aparece na aba **Tabelas** e usa o Design System (Shad
 - O botão **Gerar Relatório** fica ao lado do **TabsTrigger** “Tabelas”.
 - O relatório agora inclui um **Overview de desempenho** gerado por IA (Gemini).
 - **Disponível apenas às sextas-feiras** (UI e API validam).
+- **Em ambiente de desenvolvimento**, o botão fica liberado.
 - O relatório considera **as tarefas visíveis na tabela atual** (filtros aplicados no backend).
 - O PDF inclui:
   - Logo do sistema no topo (carregada de `/public/logo.svg`)

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/src/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/src/ui/sheet";
+import { ScrollArea, ScrollBar } from "@/src/ui/scroll-area";
 import { MenuIcon } from "lucide-react";
 import { Sidebar } from "./sidebar";
 
@@ -26,7 +27,10 @@ export const MobileSidebar = () => {
       </SheetTrigger>
       <SheetTitle className="hidden">Menu</SheetTitle>
       <SheetContent side="left" className="p-0">
-        <Sidebar />
+        <ScrollArea className="h-full">
+          <Sidebar />
+          <ScrollBar orientation="vertical" />
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );

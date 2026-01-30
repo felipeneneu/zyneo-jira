@@ -157,7 +157,7 @@ export function WorkspaceWizard({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[100vw] max-w-none h-[100dvh] sm:h-[90vh] lg:h-[85vh] p-0 border-zinc-800 bg-zinc-950 overflow-hidden shadow-2xl rounded-none sm:rounded-lg sm:w-full sm:max-w-[950px]"
+        className="w-[100vw] max-w-none h-[100dvh] max-h-[100dvh] sm:h-[90vh] lg:h-[85vh] p-0 border-zinc-800 bg-zinc-950 overflow-hidden shadow-2xl rounded-none sm:rounded-lg sm:w-full sm:max-w-[950px]"
         aria-describedby="workspace-wizard"
       >
         <DialogTitle className="sr-only">Workspace Wizard</DialogTitle>

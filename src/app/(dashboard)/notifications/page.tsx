@@ -8,7 +8,7 @@ const NotificationsPage = async () => {
   if (!user) redirect("/sign-in");
 
   return (
-    <div className="flex max-h-[80dvh]   ">
+    <div className="flex h-full w-full">
       <main className="flex-1 overflow-hidden">
         <NotificationsList />
       </main>

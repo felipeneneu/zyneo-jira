@@ -43,7 +43,8 @@ export const TaskViewSwitcher = ({
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const reportInsights = useGenerateTasksReport();
-  const isFriday = new Date().getDay() === 5;
+  const isReportEnabled =
+    new Date().getDay() === 5 || process.env.NODE_ENV === "development";
 
   const [{ status, assigneeId, projectId, dueDate }] = useTaskFilters();
 
@@ -87,7 +88,7 @@ export const TaskViewSwitcher = ({
       toast.error("Workspace não encontrado.");
       return;
     }
-    if (!isFriday) {
+    if (!isReportEnabled) {
       toast.error("Relatório disponível apenas às sextas-feiras.");
       return;
     }
@@ -175,9 +176,9 @@ export const TaskViewSwitcher = ({
                   variant="secondary"
                   className="gap-2"
                   onClick={handleGenerateReport}
-                  disabled={isGeneratingReport || !isFriday}
+                  disabled={isGeneratingReport || !isReportEnabled}
                   title={
-                    isFriday
+                    isReportEnabled
                       ? "Gerar relatório com overview"
                       : "Disponível apenas às sextas-feiras"
                   }
