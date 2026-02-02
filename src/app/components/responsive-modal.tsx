@@ -28,7 +28,7 @@ export const ResponsiveModal = ({
   return (
     <Drawer onOpenChange={onOpenChange} open={open}>
       <DrawerContent className="w-full sm:max-w-lg max-h-[85vh] p-0 overflow-hidden">
-        <div className="p-0 border-none">{children}</div>
+        <div className="p-0 border-none mb-28 pb-24">{children}</div>
       </DrawerContent>
     </Drawer>
   );

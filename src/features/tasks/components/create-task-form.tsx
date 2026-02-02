@@ -79,7 +79,7 @@ export const CreateTaskForm = ({
 
   return (
     <Card className="w-full max-h-[85vh] border-none shadow-none">
-      <CardHeader className="flex p-7">
+      <CardHeader className="flex md:p-7">
         <CardTitle className="text-xl font-bold">
           Criar uma nova tarefa
         </CardTitle>
@@ -87,13 +87,13 @@ export const CreateTaskForm = ({
       <div className="px-7">
         <DottedSeparator />
       </div>
-      <CardContent className="p-7 flex flex-col min-h-0">
+      <CardContent className="md:p-7 flex flex-col min-h-0">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex min-h-0 flex-col"
           >
-            <ScrollArea className="flex-1 min-h-0 pr-2">
+            <ScrollArea className="h-60 px-6 mb-6">
               <div className="flex flex-col gap-y-4 w-full">
                 <FormField
                   control={form.control}
